@@ -1,6 +1,6 @@
 # Portfolio Tracker — Outil de suivi et d'analyse de portefeuille
 
-Projet universitaire · Année 2026-2027
+Projet de Master G2C · Année universitaire 2026-2027
 Auteurs : *[Prénom NOM, Prénom NOM, Prénom NOM]*
 
 Outil en Python qui lit l'historique des transactions d'un portefeuille (achats, ventes,

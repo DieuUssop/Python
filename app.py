@@ -65,7 +65,7 @@ langues.definir(st.session_state.get("langue", "fr"))
 # ----------------------------------------------------------------------
 # Configuration de la page (doit être la première commande Streamlit)
 # ----------------------------------------------------------------------
-st.set_page_config(page_title=t("Suivi de portefeuille"), page_icon="📈", layout="wide")
+st.set_page_config(page_title=t("Suivi de portefeuille") + " · Master G2C", page_icon="📈", layout="wide")
 
 # On charge la feuille de style (si elle est présente).
 if FEUILLE_DE_STYLE.exists():
@@ -136,7 +136,7 @@ def produire_rapport(contenu_csv, indice, taux_sans_risque, niveau_var, nom_indi
 # BARRE LATÉRALE : les réglages
 # ======================================================================
 with st.sidebar:
-    html(ui.marque("Portfolio Tracker", t("Outil de suivi de portefeuille")))
+    html(ui.marque("Portfolio Tracker", "Master G2C · " + t("Outil de suivi de portefeuille")))
 
     # Sélecteur de langue : un clic relance la page dans l'autre langue.
     st.segmented_control("Langue / Language", list(langues.LANGUES), format_func=langues.LANGUES.get,
@@ -257,7 +257,7 @@ with st.sidebar:
 # ======================================================================
 html(ui.entete(
     titre=t("Suivi de portefeuille"),
-    surtitre=t("Gestion de portefeuille"),
+    surtitre="Master G2C · " + t("Gestion de portefeuille"),
     sous_titre=t("Du {debut} au {fin}  ·  {n} lignes  ·  Référence : {indice}",
                  debut=date_debut, fin=date_fin, n=resume["nb_lignes"], indice=nom_court),
     source=res["source_cours"],
@@ -290,7 +290,7 @@ html(ui.grille([
 # ONGLETS
 # ======================================================================
 PIED_DE_PAGE = t("Données de marché : Yahoo Finance · Taux sans risque : BCE · "
-                 "Outil pédagogique — ne constitue pas un conseil en investissement.")
+                 "Outil pédagogique réalisé dans le cadre du Master G2C — ne constitue pas un conseil en investissement.")
 cle_calculs = (hash(contenu), code_indice, taux_sans_risque, niveau_var)
 
 # Les deux espaces supplémentaires (étape 10) ont leur propre fichier.

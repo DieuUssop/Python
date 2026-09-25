@@ -78,9 +78,9 @@ TEXTES = {
     "Cours en cache (hors ligne)": "Cached prices (offline)",
     "Données au {date}": "Data as of {date}",
     "Données de marché : Yahoo Finance · Taux sans risque : BCE · "
-    "Outil pédagogique — ne constitue pas un conseil en investissement.":
+    "Outil pédagogique réalisé dans le cadre du Master G2C — ne constitue pas un conseil en investissement.":
         "Market data: Yahoo Finance · Risk-free rate: ECB · "
-        "Educational tool — not investment advice.",
+        "Educational tool developed as part of the Master G2C — not investment advice.",
 
     # ------------------------------------------------------------------
     # Chiffres clés

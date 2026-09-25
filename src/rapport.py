@@ -87,7 +87,7 @@ def _styles():
 # ----------------------------------------------------------------------
 def _bandeau(st, titre, sous_titre):
     """Bandeau bleu marine en haut de la première page."""
-    contenu = [[Paragraph("GESTION DE PORTEFEUILLE", st["surtitre"])],
+    contenu = [[Paragraph("MASTER G2C · GESTION DE PORTEFEUILLE", st["surtitre"])],
                [Paragraph(titre, st["titre"])],
                [Paragraph(escape(sous_titre), st["sous_titre_bandeau"])]]
     tableau = Table(contenu, colWidths=[LARGEUR_UTILE])
@@ -495,6 +495,6 @@ def generer_rapport(res, destination, nom_indice, taux_sans_risque, niveau_var,
     doc = SimpleDocTemplate(
         destination, pagesize=A4,
         leftMargin=1.8 * cm, rightMargin=1.8 * cm, topMargin=1.6 * cm, bottomMargin=2.0 * cm,
-        title="Rapport de suivi de portefeuille", author="Portfolio Tracker",
+        title="Rapport de suivi de portefeuille", author="Master G2C",
     )
     doc.build(story, onFirstPage=_pied_de_page, onLaterPages=_pied_de_page)

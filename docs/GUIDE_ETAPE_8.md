@@ -112,7 +112,7 @@ Le rapport contient 7 pages :
 
 Il est généré avec **reportlab**. Le principe : on construit une liste d'éléments (titres, tableaux, images) et reportlab les répartit automatiquement sur les pages. Les graphiques sont ceux de matplotlib, dessinés en mémoire puis insérés comme images.
 
-**Conseil :** joins ce PDF en annexe de votre rapport écrit. Il montre que l'outil produit un livrable exploitable par un client, ce qui est un vrai plus pour le projet.
+**Conseil :** joins ce PDF en annexe de votre rapport écrit. Il montre que l'outil produit un livrable exploitable par un client, ce qui est un vrai plus pour un Master G2C.
 
 ## F. Exercices
 
