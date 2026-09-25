@@ -21,6 +21,7 @@ un tableau de bord web interactif et dans un rapport PDF généré automatiqueme
 | **Conseil patrimonial** | Profil de risque client (questionnaire inspiré de MiFID II), indicateur SRI, test d'adéquation ; fiscalité comparée CTO / PEA / assurance-vie (taux 2026) ; stress tests (5 crises historiques et chocs hypothétiques) |
 | **Gestion d'actifs** | Attribution de performance de Brinson-Fachler face au MSCI ACWI (lissage de Cariño) ; budget de risque et parité des risques ; backtest de stratégies de rééquilibrage et d'investissement progressif |
 | **Restitution** | Tableau de bord Streamlit en 3 espaces (analyse, conseil patrimonial, gestion d'actifs), version en ligne de commande, rapport PDF de synthèse |
+| **Langues** | Tableau de bord disponible en français et en anglais (sélecteur FR / EN dans la barre latérale) ; le rapport PDF et la version en ligne de commande restent en français |
 | **Fiabilité** | 79 tests automatiques, contrôle croisé du gain total, cache hors ligne |
 
 ## Démarrage rapide
@@ -115,6 +116,8 @@ portfolio_tracker/
 │   ├── graphiques.py                # graphiques matplotlib (rapport PDF)
 │   ├── graphiques_interactifs.py    # graphiques Plotly (tableau de bord)
 │   ├── interface.py                 # éléments visuels du tableau de bord
+│   ├── langues.py                   # choix de la langue (FR / EN) et fonctions de traduction
+│   ├── traductions.py               # dictionnaire français -> anglais du tableau de bord
 │   ├── vues_conseil.py              # espace « Conseil patrimonial » du tableau de bord
 │   ├── vues_gestion.py              # espace « Gestion d'actifs » du tableau de bord
 │   └── rapport.py                   # rapport PDF (reportlab)

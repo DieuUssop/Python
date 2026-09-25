@@ -16,25 +16,32 @@ chaque morceau sur une seule ligne, sans indentation.
 
 from html import escape
 
+from .langues import anglais, t, td
+
 
 # ----------------------------------------------------------------------
-# Mise en forme des nombres (à la française)
+# Mise en forme des nombres (à la française, ou à l'anglaise si l'anglais
+# est choisi dans la barre latérale)
 # ----------------------------------------------------------------------
 def euros(x, signe=False):
-    """1234.5 -> '1 235 €' (ou '+1 235 €' avec signe=True)."""
+    """1234.5 -> '1 235 €' (ou '+1 235 €' avec signe=True) ; en anglais '€1,235'."""
+    if anglais():
+        prefixe = "-" if x < 0 else ("+" if signe else "")
+        return f"{prefixe}€{abs(x):,.0f}"
     texte = f"{x:+,.0f}" if signe else f"{x:,.0f}"
-    return texte.replace(",", " ") + " €"      # espace fine insécable
+    return texte.replace(",", "\u202f") + " €"      # espace fine insécable
 
 
 def pct(x, signe=True, decimales=2):
-    """0.1234 -> '+12,34 %'."""
+    """0.1234 -> '+12,34 %' ; en anglais '+12.34%'."""
     texte = f"{x * 100:+.{decimales}f}" if signe else f"{x * 100:.{decimales}f}"
-    return texte.replace(".", ",") + " %"
+    return texte + "%" if anglais() else texte.replace(".", ",") + " %"
 
 
 def nombre(x, decimales=2):
-    """1.234 -> '1,23'."""
-    return f"{x:.{decimales}f}".replace(".", ",")
+    """1.234 -> '1,23' ; en anglais '1.23'."""
+    texte = f"{x:.{decimales}f}"
+    return texte if anglais() else texte.replace(".", ",")
 
 
 def tendance(x):
@@ -58,7 +65,7 @@ def entete(titre, surtitre, sous_titre, source, date_donnees):
     """Bandeau bleu en haut de la page."""
     en_direct = "direct" in source.lower()
     point = "point-vert" if en_direct else "point-orange"
-    libelle = "Cours en direct · Yahoo Finance" if en_direct else "Cours en cache (hors ligne)"
+    libelle = t("Cours en direct · Yahoo Finance") if en_direct else t("Cours en cache (hors ligne)")
     return (
         '<div class="entete">'
         '<div class="entete-gauche">'
@@ -68,7 +75,7 @@ def entete(titre, surtitre, sous_titre, source, date_donnees):
         '</div>'
         '<div class="entete-droite">'
         f'<div class="entete-badge"><span class="point {point}"></span>{libelle}</div>'
-        f'<div class="entete-date">Données au {escape(date_donnees)}</div>'
+        f'<div class="entete-date">{escape(t("Données au {date}", date=date_donnees))}</div>'
         '</div>'
         '</div>'
     )
@@ -137,19 +144,20 @@ def echelle_sri(classe):
     cases = "".join(
         f'<div class="sri-case{" sri-active" if i == classe else ""}">{i}</div>' for i in range(1, 8)
     )
-    return ('<div class="sri"><div class="sri-legende"><span>Risque plus faible</span>'
-            f'<span>Risque plus élevé</span></div><div class="sri-cases">{cases}</div></div>')
+    return (f'<div class="sri"><div class="sri-legende"><span>{t("Risque plus faible")}</span>'
+            f'<span>{t("Risque plus élevé")}</span></div><div class="sri-cases">{cases}</div></div>')
 
 
 def tableau_criteres(criteres, formats):
     """Tableau HTML des critères d'adéquation : critère, portefeuille, limite, statut."""
     lignes = ""
     for (nom, valeur, limite, ok), fmt in zip(criteres, formats):
-        statut = pastille("Conforme", "positive") if ok else pastille("Dépassé", "negative")
-        lignes += (f"<tr><td>{escape(nom)}</td><td class='num'>{escape(fmt(valeur))}</td>"
+        statut = pastille(t("Conforme"), "positive") if ok else pastille(t("Dépassé"), "negative")
+        lignes += (f"<tr><td>{escape(td(nom))}</td><td class='num'>{escape(fmt(valeur))}</td>"
                    f"<td class='num'>{escape(fmt(limite))}</td><td>{statut}</td></tr>")
-    return ('<table class="criteres"><thead><tr><th>Critère</th><th class="num">Portefeuille</th>'
-            f'<th class="num">Limite du profil</th><th>Statut</th></tr></thead><tbody>{lignes}</tbody></table>')
+    return (f'<table class="criteres"><thead><tr><th>{t("Critère")}</th><th class="num">{t("Portefeuille")}</th>'
+            f'<th class="num">{t("Limite du profil")}</th><th>{t("Statut")}</th></tr></thead>'
+            f'<tbody>{lignes}</tbody></table>')
 
 
 def verdict(ok, titre, texte):
