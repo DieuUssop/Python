@@ -192,3 +192,29 @@ def attribution_mensuelle(valeur_par_titre, prix_hist, regions_titres, cours_ind
         "effets": par_region[["allocation", "selection", "interaction"]].sum(),
         "somme_effets": float(par_region["total"].sum()),      # = Rp − Rb grâce à Cariño
     }
+
+
+def attribution_poche_actions(res, cours_indices, poids_indice=None):
+    """Attribution de la POCHE ACTIONS du portefeuille.
+
+    L'indice de référence est un indice d'actions : pour un portefeuille
+    diversifié (actions + obligations + or), on compare donc seulement les
+    actions à cet indice, comme le fait un gérant pour chaque "poche".
+    Les obligations et l'or sont exclus du calcul.
+    Le résultat contient en plus "part_actions" : poids actuel de la poche actions.
+    """
+    from .analyse import charger_referentiel      # import ici pour éviter un import circulaire
+    referentiel = charger_referentiel()
+    valeurs = res["valeur_par_titre"]
+    vide = pd.Series(dtype=object)
+    regions = referentiel["region"] if "region" in referentiel.columns else vide
+    classes = referentiel["classe"] if "classe" in referentiel.columns else vide
+    actions = [t for t in valeurs.columns if classes.get(t, "Actions") == "Actions"]
+    if not actions:
+        raise ValueError("aucune action dans le portefeuille (l'indice de référence est un indice actions)")
+    resultat = attribution_mensuelle(valeurs[actions], res["prix_hist"],
+                                     {t: regions.get(t, "Non classé") for t in actions},
+                                     cours_indices, poids_indice or POIDS_INDICE)
+    derniere = valeurs.iloc[-1]
+    resultat["part_actions"] = float(derniere[actions].sum() / derniere.sum()) if derniere.sum() else 1.0
+    return resultat

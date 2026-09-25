@@ -27,7 +27,8 @@ CHEMIN_REFERENTIEL = Path(__file__).resolve().parent.parent / "data" / "referent
 
 
 def charger_referentiel():
-    """Région, secteur et pays de chaque titre (fichier data/referentiel.csv).
+    """Région, secteur, pays, classe d'actifs et duration de chaque titre
+    (fichier data/referentiel.csv).
     Renvoie un tableau vide si le fichier n'existe pas."""
     if not CHEMIN_REFERENTIEL.exists():
         return pd.DataFrame(columns=["region", "secteur", "pays"])
@@ -89,6 +90,13 @@ def analyse_complete(source_csv,
     for colonne in ["region", "secteur", "pays"]:
         positions[colonne] = positions.index.map(referentiel[colonne].to_dict()).fillna("Non classé") \
             if colonne in referentiel.columns else "Non classé"
+    # Classe d'actifs (Actions, Obligations, Or) : un titre absent du référentiel
+    # est considéré comme une action (hypothèse prudente pour le profil de risque).
+    positions["classe"] = positions.index.map(referentiel["classe"].to_dict()).fillna("Actions") \
+        if "classe" in referentiel.columns else "Actions"
+    # Duration (sensibilité aux taux) des fonds obligataires, en années
+    positions["duration"] = pd.to_numeric(positions.index.map(referentiel["duration"].to_dict()), errors="coerce") \
+        if "duration" in referentiel.columns else float("nan")
     resume = portefeuille.resume_valorise(prix)
 
     # Étape 3 (suite) : historique du portefeuille, en euros

@@ -67,7 +67,8 @@ def _profil(res):
 
     resultat = pf.profil_depuis_reponses(reponses)
     profil = resultat["profil"]
-    test = pf.adequation(profil, ind["volatilite"], ind["max_drawdown"], part_actions=1.0)
+    part_actions = pf.part_actions(res["positions"])
+    test = pf.adequation(profil, ind["volatilite"], ind["max_drawdown"], part_actions=part_actions)
 
     with droite:
         html(ui.grille([
@@ -95,7 +96,9 @@ def _profil(res):
                 lambda v: pct(v, signe=False, decimales=1), lambda v: pct(v, signe=False, decimales=1),
                 lambda v: pct(v, signe=False, decimales=0), lambda v: f"{v:.0f}",
             ]))
-            html(ui.note("Le portefeuille est entièrement investi en actions (ETF actions compris). "
+            html(ui.note(f"Part investie en actions (ETF actions compris) : "
+                         f"{pct(part_actions, signe=False, decimales=0)}"
+                         f"{' (le reste : obligations, or)' if part_actions < 0.995 else ''}. "
                          "Le SRI réglementaire se calcule à partir de la VaR (Cornish-Fisher) : "
                          "la volatilité en donne ici une approximation."))
 

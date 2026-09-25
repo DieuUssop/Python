@@ -12,7 +12,8 @@ Deux familles de scénarios :
 
   2. Scénarios HYPOTHÉTIQUES :
      - baisse des actions de X % : perte ≈ bêta du portefeuille × X ;
-     - baisse du dollar de 10 % : perte sur la part investie en dollars.
+     - baisse du dollar de 10 % : perte sur la part investie en dollars ;
+     - hausse des taux de 1 point : perte ≈ duration × 1 % sur les obligations.
 
 Limites : variations calculées en devise locale (effet de change ignoré dans
 les scénarios historiques) et sur des cours hors dividendes.
@@ -43,10 +44,26 @@ PROXIES_REGIONS = {
 }
 PROXY_PAR_DEFAUT = "^GSPC"
 
+# Pour les obligations et l'or, un indice ACTIONS serait une mauvaise
+# approximation (en 2008, les emprunts d'État ont monté quand les actions
+# chutaient). On utilise un fonds de la même catégorie, coté depuis 2007 au plus tard.
+PROXIES_SECTEURS = {
+    "Obligations d'État": "IEF", "Obligations indexées sur l'inflation": "TIP",
+    "Obligations d'entreprises": "LQD", "Obligations à haut rendement": "HYG",
+    "Obligations émergentes": "EMB", "Or": "GLD",
+}
+
+
+def _proxy(ligne):
+    """Indice (ou fonds) servant d'approximation pour une ligne sans historique."""
+    if ligne.get("classe", "Actions") != "Actions" and ligne.get("secteur") in PROXIES_SECTEURS:
+        return PROXIES_SECTEURS[ligne.get("secteur")]
+    return PROXIES_REGIONS.get(ligne.get("region"), PROXY_PAR_DEFAUT)
+
 
 def telecharger_historique_long(tickers):
     """Cours depuis 2008 (cache séparé : data/cache_stress.csv)."""
-    tous = sorted(set(tickers) | set(PROXIES_REGIONS.values()))
+    tous = sorted(set(tickers) | set(PROXIES_REGIONS.values()) | set(PROXIES_SECTEURS.values()))
     debut = pd.Timestamp(SCENARIOS_HISTORIQUES[0][1]) - pd.Timedelta(days=15)
     return obtenir_historique(tous, debut, chemin_cache=CHEMIN_CACHE_STRESS)
 
@@ -81,7 +98,7 @@ def scenarios_historiques(positions, prix_longs):
             variation = _variation(prix_longs[ticker], debut, fin) if ticker in prix_longs else None
             source = "titre"
             if variation is None:
-                proxy = PROXIES_REGIONS.get(ligne.get("region"), PROXY_PAR_DEFAUT)
+                proxy = _proxy(ligne)
                 variation = _variation(prix_longs[proxy], debut, fin) if proxy in prix_longs else None
                 if variation is None and PROXY_PAR_DEFAUT in prix_longs:
                     proxy = PROXY_PAR_DEFAUT
@@ -97,10 +114,13 @@ def scenarios_historiques(positions, prix_longs):
     return pd.DataFrame(resume), pd.DataFrame(detail)
 
 
-def scenarios_hypothetiques(positions, beta, chocs_actions=(-0.10, -0.20, -0.35), choc_dollar=-0.10):
+def scenarios_hypothetiques(positions, beta, chocs_actions=(-0.10, -0.20, -0.35), choc_dollar=-0.10,
+                            choc_taux=0.01):
     """Chocs simples :
     - baisse des marchés actions de X % : variation du portefeuille ≈ β × X ;
-    - baisse du dollar : variation = choc × part des titres cotés en dollars.
+    - baisse du dollar : variation = choc × part des titres cotés en dollars ;
+    - hausse des taux de 1 point : chaque fonds obligataire perd environ
+      duration × 1 % (la duration mesure la sensibilité d'une obligation aux taux).
     """
     valeur = positions["valeur"].sum()
     lignes = []
@@ -114,5 +134,13 @@ def scenarios_hypothetiques(positions, beta, chocs_actions=(-0.10, -0.20, -0.35)
         v = choc_dollar * part_usd
         lignes.append({"scenario": f"Baisse du dollar de {abs(choc_dollar):.0%}",
                        "hypothese": f"{part_usd:.0%} du portefeuille en dollars",
+                       "variation": v, "perte_euros": v * valeur})
+    if "duration" in positions.columns and positions["duration"].notna().any():
+        poids = positions["valeur"] / valeur
+        v = -choc_taux * float((poids * positions["duration"].fillna(0.0)).sum())
+        duration_moyenne = float((poids * positions["duration"].fillna(0.0)).sum()
+                                 / poids[positions["duration"].notna()].sum())
+        lignes.append({"scenario": f"Hausse des taux de {choc_taux * 100:.0f} point",
+                       "hypothese": f"duration moyenne des obligations {duration_moyenne:.1f} ans".replace(".", ","),
                        "variation": v, "perte_euros": v * valeur})
     return pd.DataFrame(lignes)

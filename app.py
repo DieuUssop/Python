@@ -53,7 +53,7 @@ NOMS_COURTS = {"CW8.PA": "MSCI World", "ESE.PA": "S&P 500", "^FCHI": "CAC 40", "
 # ----------------------------------------------------------------------
 # Configuration de la page (doit être la première commande Streamlit)
 # ----------------------------------------------------------------------
-st.set_page_config(page_title="Suivi de portefeuille · Master G2C", page_icon="📈", layout="wide")
+st.set_page_config(page_title="Suivi de portefeuille", page_icon="📈", layout="wide")
 
 # On charge la feuille de style (si elle est présente).
 if FEUILLE_DE_STYLE.exists():
@@ -122,7 +122,7 @@ def produire_rapport(contenu_csv, indice, taux_sans_risque, niveau_var, nom_indi
 # BARRE LATÉRALE : les réglages
 # ======================================================================
 with st.sidebar:
-    html(ui.marque("Portfolio Tracker", "Master G2C · Outil de suivi de portefeuille"))
+    html(ui.marque("Portfolio Tracker", "Outil de suivi de portefeuille"))
 
     html(ui.bloc_titre("Espace de travail"))
     espace = st.radio(
@@ -139,7 +139,8 @@ with st.sidebar:
         fichier_choisi = st.selectbox(
             "Portefeuille", FICHIERS_DISPONIBLES,
             format_func=lambda f: {"transactions.csv": "Mon portefeuille",
-                                   "transactions_mondial.csv": "Portefeuille actions monde"}.get(f.name, f.name),
+                                   "transactions_mondial.csv": "Portefeuille actions monde",
+                                   "transactions_diversifie.csv": "Portefeuille diversifié (multi-actifs)"}.get(f.name, f.name),
             help="Fichiers data/transactions*.csv du projet",
         )
     fichier_envoye = st.file_uploader(
@@ -236,7 +237,7 @@ with st.sidebar:
 # ======================================================================
 html(ui.entete(
     titre="Suivi de portefeuille",
-    surtitre="Master G2C · Gestion de portefeuille",
+    surtitre="Gestion de portefeuille",
     sous_titre=f"Du {date_debut} au {date_fin}  ·  {resume['nb_lignes']} lignes  ·  Référence : {nom_court}",
     source=res["source_cours"],
     date_donnees=date_fin,
@@ -268,7 +269,7 @@ html(ui.grille([
 # ONGLETS
 # ======================================================================
 PIED_DE_PAGE = ("Données de marché : Yahoo Finance · Taux sans risque : BCE · "
-                "Outil pédagogique réalisé dans le cadre du Master G2C — ne constitue pas un conseil en investissement.")
+                "Outil pédagogique — ne constitue pas un conseil en investissement.")
 cle_calculs = (hash(contenu), code_indice, taux_sans_risque, niveau_var)
 
 # Les deux espaces supplémentaires (étape 10) ont leur propre fichier.
@@ -296,9 +297,10 @@ with onglets[0]:
         html(ui.titre_section("Répartition", "Poids de chaque ligne dans la valeur totale"))
         graphique(gi.fig_repartition(positions))
 
-    # Répartition par région et par secteur (si le référentiel classe les titres)
-    groupes = [(c, t) for c, t in [("region", "Par région"), ("secteur", "Par secteur")]
-               if positions[c].nunique() > 1]
+    # Répartition par classe d'actifs, région et secteur (si le référentiel classe les titres)
+    groupes = [(c, t) for c, t in [("classe", "Par classe d'actifs"), ("region", "Par région"),
+                                   ("secteur", "Par secteur")]
+               if c in positions.columns and positions[c].nunique() > 1]
     if groupes:
         for colonne_st, (colonne, libelle) in zip(st.columns(len(groupes), gap="medium"), groupes):
             with colonne_st, st.container(border=True):
@@ -310,7 +312,7 @@ with onglets[0]:
                  detail=ui.pastille("non réalisées", tendance(resume["pv_latentes"]))),
         ui.carte("Plus-values réalisées", euros(resume["pv_realisees"], signe=True),
                  detail=ui.pastille("encaissées", tendance(resume["pv_realisees"]))),
-        ui.carte("Dividendes perçus", euros(resume["dividendes"]), detail="Montants bruts"),
+        ui.carte("Dividendes et coupons", euros(resume["dividendes"]), detail="Montants bruts perçus"),
         ui.carte("Frais de courtage", euros(resume["frais_totaux"]), detail="Depuis l'origine"),
     ]))
 
@@ -320,7 +322,7 @@ with onglets[0]:
 with onglets[1]:
     with st.container(border=True):
         html(ui.titre_section("Positions détenues", "Cliquer sur un titre de colonne pour trier"))
-        tableau = positions[["nom", "region", "secteur", "devise", "quantite", "pru", "cours", "valeur",
+        tableau = positions[["nom", "classe", "region", "secteur", "devise", "quantite", "pru", "cours", "valeur",
                              "pv_latente", "pv_latente_pct", "poids_pct", "dividendes"]].reset_index()
         # column_config : nom affiché et format de chaque colonne.
         st.dataframe(
@@ -328,6 +330,7 @@ with onglets[1]:
             column_config={
                 "ticker": st.column_config.TextColumn("Ticker", width="small"),
                 "nom": st.column_config.TextColumn("Titre", width="medium"),
+                "classe": st.column_config.TextColumn("Classe"),
                 "region": st.column_config.TextColumn("Région"),
                 "secteur": st.column_config.TextColumn("Secteur"),
                 "devise": st.column_config.TextColumn("Devise", width="small",

@@ -19,7 +19,7 @@ Les résultats apparaissent aussi dans `python main.py` et sur deux nouvelles pa
 
 1. Dézippe `mise_a_jour_etape10.zip` et copie son contenu dans `portfolio_tracker` (**Remplacer**).
 2. Aucune bibliothèque nouvelle à installer.
-3. Lance les tests : `python -m pytest`. Résultat attendu : **74 passed**.
+3. Lance les tests : `python -m pytest`. Résultat attendu : **79 passed**.
 4. Relance le tableau de bord : `python -m streamlit run app.py`.
 
 Au premier affichage des stress tests, l'outil télécharge l'historique depuis 2008 (30 secondes à 1 minute pour le portefeuille mondial). Ensuite, le cache prend le relais.

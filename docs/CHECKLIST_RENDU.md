@@ -2,9 +2,10 @@
 
 ## 1. Le code
 
-- [ ] `python -m pytest` affiche **74 passed**
+- [ ] `python -m pytest` affiche **79 passed**
 - [ ] `python main.py` fonctionne et crée `rapport_portefeuille.pdf`
 - [ ] `python main.py data/transactions_mondial.csv` fonctionne
+- [ ] `python main.py data/transactions_diversifie.csv` fonctionne
 - [ ] Le tableau de bord s'ouvre (`lancer_tableau_de_bord.bat`) et les 3 espaces (analyse, conseil patrimonial, gestion d'actifs) s'affichent
 - [ ] Les noms du groupe sont indiqués en haut du `README.md`
 
@@ -22,7 +23,7 @@
 
 1. **Supprimer** les fichiers produits automatiquement (ils seront recréés au lancement) :
    `data/cache_*.csv`, `data/historique.csv`, `data/transactions_sauvegarde.csv`, les dossiers `__pycache__`.
-2. **Garder** : tout le reste, y compris `data/transactions.csv`, `data/transactions_mondial.csv`,
+2. **Garder** : tout le reste, y compris `data/transactions.csv`, `data/transactions_mondial.csv`, `data/transactions_diversifie.csv`,
    `data/referentiel.csv`, et éventuellement `rapport_portefeuille.pdf` comme exemple de sortie.
 3. Clic droit sur le dossier `portfolio_tracker` > **Compresser vers > Fichier ZIP**.
 4. Tester l'archive : la décompresser dans un autre dossier et lancer `python -m pytest`.

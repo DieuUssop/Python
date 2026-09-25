@@ -111,6 +111,15 @@ def indicateur_sri(volatilite):
 # ----------------------------------------------------------------------
 # 4. Test d'adéquation
 # ----------------------------------------------------------------------
+def part_actions(positions):
+    """Part de la valeur investie en actions (colonne "classe" des positions).
+    Sans information sur la classe d'actifs, tout est considéré comme actions."""
+    if "classe" not in positions.columns or positions["valeur"].sum() <= 0:
+        return 1.0
+    valeurs = positions["valeur"]
+    return float(valeurs[positions["classe"] == "Actions"].sum() / valeurs.sum())
+
+
 def adequation(profil, volatilite, max_drawdown, part_actions=1.0):
     """Compare le risque du portefeuille aux limites du profil.
 

@@ -11,7 +11,6 @@ import streamlit as st
 from . import attribution, backtest, budget_risque
 from . import graphiques_interactifs as gi
 from . import interface as ui
-from .analyse import charger_referentiel
 from .interface import euros, nombre, pct
 
 
@@ -28,12 +27,9 @@ def graphique(figure):
 # ----------------------------------------------------------------------
 @st.cache_data(show_spinner="Attribution de performance (téléchargement des indices régionaux)...")
 def _calcul_attribution(cle, _res):
-    referentiel = charger_referentiel()
-    regions = {t: referentiel["region"].get(t, "Non classé") if "region" in referentiel else "Non classé"
-               for t in _res["valeur_par_titre"].columns}
     debut = _res["historique"].index[0] - pd.Timedelta(days=10)
     cours_indices = attribution.rendements_indices(debut)
-    return attribution.attribution_mensuelle(_res["valeur_par_titre"], _res["prix_hist"], regions, cours_indices)
+    return attribution.attribution_poche_actions(_res, cours_indices)
 
 
 @st.cache_data(show_spinner="Calcul du budget de risque...")
@@ -85,6 +81,10 @@ def _attribution(res, cle):
         ui.carte("Effet interaction", pct(effets["interaction"]), detail="Effet croisé"),
     ]))
 
+    if a["part_actions"] < 0.995:
+        html(ui.note(f"Portefeuille diversifié : l'attribution porte sur la poche actions "
+                     f"({pct(a['part_actions'], signe=False, decimales=0)} du portefeuille aujourd'hui), "
+                     "comparée à un indice actions. Les obligations et l'or sont exclus du calcul."))
     hors_indice = a["par_region"].loc[~a["par_region"].index.isin(attribution.POIDS_INDICE), "poids_portefeuille"].sum()
     if hors_indice > 0.2:
         html(ui.note(f"{pct(hors_indice, signe=False, decimales=0)} du portefeuille n'est pas classé dans une "

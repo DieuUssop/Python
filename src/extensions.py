@@ -11,7 +11,6 @@ import pandas as pd
 
 from . import attribution, backtest, budget_risque, config, fiscalite, stress
 from . import profil as pf
-from .analyse import charger_referentiel
 
 
 def calculer_extensions(res, taux_sans_risque=config.TAUX_SANS_RISQUE,
@@ -22,7 +21,8 @@ def calculer_extensions(res, taux_sans_risque=config.TAUX_SANS_RISQUE,
     # 1. Profil et adéquation
     profil = pf.profil_par_nom(nom_profil)
     ext["profil"] = profil
-    ext["adequation"] = pf.adequation(profil, ind["volatilite"], ind["max_drawdown"], part_actions=1.0)
+    ext["adequation"] = pf.adequation(profil, ind["volatilite"], ind["max_drawdown"],
+                                      part_actions=pf.part_actions(positions))
 
     # 2. Fiscalité
     anciennete = (res["historique"].index[-1] - res["date_ouverture"]).days / 365.25
@@ -41,12 +41,8 @@ def calculer_extensions(res, taux_sans_risque=config.TAUX_SANS_RISQUE,
 
     # 4. Attribution de performance
     try:
-        referentiel = charger_referentiel()
-        regions = {t: referentiel["region"].get(t, "Non classé") if "region" in referentiel else "Non classé"
-                   for t in res["valeur_par_titre"].columns}
         indices = attribution.rendements_indices(res["historique"].index[0] - pd.Timedelta(days=10))
-        ext["attribution"] = attribution.attribution_mensuelle(res["valeur_par_titre"], res["prix_hist"],
-                                                               regions, indices)
+        ext["attribution"] = attribution.attribution_poche_actions(res, indices)
     except Exception as erreur:
         ext["erreurs"]["attribution"] = str(erreur)
 

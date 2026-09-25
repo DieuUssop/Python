@@ -206,3 +206,58 @@ def test_carino_la_somme_des_effets_egale_l_ecart_compose():
     assert res["somme_effets"] == pytest.approx(res["Rp"] - res["Rb"], rel=1e-9)
     assert res["effets"]["allocation"] > 0      # surpondérer les US (qui montent) a rapporté
     assert res["effets"]["selection"] > 0       # le titre a battu son indice
+
+
+# ----------------------------------------------------------------------
+# Portefeuille diversifié : classes d'actifs (actions, obligations, or)
+# ----------------------------------------------------------------------
+def test_part_actions():
+    positions = pd.DataFrame({"valeur": [600.0, 350.0, 50.0], "classe": ["Actions", "Obligations", "Or"]},
+                             index=["A", "OBL", "OR"])
+    assert profil.part_actions(positions) == pytest.approx(0.6)
+    # Sans colonne "classe", tout est considéré comme actions (hypothèse prudente)
+    assert profil.part_actions(positions.drop(columns="classe")) == 1.0
+
+
+def test_pea_exclut_les_obligations():
+    # Un fonds obligataire domicilié en Irlande n'est pas éligible au PEA, même si l'Irlande est dans l'UE
+    positions = pd.DataFrame({"valeur": [600, 400], "pays": ["France", "Irlande"],
+                              "classe": ["Actions", "Obligations"]}, index=["MC.PA", "EUNH.DE"])
+    part, exclus = fiscalite.eligibilite_pea(positions)
+    assert part == pytest.approx(0.6)
+    assert exclus == ["EUNH.DE"]
+
+
+def test_choc_de_taux_selon_la_duration():
+    # 40 % d'obligations de duration 5 ans : +1 point de taux -> −0,4 × 5 × 1 % = −2 %
+    positions = pd.DataFrame({"valeur": [600.0, 400.0], "devise": ["EUR", "EUR"],
+                              "duration": [np.nan, 5.0]}, index=["A", "OBL"])
+    res = stress.scenarios_hypothetiques(positions, beta=1.0, chocs_actions=())
+    choc = res[res["scenario"].str.contains("taux")].iloc[0]
+    assert choc["variation"] == pytest.approx(-0.02)
+
+
+def test_stress_obligation_sans_historique_utilise_un_fonds_obligataire():
+    # Une obligation sans historique en 2008 prend la variation d'un fonds d'État (IEF), pas celle des actions
+    dates = pd.to_datetime(["2008-08-15", "2008-09-01", "2009-03-09"])
+    prix = pd.DataFrame({"OBL": [np.nan, np.nan, np.nan], "^STOXX50E": [100, 100, 50],
+                         "IEF": [100, 100, 110]}, index=dates)
+    positions = pd.DataFrame({"nom": ["OBL"], "region": ["Europe"], "secteur": ["Obligations d'État"],
+                              "classe": ["Obligations"], "poids_pct": [100.0], "valeur": [1000.0]},
+                             index=["OBL"])
+    resume, detail = stress.scenarios_historiques(positions, prix)
+    assert resume.iloc[0]["variation"] == pytest.approx(0.10)
+    assert detail.iloc[0]["source"] == "indice IEF"
+
+
+def test_attribution_porte_sur_la_poche_actions():
+    # AAPL (action) suit exactement l'indice US ; IEF (obligation) est exclu du calcul.
+    dates = pd.bdate_range("2024-01-01", "2024-04-30")
+    indice = pd.Series(np.linspace(100, 120, len(dates)), index=dates)
+    obligation = pd.Series(np.linspace(100, 90, len(dates)), index=dates)
+    res = {"valeur_par_titre": pd.DataFrame({"AAPL": 600 * indice / 100, "IEF": 400 * obligation / 100}),
+           "prix_hist": pd.DataFrame({"AAPL": indice, "IEF": obligation})}
+    a = attribution.attribution_poche_actions(res, pd.DataFrame({"États-Unis": indice}),
+                                              poids_indice={"États-Unis": 1.0})
+    assert a["Rp"] == pytest.approx(a["Rb"])            # la baisse de l'obligation ne pèse pas
+    assert a["part_actions"] == pytest.approx(0.6 * 1.2 / (0.6 * 1.2 + 0.4 * 0.9))

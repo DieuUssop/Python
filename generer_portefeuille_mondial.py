@@ -90,7 +90,8 @@ def dates_de_gestion(calendrier):
 def main():
     # 1. L'univers d'investissement et les poids cibles
     ref = pd.read_csv(FICHIER_REFERENTIEL)
-    univers = ref[ref["region"].isin(POIDS_REGIONS) & (ref["secteur"] != "ETF diversifié")].copy()
+    actions = ref["classe"] == "Actions" if "classe" in ref.columns else True   # pas d'obligations ni d'or
+    univers = ref[ref["region"].isin(POIDS_REGIONS) & (ref["secteur"] != "ETF diversifié") & actions].copy()
     tickers = list(univers["ticker"])
     noms = dict(zip(univers["ticker"], univers["nom"]))
     print(f"⏳ Univers : {len(tickers)} actions dans {len(POIDS_REGIONS)} régions")

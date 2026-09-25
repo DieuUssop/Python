@@ -118,11 +118,13 @@ def eligibilite_pea(positions):
 
     Éligibles : actions de sociétés dont le siège est dans l'UE / l'EEE, et
     fonds éligibles connus. Les actions américaines, britanniques (depuis le
-    Brexit), suisses ou japonaises ne le sont pas.
+    Brexit), suisses ou japonaises ne le sont pas, ni les fonds obligataires
+    et l'or (le PEA est réservé aux actions).
     Renvoie (part éligible, liste des titres non éligibles).
     """
     eligible = [
-        (t in ETF_ELIGIBLES_PEA) or (str(p.get("pays", "")) in PAYS_EEE)
+        (t in ETF_ELIGIBLES_PEA)
+        or (str(p.get("pays", "")) in PAYS_EEE and p.get("classe", "Actions") == "Actions")
         for t, p in positions.iterrows()
     ]
     valeurs = positions["valeur"]

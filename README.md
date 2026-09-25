@@ -1,6 +1,6 @@
 # Portfolio Tracker — Outil de suivi et d'analyse de portefeuille
 
-Projet de Master G2C · Année universitaire 2026-2027
+Projet universitaire · Année 2026-2027
 Auteurs : *[Prénom NOM, Prénom NOM, Prénom NOM]*
 
 Outil en Python qui lit l'historique des transactions d'un portefeuille (achats, ventes,
@@ -21,7 +21,7 @@ un tableau de bord web interactif et dans un rapport PDF généré automatiqueme
 | **Conseil patrimonial** | Profil de risque client (questionnaire inspiré de MiFID II), indicateur SRI, test d'adéquation ; fiscalité comparée CTO / PEA / assurance-vie (taux 2026) ; stress tests (5 crises historiques et chocs hypothétiques) |
 | **Gestion d'actifs** | Attribution de performance de Brinson-Fachler face au MSCI ACWI (lissage de Cariño) ; budget de risque et parité des risques ; backtest de stratégies de rééquilibrage et d'investissement progressif |
 | **Restitution** | Tableau de bord Streamlit en 3 espaces (analyse, conseil patrimonial, gestion d'actifs), version en ligne de commande, rapport PDF de synthèse |
-| **Fiabilité** | 74 tests automatiques, contrôle croisé du gain total, cache hors ligne |
+| **Fiabilité** | 79 tests automatiques, contrôle croisé du gain total, cache hors ligne |
 
 ## Démarrage rapide
 
@@ -38,7 +38,8 @@ python -m streamlit run app.py                      # tableau de bord web
 python main.py                                      # analyse de data/transactions.csv
 python main.py data/transactions_mondial.csv        # analyse d'un autre portefeuille
 python generer_portefeuille_mondial.py              # crée le fonds actions monde (69 titres)
-python -m pytest                                    # lance les 74 tests
+python generer_portefeuille_diversifie.py           # crée le portefeuille diversifié (50 lignes, depuis 2017)
+python -m pytest                                    # lance les 79 tests
 ```
 
 Python 3.11 ou plus récent est nécessaire, ainsi qu'une connexion Internet au premier lancement.
@@ -86,13 +87,15 @@ portfolio_tracker/
 ├── main.py                          # version en ligne de commande + rapport PDF
 ├── generer_transactions.py          # enrichit data/transactions.csv (vrais cours et dividendes)
 ├── generer_portefeuille_mondial.py  # fonds actions monde : 69 titres, 8 devises
+├── generer_portefeuille_diversifie.py # portefeuille diversifié : actions, obligations, or
 ├── lancer_tableau_de_bord.bat       # raccourcis Windows
 ├── lancer_analyse.bat
 ├── requirements.txt · pytest.ini · .gitignore
 ├── data/
 │   ├── transactions.csv             # portefeuille du particulier
 │   ├── transactions_mondial.csv     # fonds actions monde (créé par le script)
-│   └── referentiel.csv              # région, secteur, pays de chaque titre
+│   ├── transactions_diversifie.csv  # portefeuille diversifié multi-actifs (créé par le script)
+│   └── referentiel.csv              # région, secteur, pays, classe d'actifs, duration de chaque titre
 ├── src/
 │   ├── config.py                    # réglages (indice, taux sans risque, VaR, poids max, projection)
 │   ├── portfolio.py                 # transactions, PRU, plus-values, historique jour par jour
@@ -116,7 +119,7 @@ portfolio_tracker/
 │   ├── vues_gestion.py              # espace « Gestion d'actifs » du tableau de bord
 │   └── rapport.py                   # rapport PDF (reportlab)
 ├── assets/style.css · .streamlit/config.toml   # apparence du tableau de bord
-├── tests/                           # 74 tests automatiques (pytest)
+├── tests/                           # 79 tests automatiques (pytest)
 └── docs/                            # guides pas à pas des étapes du projet
 ```
 
@@ -160,12 +163,14 @@ du gain total (ligne par ligne et jour par jour).
 - **Devises** : prix saisis dans la devise de cotation Yahoo (pence pour Londres), frais en euros. Conversion au taux EURxxx=X du jour de l'opération (transactions) ou du jour de cotation (historique, valorisation).
 - **Rapport PDF** : reportlab, graphiques matplotlib intégrés ; généré par `python main.py` ou depuis le tableau de bord.
 - **Portefeuille actions monde** : allocation cible par région (États-Unis 55 %, Europe 18 %, Japon 6 %, Royaume-Uni 5 %, Émergents 5 %, Suisse 4 %, Asie-Pacifique 4 %, Canada 3 %), équipondération dans chaque région ; 2 M€ investis le 15/01/2024 ; souscription de 100 000 € et rééquilibrage chaque trimestre (bande de tolérance de 10 %) ; frais de 0,05 % (minimum 5 €).
+- **Portefeuille diversifié (multi-actifs)** : allocation stratégique 60 % actions (39 sociétés, 8 régions, 11 secteurs, équipondérées dans chaque région), 35 % obligations (10 ETF : États zone euro et États-Unis, indexées sur l'inflation, entreprises, haut rendement, émergents), 5 % or physique ; 500 000 € investis le 16/01/2017 ; versement de 10 000 € et rééquilibrage chaque trimestre (bande de tolérance de 10 %) ; frais de 0,10 % (minimum 5 €).
+- **Classes d'actifs** : le référentiel indique la classe (Actions, Obligations, Or) et la duration des fonds obligataires. Elles servent au test d'adéquation (part d'actions), à l'éligibilité au PEA (actions uniquement), aux stress tests (fonds obligataire de même catégorie comme approximation, choc de taux ≈ −duration × 1 %) et à l'attribution (poche actions seulement).
 - **Nuage de points Monte-Carlo** : 400 scénarios affichés tous les 6 mois, classés par tranche de probabilité (< 5 %, 5-25 %, 25-75 %, 75-95 %, > 95 %) selon les percentiles de l'ensemble des 5 000 scénarios.
 - **Cache** : chaque récupération de cours est enregistrée dans `data/cache_prix.csv`. Si Yahoo Finance est injoignable, l'outil utilise ces derniers cours et l'indique.
 
 - **Profil client** : 7 questions notées de 0 à 4 ; 5 profils (Sécuritaire à Offensif) avec limites de volatilité, de perte, de part d'actions et de SRI ; la tolérance aux pertes plafonne le profil. SRI : classes de risque de marché PRIIPs appliquées à la volatilité annuelle (approximation de la VEV).
 - **Fiscalité (2026)** : flat tax 31,4 % (12,8 % + 18,6 % de prélèvements sociaux, LFSS 2026) ; PEA après 5 ans : 18,6 % ; assurance-vie : 17,2 % de prélèvements sociaux, 7,5 % après 8 ans au-delà de l'abattement de 4 600 € (9 200 € pour un couple).
-- **Stress tests** : variation du plus haut au plus bas de 5 crises (2008, 2011, 2020, 2022, 2024) appliquée aux lignes actuelles ; indice régional si le titre n'était pas coté ; chocs hypothétiques via le bêta.
+- **Stress tests** : variation du plus haut au plus bas de 5 crises (2008, 2011, 2020, 2022, 2024) appliquée aux lignes actuelles ; indice régional (ou fonds obligataire de même catégorie) si le titre n'était pas coté ; chocs hypothétiques : actions via le bêta, dollar, hausse des taux via la duration.
 - **Attribution** : Brinson-Fachler mensuel par région, poids de début de mois, lissage de Cariño ; référence : poids régionaux du MSCI ACWI IMI au 30/06/2026 et indices régionaux convertis en euros.
 - **Budget de risque** : contributions d'Euler `wᵢ(Σw)ᵢ/σ` ; parité des risques par la méthode de Spinu ; nombre effectif de paris `1/Σ(CRᵢ/σ)²`.
 - **Backtest** : mêmes titres et poids de départ que le portefeuille actuel ; rééquilibrage mensuel, trimestriel ou annuel avec frais de 0,1 % ; investissement progressif sur 12 mois, liquidités rémunérées au taux sans risque.

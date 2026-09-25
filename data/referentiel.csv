@@ -1,72 +1,83 @@
-ticker,nom,pays,region,secteur
-AAPL,Apple,États-Unis,États-Unis,Technologie
-MSFT,Microsoft,États-Unis,États-Unis,Technologie
-NVDA,Nvidia,États-Unis,États-Unis,Technologie
-AVGO,Broadcom,États-Unis,États-Unis,Technologie
-AMZN,Amazon,États-Unis,États-Unis,Consommation discrétionnaire
-HD,Home Depot,États-Unis,États-Unis,Consommation discrétionnaire
-GOOGL,Alphabet,États-Unis,États-Unis,Communication
-META,Meta Platforms,États-Unis,États-Unis,Communication
-JPM,JPMorgan Chase,États-Unis,États-Unis,Finance
-V,Visa,États-Unis,États-Unis,Finance
-BRK-B,Berkshire Hathaway,États-Unis,États-Unis,Finance
-UNH,UnitedHealth,États-Unis,États-Unis,Santé
-JNJ,Johnson & Johnson,États-Unis,États-Unis,Santé
-LLY,Eli Lilly,États-Unis,États-Unis,Santé
-PG,Procter & Gamble,États-Unis,États-Unis,Consommation de base
-KO,Coca-Cola,États-Unis,États-Unis,Consommation de base
-COST,Costco,États-Unis,États-Unis,Consommation de base
-XOM,ExxonMobil,États-Unis,États-Unis,Énergie
-CAT,Caterpillar,États-Unis,États-Unis,Industrie
-NEE,NextEra Energy,États-Unis,États-Unis,Services publics
-LIN,Linde,États-Unis,États-Unis,Matériaux
-PLD,Prologis,États-Unis,États-Unis,Immobilier
-MC.PA,LVMH,France,Europe,Consommation discrétionnaire
-OR.PA,L'Oreal,France,Europe,Consommation de base
-TTE.PA,TotalEnergies,France,Europe,Énergie
-SAN.PA,Sanofi,France,Europe,Santé
-AI.PA,Air Liquide,France,Europe,Matériaux
-SU.PA,Schneider Electric,France,Europe,Industrie
-BNP.PA,BNP Paribas,France,Europe,Finance
-AIR.PA,Airbus,France,Europe,Industrie
-SAF.PA,Safran,France,Europe,Industrie
-DG.PA,Vinci,France,Europe,Industrie
-EL.PA,EssilorLuxottica,France,Europe,Santé
-ASML.AS,ASML,Pays-Bas,Europe,Technologie
-SAP.DE,SAP,Allemagne,Europe,Technologie
-SIE.DE,Siemens,Allemagne,Europe,Industrie
-ALV.DE,Allianz,Allemagne,Europe,Finance
-IBE.MC,Iberdrola,Espagne,Europe,Services publics
-ENEL.MI,Enel,Italie,Europe,Services publics
-ISP.MI,Intesa Sanpaolo,Italie,Europe,Finance
-NOVO-B.CO,Novo Nordisk,Danemark,Europe,Santé
-SHEL.L,Shell,Royaume-Uni,Royaume-Uni,Énergie
-AZN.L,AstraZeneca,Royaume-Uni,Royaume-Uni,Santé
-HSBA.L,HSBC,Royaume-Uni,Royaume-Uni,Finance
-ULVR.L,Unilever,Royaume-Uni,Royaume-Uni,Consommation de base
-RIO.L,Rio Tinto,Royaume-Uni,Royaume-Uni,Matériaux
-NESN.SW,Nestlé,Suisse,Suisse,Consommation de base
-NOVN.SW,Novartis,Suisse,Suisse,Santé
-ROG.SW,Roche,Suisse,Suisse,Santé
-UBSG.SW,UBS,Suisse,Suisse,Finance
-7203.T,Toyota,Japon,Japon,Consommation discrétionnaire
-6758.T,Sony,Japon,Japon,Consommation discrétionnaire
-8306.T,Mitsubishi UFJ,Japon,Japon,Finance
-6861.T,Keyence,Japon,Japon,Technologie
-8035.T,Tokyo Electron,Japon,Japon,Technologie
-9432.T,NTT,Japon,Japon,Communication
-BHP.AX,BHP,Australie,Asie-Pacifique,Matériaux
-CBA.AX,Commonwealth Bank,Australie,Asie-Pacifique,Finance
-CSL.AX,CSL,Australie,Asie-Pacifique,Santé
-0700.HK,Tencent,Hong Kong,Asie-Pacifique,Communication
-1299.HK,AIA Group,Hong Kong,Asie-Pacifique,Finance
-RY.TO,Royal Bank of Canada,Canada,Canada,Finance
-SHOP.TO,Shopify,Canada,Canada,Technologie
-CNQ.TO,Canadian Natural Resources,Canada,Canada,Énergie
-TSM,Taiwan Semiconductor (ADR),Taïwan,Émergents,Technologie
-BABA,Alibaba (ADR),Chine,Émergents,Consommation discrétionnaire
-INFY,Infosys (ADR),Inde,Émergents,Technologie
-HDB,HDFC Bank (ADR),Inde,Émergents,Finance
-VALE,Vale (ADR),Brésil,Émergents,Matériaux
-CW8.PA,Amundi MSCI World,Monde,Monde (ETF),ETF diversifié
-ESE.PA,BNP Paribas Easy S&P 500,États-Unis,États-Unis,ETF diversifié
+ticker,nom,pays,region,secteur,classe,duration
+AAPL,Apple,États-Unis,États-Unis,Technologie,Actions,
+MSFT,Microsoft,États-Unis,États-Unis,Technologie,Actions,
+NVDA,Nvidia,États-Unis,États-Unis,Technologie,Actions,
+AVGO,Broadcom,États-Unis,États-Unis,Technologie,Actions,
+AMZN,Amazon,États-Unis,États-Unis,Consommation discrétionnaire,Actions,
+HD,Home Depot,États-Unis,États-Unis,Consommation discrétionnaire,Actions,
+GOOGL,Alphabet,États-Unis,États-Unis,Communication,Actions,
+META,Meta Platforms,États-Unis,États-Unis,Communication,Actions,
+JPM,JPMorgan Chase,États-Unis,États-Unis,Finance,Actions,
+V,Visa,États-Unis,États-Unis,Finance,Actions,
+BRK-B,Berkshire Hathaway,États-Unis,États-Unis,Finance,Actions,
+UNH,UnitedHealth,États-Unis,États-Unis,Santé,Actions,
+JNJ,Johnson & Johnson,États-Unis,États-Unis,Santé,Actions,
+LLY,Eli Lilly,États-Unis,États-Unis,Santé,Actions,
+PG,Procter & Gamble,États-Unis,États-Unis,Consommation de base,Actions,
+KO,Coca-Cola,États-Unis,États-Unis,Consommation de base,Actions,
+COST,Costco,États-Unis,États-Unis,Consommation de base,Actions,
+XOM,ExxonMobil,États-Unis,États-Unis,Énergie,Actions,
+CAT,Caterpillar,États-Unis,États-Unis,Industrie,Actions,
+NEE,NextEra Energy,États-Unis,États-Unis,Services publics,Actions,
+LIN,Linde,États-Unis,États-Unis,Matériaux,Actions,
+PLD,Prologis,États-Unis,États-Unis,Immobilier,Actions,
+MC.PA,LVMH,France,Europe,Consommation discrétionnaire,Actions,
+OR.PA,L'Oreal,France,Europe,Consommation de base,Actions,
+TTE.PA,TotalEnergies,France,Europe,Énergie,Actions,
+SAN.PA,Sanofi,France,Europe,Santé,Actions,
+AI.PA,Air Liquide,France,Europe,Matériaux,Actions,
+SU.PA,Schneider Electric,France,Europe,Industrie,Actions,
+BNP.PA,BNP Paribas,France,Europe,Finance,Actions,
+AIR.PA,Airbus,France,Europe,Industrie,Actions,
+SAF.PA,Safran,France,Europe,Industrie,Actions,
+DG.PA,Vinci,France,Europe,Industrie,Actions,
+EL.PA,EssilorLuxottica,France,Europe,Santé,Actions,
+ASML.AS,ASML,Pays-Bas,Europe,Technologie,Actions,
+SAP.DE,SAP,Allemagne,Europe,Technologie,Actions,
+SIE.DE,Siemens,Allemagne,Europe,Industrie,Actions,
+ALV.DE,Allianz,Allemagne,Europe,Finance,Actions,
+IBE.MC,Iberdrola,Espagne,Europe,Services publics,Actions,
+ENEL.MI,Enel,Italie,Europe,Services publics,Actions,
+ISP.MI,Intesa Sanpaolo,Italie,Europe,Finance,Actions,
+NOVO-B.CO,Novo Nordisk,Danemark,Europe,Santé,Actions,
+SHEL.L,Shell,Royaume-Uni,Royaume-Uni,Énergie,Actions,
+AZN.L,AstraZeneca,Royaume-Uni,Royaume-Uni,Santé,Actions,
+HSBA.L,HSBC,Royaume-Uni,Royaume-Uni,Finance,Actions,
+ULVR.L,Unilever,Royaume-Uni,Royaume-Uni,Consommation de base,Actions,
+RIO.L,Rio Tinto,Royaume-Uni,Royaume-Uni,Matériaux,Actions,
+NESN.SW,Nestlé,Suisse,Suisse,Consommation de base,Actions,
+NOVN.SW,Novartis,Suisse,Suisse,Santé,Actions,
+ROG.SW,Roche,Suisse,Suisse,Santé,Actions,
+UBSG.SW,UBS,Suisse,Suisse,Finance,Actions,
+7203.T,Toyota,Japon,Japon,Consommation discrétionnaire,Actions,
+6758.T,Sony,Japon,Japon,Consommation discrétionnaire,Actions,
+8306.T,Mitsubishi UFJ,Japon,Japon,Finance,Actions,
+6861.T,Keyence,Japon,Japon,Technologie,Actions,
+8035.T,Tokyo Electron,Japon,Japon,Technologie,Actions,
+9432.T,NTT,Japon,Japon,Communication,Actions,
+BHP.AX,BHP,Australie,Asie-Pacifique,Matériaux,Actions,
+CBA.AX,Commonwealth Bank,Australie,Asie-Pacifique,Finance,Actions,
+CSL.AX,CSL,Australie,Asie-Pacifique,Santé,Actions,
+0700.HK,Tencent,Hong Kong,Asie-Pacifique,Communication,Actions,
+1299.HK,AIA Group,Hong Kong,Asie-Pacifique,Finance,Actions,
+RY.TO,Royal Bank of Canada,Canada,Canada,Finance,Actions,
+SHOP.TO,Shopify,Canada,Canada,Technologie,Actions,
+CNQ.TO,Canadian Natural Resources,Canada,Canada,Énergie,Actions,
+TSM,Taiwan Semiconductor (ADR),Taïwan,Émergents,Technologie,Actions,
+BABA,Alibaba (ADR),Chine,Émergents,Consommation discrétionnaire,Actions,
+INFY,Infosys (ADR),Inde,Émergents,Technologie,Actions,
+HDB,HDFC Bank (ADR),Inde,Émergents,Finance,Actions,
+VALE,Vale (ADR),Brésil,Émergents,Matériaux,Actions,
+CW8.PA,Amundi MSCI World,Monde,Monde (ETF),ETF diversifié,Actions,
+ESE.PA,BNP Paribas Easy S&P 500,États-Unis,États-Unis,ETF diversifié,Actions,
+IBCA.DE,iShares € Govt Bond 1-3 ans,Zone euro,Europe,Obligations d'État,Obligations,1.9
+EUNH.DE,iShares Core € Govt Bond,Zone euro,Europe,Obligations d'État,Obligations,7.0
+IBCI.DE,iShares € Inflation Linked Govt Bond,Zone euro,Europe,Obligations indexées sur l'inflation,Obligations,7.0
+EUN5.DE,iShares Core € Corp Bond,Zone euro,Europe,Obligations d'entreprises,Obligations,4.5
+EUNW.DE,iShares € High Yield Corp Bond,Zone euro,Europe,Obligations à haut rendement,Obligations,3.0
+IEF,iShares 7-10 Year Treasury Bond,États-Unis,États-Unis,Obligations d'État,Obligations,7.0
+TLT,iShares 20+ Year Treasury Bond,États-Unis,États-Unis,Obligations d'État,Obligations,16.0
+TIP,iShares TIPS Bond,États-Unis,États-Unis,Obligations indexées sur l'inflation,Obligations,6.5
+LQD,iShares iBoxx $ Investment Grade Corporate Bond,États-Unis,États-Unis,Obligations d'entreprises,Obligations,8.3
+EMB,iShares J.P. Morgan USD Emerging Markets Bond,Émergents,Émergents,Obligations émergentes,Obligations,7.0
+4GLD.DE,Xetra-Gold (or physique),Allemagne,Monde,Or,Or,

@@ -59,9 +59,9 @@ affichage = positions[colonnes].rename(columns={
 })
 print(affichage.round(2).to_string())
 
-# Répartition par région et par secteur (grâce à data/referentiel.csv)
-for colonne, libelle in [("region", "RÉGION"), ("secteur", "SECTEUR")]:
-    if positions[colonne].nunique() > 1:
+# Répartition par classe d'actifs, région et secteur (grâce à data/referentiel.csv)
+for colonne, libelle in [("classe", "CLASSE D'ACTIFS"), ("region", "RÉGION"), ("secteur", "SECTEUR")]:
+    if colonne in positions.columns and positions[colonne].nunique() > 1:
         repartition_groupe = positions.groupby(colonne)["poids_pct"].agg(["sum", "count"])
         repartition_groupe.columns = ["poids %", "nb lignes"]
         print()
@@ -252,7 +252,8 @@ for _, l in ext["stress_hypothetiques"].iterrows():
 titre("GESTION D'ACTIFS")
 if "attribution" in ext:
     a = ext["attribution"]
-    print(f"Attribution de performance face au MSCI ACWI : portefeuille {a['Rp']:+.2%}, "
+    poche = f" (poche actions : {a['part_actions']:.0%} du portefeuille)" if a["part_actions"] < 0.995 else ""
+    print(f"Attribution de performance face au MSCI ACWI{poche} : portefeuille {a['Rp']:+.2%}, "
           f"indice {a['Rb']:+.2%}, écart {a['Rp'] - a['Rb']:+.2%}")
     for effet, valeur in a["effets"].items():
         print(f"  Effet {effet:<12} : {valeur:+.2%}")

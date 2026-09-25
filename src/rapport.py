@@ -87,7 +87,7 @@ def _styles():
 # ----------------------------------------------------------------------
 def _bandeau(st, titre, sous_titre):
     """Bandeau bleu marine en haut de la première page."""
-    contenu = [[Paragraph("MASTER G2C · GESTION DE PORTEFEUILLE", st["surtitre"])],
+    contenu = [[Paragraph("GESTION DE PORTEFEUILLE", st["surtitre"])],
                [Paragraph(titre, st["titre"])],
                [Paragraph(escape(sous_titre), st["sous_titre_bandeau"])]]
     tableau = Table(contenu, colWidths=[LARGEUR_UTILE])
@@ -251,8 +251,8 @@ def generer_rapport(res, destination, nom_indice, taux_sans_risque, niveau_var,
         story.append(Paragraph(escape(f"Titres en devise étrangère, convertis en euros au taux du jour ({resume_devises})."),
                                st["note"]))
 
-    # Répartition par région et par secteur (si le référentiel classe les titres)
-    groupes = [(c, t) for c, t in [("region", "Région"), ("secteur", "Secteur")]
+    # Répartition par classe d'actifs, région et secteur (si le référentiel classe les titres)
+    groupes = [(c, t) for c, t in [("classe", "Classe d'actifs"), ("region", "Région"), ("secteur", "Secteur")]
                if c in positions.columns and positions[c].nunique() > 1]
     for colonne, libelle in groupes:
         repartition = positions.groupby(colonne).agg(poids=("poids_pct", "sum"), valeur=("valeur", "sum"),
@@ -425,7 +425,9 @@ def generer_rapport(res, destination, nom_indice, taux_sans_risque, niveau_var,
         if "attribution" in ext:
             a = ext["attribution"]
             p_ = a["par_region"]
-            story.append(Paragraph(escape(f"Attribution de performance face au MSCI ACWI : portefeuille {pct(a['Rp'])}, "
+            poche = f" (poche actions, {pct(a['part_actions'], signe=False, decimales=0)} du portefeuille)" \
+                if a.get("part_actions", 1.0) < 0.995 else ""
+            story.append(Paragraph(escape(f"Attribution de performance face au MSCI ACWI{poche} : portefeuille {pct(a['Rp'])}, "
                                           f"indice {pct(a['Rb'])}, écart {pct(a['Rp'] - a['Rb'])}"), st["h2"]))
             story.append(_tableau(["Région", "Poids ptf", "Poids indice", "Allocation", "Sélection", "Interaction"],
                                   [[escape(str(r)), pct(l["poids_portefeuille"], signe=False, decimales=1),
@@ -493,6 +495,6 @@ def generer_rapport(res, destination, nom_indice, taux_sans_risque, niveau_var,
     doc = SimpleDocTemplate(
         destination, pagesize=A4,
         leftMargin=1.8 * cm, rightMargin=1.8 * cm, topMargin=1.6 * cm, bottomMargin=2.0 * cm,
-        title="Rapport de suivi de portefeuille", author="Master G2C",
+        title="Rapport de suivi de portefeuille", author="Portfolio Tracker",
     )
     doc.build(story, onFirstPage=_pied_de_page, onLaterPages=_pied_de_page)
