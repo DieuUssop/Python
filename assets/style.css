@@ -1,0 +1,168 @@
+/* ==========================================================================
+   style.css — Apparence du tableau de bord
+   Injecté dans la page par app.py. Les couleurs sont regroupées en haut
+   (variables CSS) : pour changer le thème, il suffit de modifier ce bloc.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --primaire: #1c5cab;
+    --primaire-fonce: #0f2a4a;
+    --texte: #1a1a19;
+    --texte-2: #5f5e5a;
+    --texte-3: #898781;
+    --bordure: #e4e7ec;
+    --fond-carte: #ffffff;
+    --fond-doux: #f3f5f8;
+    --positif: #0b7a33;
+    --positif-fond: #e7f5ec;
+    --negatif: #b42323;
+    --negatif-fond: #fdecec;
+    --neutre-fond: #eef1f5;
+    --attention: #b86e00;
+}
+
+/* ---- Police et largeur de page ---- */
+.stApp { font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif; }
+.block-container,
+[data-testid="stMainBlockContainer"] {
+    padding-top: 1.25rem;
+    padding-bottom: 2rem;
+    max-width: 1440px;
+}
+
+/* ---- On masque les éléments de Streamlit inutiles pour une démo ---- */
+#MainMenu, footer,
+[data-testid="stAppDeployButton"],
+[data-testid="stDecoration"] { display: none !important; }
+header[data-testid="stHeader"] { background: transparent; }
+
+/* ---- Bandeau d'en-tête ---- */
+.entete {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    flex-wrap: wrap; gap: 1rem;
+    background: linear-gradient(120deg, var(--primaire-fonce) 0%, var(--primaire) 100%);
+    color: #ffffff; border-radius: 14px; padding: 1.4rem 1.75rem; margin-bottom: 1.25rem;
+}
+.entete-surtitre {
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; opacity: 0.75;
+}
+.entete-titre { font-size: 1.85rem; font-weight: 700; line-height: 1.2; margin: 0.2rem 0 0.35rem; }
+.entete-sous-titre { font-size: 0.9rem; opacity: 0.85; }
+.entete-droite { text-align: right; }
+.entete-badge {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 999px; padding: 0.3rem 0.8rem; font-size: 0.8rem; font-weight: 500;
+}
+.entete-date { font-size: 0.8rem; opacity: 0.75; margin-top: 0.45rem; }
+.point { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.point-vert { background: #4ade80; }
+.point-orange { background: #fbbf24; }
+
+/* ---- Cartes de chiffres clés ---- */
+.kpi-grille {
+    display: grid; gap: 0.8rem; margin: 0.25rem 0 1.1rem;
+    grid-template-columns: repeat(var(--colonnes, 4), minmax(0, 1fr));  /* toutes les cartes sur une ligne */
+}
+@media (max-width: 1100px) {   /* petit écran : les cartes passent à la ligne */
+    .kpi-grille { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+}
+.kpi {
+    background: var(--fond-carte); border: 1px solid var(--bordure); border-radius: 12px;
+    padding: 0.9rem 1rem; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+.kpi-label {
+    font-size: 0.7rem; font-weight: 600; color: var(--texte-3);
+    text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+    display: flex; align-items: center; gap: 0.35rem;
+}
+.kpi-aide {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; border-radius: 50%; font-size: 0.65rem;
+    border: 1px solid var(--texte-3); color: var(--texte-3); cursor: help;
+    text-transform: none; letter-spacing: 0;
+}
+.kpi-valeur {
+    font-size: 1.45rem; font-weight: 700; color: var(--texte);
+    margin-top: 0.35rem; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.kpi-detail { font-size: 0.8rem; color: var(--texte-2); margin-top: 0.4rem; }
+
+/* ---- Pastilles de variation (+ vert, − rouge) ---- */
+.pastille {
+    display: inline-block; border-radius: 6px; padding: 0.1rem 0.45rem;
+    font-weight: 600; font-size: 0.78rem; font-variant-numeric: tabular-nums;
+}
+.pastille.positive { color: var(--positif); background: var(--positif-fond); }
+.pastille.negative { color: var(--negatif); background: var(--negatif-fond); }
+.pastille.neutre   { color: var(--texte-2); background: var(--neutre-fond); }
+
+/* ---- Titres de section (dans les encadrés) ---- */
+.section { margin-bottom: 0.4rem; }
+.section-titre { font-size: 1.02rem; font-weight: 650; color: var(--texte); }
+.section-sous-titre { font-size: 0.82rem; color: var(--texte-3); margin-top: 0.1rem; }
+
+/* ---- Encadrés (st.container(border=True)) : légère ombre ---- */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+/* ---- Onglets ---- */
+.stTabs [data-baseweb="tab-list"] { gap: 0.25rem; border-bottom: 1px solid var(--bordure); }
+.stTabs [data-baseweb="tab"] {
+    height: 2.8rem; padding: 0 1.1rem; font-weight: 600; color: var(--texte-2);
+}
+.stTabs [aria-selected="true"] { color: var(--primaire); }
+
+/* ---- Note discrète (avertissement, méthodologie) ---- */
+.note {
+    font-size: 0.8rem; color: var(--texte-2); background: var(--fond-doux);
+    border-left: 3px solid var(--texte-3); border-radius: 6px;
+    padding: 0.6rem 0.8rem; margin-top: 0.6rem;
+}
+.note.attention { border-left-color: var(--attention); }
+
+/* ---- Barre latérale ---- */
+.marque { padding: 0.25rem 0 0.9rem; border-bottom: 1px solid var(--bordure); margin-bottom: 0.9rem; }
+.marque-nom { font-size: 1.1rem; font-weight: 700; color: var(--primaire-fonce); }
+.marque-sous-titre { font-size: 0.78rem; color: var(--texte-3); }
+.bloc-titre {
+    font-size: 0.7rem; font-weight: 700; color: var(--texte-3);
+    text-transform: uppercase; letter-spacing: 0.1em; margin: 0.9rem 0 0.35rem;
+}
+.infos { font-size: 0.78rem; color: var(--texte-2); line-height: 1.7; }
+.infos b { color: var(--texte); font-weight: 600; }
+
+/* ---- Pied de page ---- */
+.pied {
+    margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--bordure);
+    font-size: 0.76rem; color: var(--texte-3); text-align: center;
+}
+
+/* ---- Échelle de risque SRI (1 à 7) ---- */
+.sri { margin: 0.4rem 0 0.8rem; }
+.sri-legende { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--texte-3); margin-bottom: 0.3rem; }
+.sri-cases { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.sri-case {
+    text-align: center; padding: 0.45rem 0; border-radius: 6px; font-weight: 700;
+    background: var(--neutre-fond); color: var(--texte-3);
+}
+.sri-case.sri-active { background: var(--primaire); color: #ffffff; }
+
+/* ---- Tableau des critères d'adéquation ---- */
+table.criteres { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin-top: 0.3rem; }
+table.criteres th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
+                    color: var(--texte-3); border-bottom: 1px solid var(--bordure); padding: 0.4rem 0.3rem; }
+table.criteres td { border-bottom: 1px solid var(--bordure); padding: 0.45rem 0.3rem; }
+table.criteres .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---- Verdict du profil ---- */
+.verdict { border-radius: 12px; padding: 1rem 1.1rem; margin: 0.3rem 0 0.8rem; }
+.verdict.ok { background: var(--positif-fond); color: var(--positif); }
+.verdict.ko { background: var(--negatif-fond); color: var(--negatif); }
+.verdict-titre { font-weight: 700; font-size: 1.05rem; }
+.verdict-texte { font-size: 0.86rem; margin-top: 0.25rem; color: var(--texte); }

@@ -1,0 +1,72 @@
+ticker,nom,pays,region,secteur
+AAPL,Apple,États-Unis,États-Unis,Technologie
+MSFT,Microsoft,États-Unis,États-Unis,Technologie
+NVDA,Nvidia,États-Unis,États-Unis,Technologie
+AVGO,Broadcom,États-Unis,États-Unis,Technologie
+AMZN,Amazon,États-Unis,États-Unis,Consommation discrétionnaire
+HD,Home Depot,États-Unis,États-Unis,Consommation discrétionnaire
+GOOGL,Alphabet,États-Unis,États-Unis,Communication
+META,Meta Platforms,États-Unis,États-Unis,Communication
+JPM,JPMorgan Chase,États-Unis,États-Unis,Finance
+V,Visa,États-Unis,États-Unis,Finance
+BRK-B,Berkshire Hathaway,États-Unis,États-Unis,Finance
+UNH,UnitedHealth,États-Unis,États-Unis,Santé
+JNJ,Johnson & Johnson,États-Unis,États-Unis,Santé
+LLY,Eli Lilly,États-Unis,États-Unis,Santé
+PG,Procter & Gamble,États-Unis,États-Unis,Consommation de base
+KO,Coca-Cola,États-Unis,États-Unis,Consommation de base
+COST,Costco,États-Unis,États-Unis,Consommation de base
+XOM,ExxonMobil,États-Unis,États-Unis,Énergie
+CAT,Caterpillar,États-Unis,États-Unis,Industrie
+NEE,NextEra Energy,États-Unis,États-Unis,Services publics
+LIN,Linde,États-Unis,États-Unis,Matériaux
+PLD,Prologis,États-Unis,États-Unis,Immobilier
+MC.PA,LVMH,France,Europe,Consommation discrétionnaire
+OR.PA,L'Oreal,France,Europe,Consommation de base
+TTE.PA,TotalEnergies,France,Europe,Énergie
+SAN.PA,Sanofi,France,Europe,Santé
+AI.PA,Air Liquide,France,Europe,Matériaux
+SU.PA,Schneider Electric,France,Europe,Industrie
+BNP.PA,BNP Paribas,France,Europe,Finance
+AIR.PA,Airbus,France,Europe,Industrie
+SAF.PA,Safran,France,Europe,Industrie
+DG.PA,Vinci,France,Europe,Industrie
+EL.PA,EssilorLuxottica,France,Europe,Santé
+ASML.AS,ASML,Pays-Bas,Europe,Technologie
+SAP.DE,SAP,Allemagne,Europe,Technologie
+SIE.DE,Siemens,Allemagne,Europe,Industrie
+ALV.DE,Allianz,Allemagne,Europe,Finance
+IBE.MC,Iberdrola,Espagne,Europe,Services publics
+ENEL.MI,Enel,Italie,Europe,Services publics
+ISP.MI,Intesa Sanpaolo,Italie,Europe,Finance
+NOVO-B.CO,Novo Nordisk,Danemark,Europe,Santé
+SHEL.L,Shell,Royaume-Uni,Royaume-Uni,Énergie
+AZN.L,AstraZeneca,Royaume-Uni,Royaume-Uni,Santé
+HSBA.L,HSBC,Royaume-Uni,Royaume-Uni,Finance
+ULVR.L,Unilever,Royaume-Uni,Royaume-Uni,Consommation de base
+RIO.L,Rio Tinto,Royaume-Uni,Royaume-Uni,Matériaux
+NESN.SW,Nestlé,Suisse,Suisse,Consommation de base
+NOVN.SW,Novartis,Suisse,Suisse,Santé
+ROG.SW,Roche,Suisse,Suisse,Santé
+UBSG.SW,UBS,Suisse,Suisse,Finance
+7203.T,Toyota,Japon,Japon,Consommation discrétionnaire
+6758.T,Sony,Japon,Japon,Consommation discrétionnaire
+8306.T,Mitsubishi UFJ,Japon,Japon,Finance
+6861.T,Keyence,Japon,Japon,Technologie
+8035.T,Tokyo Electron,Japon,Japon,Technologie
+9432.T,NTT,Japon,Japon,Communication
+BHP.AX,BHP,Australie,Asie-Pacifique,Matériaux
+CBA.AX,Commonwealth Bank,Australie,Asie-Pacifique,Finance
+CSL.AX,CSL,Australie,Asie-Pacifique,Santé
+0700.HK,Tencent,Hong Kong,Asie-Pacifique,Communication
+1299.HK,AIA Group,Hong Kong,Asie-Pacifique,Finance
+RY.TO,Royal Bank of Canada,Canada,Canada,Finance
+SHOP.TO,Shopify,Canada,Canada,Technologie
+CNQ.TO,Canadian Natural Resources,Canada,Canada,Énergie
+TSM,Taiwan Semiconductor (ADR),Taïwan,Émergents,Technologie
+BABA,Alibaba (ADR),Chine,Émergents,Consommation discrétionnaire
+INFY,Infosys (ADR),Inde,Émergents,Technologie
+HDB,HDFC Bank (ADR),Inde,Émergents,Finance
+VALE,Vale (ADR),Brésil,Émergents,Matériaux
+CW8.PA,Amundi MSCI World,Monde,Monde (ETF),ETF diversifié
+ESE.PA,BNP Paribas Easy S&P 500,États-Unis,États-Unis,ETF diversifié

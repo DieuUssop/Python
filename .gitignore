@@ -1,0 +1,7 @@
+# Fichiers produits automatiquement (inutiles dans le rendu)
+__pycache__/
+.pytest_cache/
+data/cache_*.csv
+data/historique.csv
+data/transactions_sauvegarde.csv
+graphique_*.png

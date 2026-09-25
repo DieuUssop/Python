@@ -1,0 +1,16 @@
+# Configuration de Streamlit : thème visuel de l'application.
+# Ce fichier est lu automatiquement au lancement de "streamlit run app.py".
+
+[theme]
+base = "light"
+primaryColor = "#1c5cab"              # bleu marine : boutons, curseurs, onglet actif
+backgroundColor = "#ffffff"           # fond de la page
+secondaryBackgroundColor = "#f3f5f8"  # barre latérale et champs de saisie
+textColor = "#1a1a19"
+font = "sans serif"
+
+[client]
+toolbarMode = "minimal"               # masque les options réservées aux développeurs
+
+[browser]
+gatherUsageStats = false
