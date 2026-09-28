@@ -30,8 +30,13 @@ TEXTES = {
     "Portefeuille actions monde": "Global equity portfolio",
     "Portefeuille diversifié (multi-actifs)": "Diversified portfolio (multi-asset)",
     "Fichiers data/transactions*.csv du projet": "Project files data/transactions*.csv",
-    "Ou envoyer un autre fichier (CSV)": "Or upload another file (CSV)",
-    "Prioritaire sur le portefeuille choisi ci-dessus": "Takes priority over the portfolio selected above",
+    "Ou envoyer un autre fichier (CSV ou Excel)": "Or upload another file (CSV or Excel)",
+    "Colonnes : date, type (ACHAT, VENTE, DIVIDENDE), ticker (code Yahoo Finance), nom, quantite, prix, frais. "
+    "CSV à virgules ou à points-virgules, ou fichier Excel. Prioritaire sur le portefeuille choisi ci-dessus.":
+        "Columns: date, type (ACHAT/BUY, VENTE/SELL, DIVIDENDE/DIVIDEND), ticker (Yahoo Finance code), nom (name), "
+        "quantite (quantity), prix (price), frais (fees). Comma- or semicolon-separated CSV, or Excel file. "
+        "Takes priority over the portfolio selected above.",
+    "Télécharger un modèle de fichier": "Download a template file",
     "Paramètres d'analyse": "Analysis settings",
     "Indice de référence": "Benchmark index",
     "MSCI World (ETF CW8, dividendes réinvestis)": "MSCI World (CW8 ETF, dividends reinvested)",
@@ -554,6 +559,110 @@ TEXTES = {
     "au taux sans risque.":
         "In a rising market, investing all at once usually earns more; investing gradually reduces the "
         "risk of investing just before a fall. Cash waiting to be invested earns the risk-free rate.",
+    # ------------------------------------------------------------------
+    # Assistant d'import (vues_import.py)
+    # ------------------------------------------------------------------
+    "Ouvrir l'assistant d'import": "Open the import assistant",
+    "Pour indiquer vous-même comment lire le fichier envoyé": "To specify yourself how to read the uploaded file",
+    "Assistant d'import": "Import assistant",
+    "Fichier : {nom}": "File: {nom}",
+    "Ce fichier n'est pas au format du projet, ou il contient des codes ISIN. Indiquez ci-dessous comment le "
+    "lire : l'outil propose une correspondance, il suffit de la vérifier.":
+        "This file is not in the project format, or it contains ISIN codes. Specify below how to read it: "
+        "the tool suggests a mapping, you just need to check it.",
+    "Pourquoi l'assistant s'ouvre-t-il ?": "Why is the assistant opening?",
+    "Fichier illisible : {erreur}": "Unreadable file: {erreur}",
+    "1. Le fichier": "1. The file",
+    "Choisir la feuille et la ligne qui contient les titres de colonnes":
+        "Choose the sheet and the row that contains the column headers",
+    "Feuille Excel": "Excel sheet",
+    "Ligne des titres de colonnes": "Header row",
+    # Détection automatique et devises
+    "Lecture du fichier et vérification des prix avec les cours du marché...":
+        "Reading the file and checking prices against market data...",
+    "Vérification des prix avec les cours du marché...": "Checking prices against market data...",
+    "montants en euros convertis": "amounts in euros converted",
+    "prix en {devise} convertis dans l'unité de cotation": "prices in {devise} converted to the quotation unit",
+    "Fichier reconnu automatiquement : {n} opération(s), {titres} titre(s).":
+        "File recognised automatically: {n} transaction(s), {titres} security(ies).",
+    "Prix non vérifiés avec les cours du marché (pas de connexion).":
+        "Prices not checked against market data (no connection).",
+    "{ticker} : {n} prix éloigné(s) du cours du jour (écart médian {ecart}) — ticker, devise ou division "
+    "d'actions à vérifier.":
+        "{ticker}: {n} price(s) far from that day's market price (median gap {ecart}) — check the ticker, "
+        "currency or a stock split.",
+    "Colonnes identifiées d'après leur contenu (pas de ligne de titres).":
+        "Columns identified from their content (no header row).",
+    "{n} code(s) ISIN ou nom(s) convertis en tickers.": "{n} ISIN code(s) or name(s) converted into tickers.",
+    "Dates lues au format jour/mois (JJ/MM).": "Dates read as day/month (DD/MM).",
+    "Dates lues au format américain (MM/JJ).": "Dates read in US format (MM/DD).",
+    "{n} ligne(s) ignorée(s) (frais de garde, virements...).": "{n} row(s) ignored (custody fees, transfers...).",
+    "Devise des prix du fichier": "Currency of the prices in the file",
+    "Détection automatique (recommandé)": "Automatic detection (recommended)",
+    "Devise de cotation de chaque titre": "Trading currency of each security",
+    "Tout est en euros": "Everything is in euros",
+    "La détection compare chaque prix au vrai cours de clôture du jour, en dollars, livres, euros... et garde "
+    "la lecture la plus proche.":
+        "Detection compares each price with that day's actual closing price, in dollars, pounds, euros... and "
+        "keeps the closest reading.",
+    "Numéro de la ligne du fichier où se trouvent les noms des colonnes (détecté automatiquement). 0 = le "
+    "fichier n'a pas de ligne de titres.":
+        "Row number in the file where the column names are (detected automatically). 0 = the file has no "
+        "header row.",
+    "Aperçu des premières lignes ({n} lignes au total)": "Preview of the first rows ({n} rows in total)",
+    "2. Correspondance des colonnes": "2. Column mapping",
+    "Pour chaque information, la colonne de votre fichier qui la contient (* = obligatoire)":
+        "For each item, the column of your file that contains it (* = required)",
+    "— aucune —": "— none —",
+    "Date de l'opération": "Transaction date",
+    "Type d'opération": "Transaction type",
+    "Titre (ticker, ISIN ou nom)": "Security (ticker, ISIN or name)",
+    "Nom du titre": "Security name",
+    "Prix unitaire": "Unit price",
+    "Montant total": "Total amount",
+    "Le montant total inclut les frais (montant net débité ou crédité)":
+        "The total amount includes fees (net amount debited or credited)",
+    "Sert à retrouver le prix unitaire quand il n'est pas donné : achat = quantité × prix + frais ; "
+    "vente = quantité × prix − frais.":
+        "Used to work out the unit price when it is not given: buy = quantity × price + fees; "
+        "sell = quantity × price − fees.",
+    "À indiquer : {champs}. Pour le prix, une colonne « Prix unitaire » ou « Montant total » suffit.":
+        "Still needed: {champs}. For the price, either a \"Unit price\" or a \"Total amount\" column is enough.",
+    "Sans colonne « Type d'opération » : une quantité négative est lue comme une vente, une quantité "
+    "positive comme un achat.":
+        "Without a \"Transaction type\" column: a negative quantity is read as a sale, a positive quantity "
+        "as a purchase.",
+    "3. Types d'opération et titres": "3. Transaction types and securities",
+    "Vérifier l'interprétation proposée ; les cellules modifiables sont en blanc":
+        "Check the suggested interpretation; editable cells are white",
+    "Dans le fichier": "In the file",
+    "Lignes": "Rows",
+    "Interprétation": "Interpretation",
+    "Ignorer la ligne": "Ignore the row",
+    "Recherche des tickers Yahoo Finance...": "Looking up Yahoo Finance tickers...",
+    "Ticker Yahoo Finance": "Yahoo Finance ticker",
+    "Modifiable : par exemple MC.PA pour LVMH à Paris": "Editable: for example MC.PA for LVMH in Paris",
+    "Nom trouvé": "Name found",
+    "tel quel": "as is",
+    "trouvé": "found",
+    "introuvable": "not found",
+    "Titres introuvables : saisir leur ticker à la main (recherche sur finance.yahoo.com), sinon leurs "
+    "lignes seront ignorées.":
+        "Securities not found: enter their ticker manually (search on finance.yahoo.com), otherwise their "
+        "rows will be ignored.",
+    "4. Résultat": "4. Result",
+    "Transactions au format du projet": "Transactions in the project format",
+    "{n} ligne(s) ignorée(s) : opérations d'un autre type (frais de garde, virements...)":
+        "{n} row(s) ignored: other kinds of operations (custody fees, transfers...)",
+    "{n} ligne(s) avec {motif} (lignes {lignes}) : ignorée(s)": "{n} row(s) with {motif} (rows {lignes}): ignored",
+    "date illisible": "an unreadable date",
+    "prix ou montant manquant": "a missing price or amount",
+    "quantité nulle": "a zero quantity",
+    "titre manquant": "a missing security",
+    "{n} transaction(s) · {titres} titre(s)": "{n} transaction(s) · {titres} security(ies)",
+    "Analyser ce portefeuille": "Analyse this portfolio",
+    "Télécharger le fichier converti (format du projet)": "Download the converted file (project format)",
+
 }
 
 # ----------------------------------------------------------------------

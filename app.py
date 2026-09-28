@@ -22,6 +22,7 @@ Comment fonctionne Streamlit ?
     à la page.
 """
 
+import hashlib
 import io
 from pathlib import Path
 
@@ -30,7 +31,7 @@ import streamlit as st
 from src import config, langues
 from src import graphiques_interactifs as gi
 from src import interface as ui
-from src import vues_conseil, vues_gestion
+from src import import_fichier, vues_conseil, vues_gestion, vues_import
 from src.analyse import analyse_complete
 from src.interface import euros, nombre, pct, tendance
 from src.langues import t, td
@@ -46,6 +47,12 @@ NOMS_PORTEFEUILLES = {"transactions.csv": "Mon portefeuille",
                       "transactions_mondial.csv": "Portefeuille actions monde",
                       "transactions_diversifie.csv": "Portefeuille diversifié (multi-actifs)"}
 FEUILLE_DE_STYLE = Path("assets/style.css")
+# Modèle proposé au téléchargement pour préparer son propre fichier de transactions
+MODELE_CSV = ("date,type,ticker,nom,quantite,prix,frais\n"
+              "2024-01-15,ACHAT,CW8.PA,Amundi MSCI World,10,420.00,2.50\n"
+              "2024-02-01,ACHAT,MC.PA,LVMH,3,780.00,2.00\n"
+              "2024-05-22,DIVIDENDE,MC.PA,LVMH,0,39.00,0.00\n"
+              "2024-09-18,VENTE,MC.PA,LVMH,1,700.00,2.00\n")
 
 # Indices de référence proposés dans le menu : {code Yahoo: nom affiché}
 INDICES = {
@@ -92,6 +99,12 @@ def graphique(figure):
 @st.cache_data(ttl=3600, show_spinner=False)
 def charger(contenu_csv, indice, taux_sans_risque, niveau_var):
     return analyse_complete(io.BytesIO(contenu_csv), indice, taux_sans_risque, niveau_var)
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def importer_auto(brut):
+    """Import automatique d'un fichier envoyé (mis en cache : fait une seule fois par fichier)."""
+    return import_fichier.importer_automatiquement(brut)
 
 
 @st.cache_data(show_spinner=False)
@@ -160,9 +173,19 @@ with st.sidebar:
             help=t("Fichiers data/transactions*.csv du projet"),
         )
     fichier_envoye = st.file_uploader(
-        t("Ou envoyer un autre fichier (CSV)"), type=["csv"],
-        help=t("Prioritaire sur le portefeuille choisi ci-dessus"),
+        t("Ou envoyer un autre fichier (CSV ou Excel)"), type=["csv", "xlsx"],
+        help=t("Colonnes : date, type (ACHAT, VENTE, DIVIDENDE), ticker (code Yahoo Finance), nom, "
+               "quantite, prix, frais. CSV à virgules ou à points-virgules, ou fichier Excel. "
+               "Prioritaire sur le portefeuille choisi ci-dessus."),
     )
+    st.download_button(t("Télécharger un modèle de fichier"), data=MODELE_CSV.encode("utf-8-sig"),
+                       file_name="modele_transactions.csv", mime="text/csv",
+                       icon=":material/description:", width="stretch", type="tertiary")
+    if fichier_envoye is not None and st.button(t("Ouvrir l'assistant d'import"), icon=":material/tune:",
+                                                width="stretch", type="tertiary",
+                                                help=t("Pour indiquer vous-même comment lire le fichier envoyé"),
+                                                key="assistant_barre"):
+        st.session_state["assistant_force"] = hashlib.md5(fichier_envoye.getvalue()).hexdigest()[:12]
 
     html(ui.bloc_titre(t("Paramètres d'analyse")))
     code_indice = st.selectbox(
@@ -189,8 +212,32 @@ with st.sidebar:
 # CHARGEMENT DES DONNÉES
 # ======================================================================
 if fichier_envoye is not None:
-    contenu = fichier_envoye.getvalue()
+    # Fichier envoyé : lu directement s'il est reconnu (format du projet, ou proche),
+    # sinon l'assistant d'import s'affiche (src/vues_import.py).
+    brut = fichier_envoye.getvalue()
     nom_fichier = fichier_envoye.name
+    cle_import = hashlib.md5(brut).hexdigest()[:12]
+    imports = st.session_state.setdefault("imports", {})
+    assistant_demande = st.session_state.get("assistant_force") == cle_import
+    erreur_directe = None
+    if cle_import not in imports and not assistant_demande:
+        # Détection automatique : colonnes (noms, contenu, cohérence des chiffres), codes ISIN,
+        # dates, devises vérifiées avec les vrais cours (src/import_fichier.py)
+        with st.spinner(t("Lecture du fichier et vérification des prix avec les cours du marché...")):
+            auto = importer_auto(brut)
+        if auto["sur"]:
+            imports[cle_import] = import_fichier.en_csv(auto["transactions"])
+            st.session_state.setdefault("resumes_import", {})[cle_import] = auto["resume"]
+        else:
+            erreur_directe = auto["raison"]
+    if assistant_demande or cle_import not in imports:
+        vues_import.afficher(brut, nom_fichier, cle_import, erreur_directe)
+        st.stop()
+    contenu = imports[cle_import]
+    resume_import = st.session_state.get("resumes_import", {}).get(cle_import)
+    if resume_import:
+        with st.sidebar:
+            html(ui.note(vues_import.texte_resume(resume_import)))
 elif fichier_choisi is not None:
     contenu = fichier_choisi.read_bytes()
     nom_fichier = fichier_choisi.name
@@ -203,6 +250,10 @@ try:
         res = charger(contenu, code_indice, taux_sans_risque, niveau_var)
 except Exception as erreur:  # message clair plutôt qu'un plantage
     st.error(t("Impossible d'analyser le portefeuille : {erreur}", erreur=erreur))
+    if fichier_envoye is not None and st.button(t("Ouvrir l'assistant d'import"), icon=":material/tune:",
+                                                key="assistant_erreur"):
+        st.session_state["assistant_force"] = cle_import
+        st.rerun()
     st.stop()
 
 resume = res["resume"]

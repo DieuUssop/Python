@@ -26,6 +26,27 @@ import pandas as pd
 TYPES_VALIDES = {"ACHAT", "VENTE", "DIVIDENDE"}
 
 
+def lire_fichier_transactions(source):
+    """Lit un fichier de transactions, même préparé ou réenregistré avec Excel :
+    CSV à virgules ou à points-virgules, fichier .xlsx, lignes de titre avant le
+    tableau, nombres "1 234,50", dates "15/01/2024", noms de colonnes avec accents
+    ou en anglais... Le travail est fait par src/import_fichier.py.
+
+    source : chemin, fichier ouvert (ex. envoyé depuis le tableau de bord) ou octets.
+    Renvoie un tableau avec les colonnes date, type, ticker, nom, quantite, prix, frais.
+    """
+    from .import_fichier import lire_directement
+    if isinstance(source, (bytes, bytearray)):
+        brut = bytes(source)
+    elif hasattr(source, "read"):
+        brut = source.read()
+        brut = brut.encode("utf-8") if isinstance(brut, str) else brut
+    else:
+        with open(source, "rb") as f:
+            brut = f.read()
+    return lire_directement(brut)
+
+
 class Portfolio:
     """
     Une "classe" est un plan de construction. Ici, elle décrit ce qu'est un
@@ -58,9 +79,9 @@ class Portfolio:
             df = chemin_csv.copy()
             df["date"] = pd.to_datetime(df["date"])
         else:
-            # read_csv transforme le fichier en "DataFrame" (un tableau pandas).
-            # parse_dates convertit la colonne "date" en vraies dates.
-            df = pd.read_csv(chemin_csv, parse_dates=["date"])
+            # Lecture tolérante : CSV à virgules ou points-virgules (Excel en
+            # français), fichier Excel .xlsx, colonnes avec accents... (voir plus haut)
+            df = lire_fichier_transactions(chemin_csv)
 
         # Mise en forme : "achat " devient "ACHAT" (majuscules, sans espaces).
         df["type"] = df["type"].str.strip().str.upper()

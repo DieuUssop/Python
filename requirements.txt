@@ -7,3 +7,4 @@ plotly>=5.19
 streamlit>=1.50
 reportlab
 pytest
+openpyxl
