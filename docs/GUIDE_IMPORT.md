@@ -28,7 +28,19 @@ Dans la plupart des cas, il n'y a **rien à faire** : l'outil comprend seul le f
 
 2. **Les dates ambiguës** (03/04/2024 : 3 avril ou 4 mars ?) : une seule date comme 13/04 ou 04/13 dans la colonne suffit à trancher. Sinon, le format français (jour/mois) est retenu et signalé.
 
-3. **Les codes ISIN et les noms** sont convertis en tickers Yahoo Finance.
+3. **Les codes des titres**, quelle que soit leur forme, sont convertis en tickers Yahoo Finance :
+
+   | Forme | Exemple | Devient |
+   |---|---|---|
+   | Ticker **Bloomberg** | `MC FP Equity`, `AAPL US Equity`, `NESN SW`, `700 HK` | MC.PA, AAPL, NESN.SW, 0700.HK |
+   | Google Finance | `EPA:MC`, `NASDAQ:AAPL` | MC.PA, AAPL |
+   | Reuters (RIC) | `AAPL.O`, `NESN.S` | AAPL, NESN.SW |
+   | Ticker + colonne « Place » | `MC` + `XPAR` (code MIC), `Euronext Paris`, `FP`… | MC.PA |
+   | Ticker **sans place** | `MC`, `AIR`, `TTE`, `TSLA` | l'outil essaie les grandes places (New York, Paris, Francfort, Amsterdam, Milan, Madrid, Londres, Zurich, Toronto) et garde celle dont le **cours correspond aux prix du fichier** : `MC` à 740 € est LVMH (MC.PA), pas Moelis (MC à New York, 50 $) |
+   | Code **ISIN** | `FR0000121014` | recherche Yahoo Finance, Bourse du pays privilégiée → MC.PA |
+   | Nom de société | `LVMH`, `Microsoft` | recherche Yahoo Finance |
+
+   Les conversions Bloomberg, Google et Reuters se font **sans connexion** (table des codes de place). Pour les tickers Bloomberg, la « yellow key » (`Equity`) est facultative.
 
 4. **Les devises** : l'outil compare chaque prix au **vrai cours de clôture du jour**, selon trois lectures (devise de cotation, devise principale — livres au lieu de pence —, ou euros) et garde la plus proche. Un relevé bancaire en euros pour une action américaine est ainsi **reconverti en dollars** automatiquement, avec le taux de change du jour. Par prudence, la conversion n'est faite que si elle colle nettement mieux au marché (plus de 2 % d'écart).
 

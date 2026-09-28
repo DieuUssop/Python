@@ -58,8 +58,10 @@ def texte_resume(resume):
                  n=resume.get("operations", 0), titres=resume.get("titres", 0))]
     if resume.get("sans_entete"):
         parties.append(t("Colonnes identifiées d'après leur contenu (pas de ligne de titres)."))
+    if resume.get("tickers_reconnus"):
+        parties.append(t("{n} ticker(s) sans place de cotation identifié(s) grâce aux cours.", n=resume["tickers_reconnus"]))
     if resume.get("titres_convertis"):
-        parties.append(t("{n} code(s) ISIN ou nom(s) convertis en tickers.", n=resume["titres_convertis"]))
+        parties.append(t("{n} code(s) ISIN, Bloomberg ou nom(s) convertis en tickers.", n=resume["titres_convertis"]))
     if resume.get("dates_ambigues"):
         parties.append(t("Dates lues au format jour/mois (JJ/MM)."))
     elif resume.get("ordre_dates") == "mois":
@@ -192,7 +194,8 @@ def afficher(brut, nom_fichier, cle, erreur_directe=None):
             tickers_connus = tuple(charger_referentiel().index)
             with st.spinner(t("Recherche des tickers Yahoo Finance...")):
                 resolution = _resoudre(tuple(identifiants), tuple(sorted(noms.items())), tickers_connus)
-            statuts = {"tel quel": t("tel quel"), "trouvé": t("trouvé"), "introuvable": t("introuvable")}
+            statuts = {"tel quel": t("tel quel"), "trouvé": t("trouvé"), "introuvable": t("introuvable"),
+                       "converti": t("converti (Bloomberg, Google, Reuters)")}
             edition = st.data_editor(
                 resolution.assign(statut=resolution["statut"].map(statuts))[["identifiant", "ticker", "nom", "statut"]],
                 hide_index=True, width="stretch", disabled=["identifiant", "nom", "statut"],

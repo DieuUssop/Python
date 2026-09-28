@@ -593,7 +593,12 @@ TEXTES = {
         "currency or a stock split.",
     "Colonnes identifiées d'après leur contenu (pas de ligne de titres).":
         "Columns identified from their content (no header row).",
-    "{n} code(s) ISIN ou nom(s) convertis en tickers.": "{n} ISIN code(s) or name(s) converted into tickers.",
+    "{n} code(s) ISIN, Bloomberg ou nom(s) convertis en tickers.":
+        "{n} ISIN, Bloomberg code(s) or name(s) converted into tickers.",
+    "{n} ticker(s) sans place de cotation identifié(s) grâce aux cours.":
+        "{n} ticker(s) without an exchange identified from market prices.",
+    "converti (Bloomberg, Google, Reuters)": "converted (Bloomberg, Google, Reuters)",
+    "Place de cotation": "Exchange",
     "Dates lues au format jour/mois (JJ/MM).": "Dates read as day/month (DD/MM).",
     "Dates lues au format américain (MM/JJ).": "Dates read in US format (MM/DD).",
     "{n} ligne(s) ignorée(s) (frais de garde, virements...).": "{n} row(s) ignored (custody fees, transfers...).",

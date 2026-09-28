@@ -52,6 +52,7 @@ CHAMPS = {
     "montant": "Montant total",
     "frais": "Frais",
     "devise": "Devise",
+    "place": "Place de cotation",
 }
 OBLIGATOIRES = ["date", "identifiant", "quantite"]          # + prix OU montant
 
@@ -63,7 +64,9 @@ NOMS_RECONNUS = {
              "execution date", "jour"],
     "type": ["type", "type d'operation", "type operation", "operation", "sens", "nature",
              "nature de l'operation", "transaction type", "side", "action", "mouvement"],
-    "identifiant": ["ticker", "symbole", "symbol", "code", "isin", "code isin", "isin code",
+    "identifiant": ["ticker", "symbole", "symbol", "code", "isin", "code isin", "isin code", "ticker bloomberg",
+                    "bloomberg", "bloomberg ticker", "code bloomberg", "bbg", "bbg ticker", "ticker bbg",
+                    "ric", "code reuters",
                     "valeur", "titre", "instrument", "produit", "product", "security", "libelle valeur"],
     "nom": ["nom", "name", "libelle", "designation", "nom du titre", "security name", "description",
             "produit", "product", "titre", "valeur"],
@@ -76,6 +79,8 @@ NOMS_RECONNUS = {
     "frais": ["frais", "frais de courtage", "courtage", "commission", "commissions", "fees", "fee",
               "frais totaux"],
     "devise": ["devise", "currency", "monnaie", "devise de cotation", "ccy", "cur"],
+    "place": ["place", "place de cotation", "marche", "marche de cotation", "bourse", "exchange", "market",
+              "mic", "venue", "lieu d'execution", "place d'execution", "listing"],
 }
 # Colonnes à ne jamais interpréter (notes libres)
 NOMS_EXCLUS = {"commentaire", "commentaires", "remarque", "remarques", "note", "notes", "observation",
@@ -94,6 +99,78 @@ TYPES_POSSIBLES = ["ACHAT", "VENTE", "DIVIDENDE", IGNORER]
 
 MOTIF_ISIN = re.compile(r"^[A-Z]{2}[A-Z0-9]{9}[0-9]$")
 MOTIF_TICKER = re.compile(r"^[A-Z0-9^][A-Z0-9\-=&]{0,11}(\.[A-Z]{1,3})?$")
+
+# ----------------------------------------------------------------------
+# Tickers "globaux" : les autres façons d'écrire le code d'une action
+# ----------------------------------------------------------------------
+# Suffixes de Yahoo Finance (déjà utilisables tels quels)
+SUFFIXES_YAHOO = {".PA", ".DE", ".F", ".AS", ".BR", ".MC", ".MI", ".LS", ".L", ".SW", ".T", ".TO", ".V", ".AX",
+                  ".HK", ".CO", ".ST", ".HE", ".OL", ".VI", ".IR", ".NZ", ".SI", ".KS", ".SA", ".MX", ".JO",
+                  ".TW", ".SS", ".SZ", ".NS", ".BO", ".WA", ".PR", ".AT", ".IS", ".TA", ".BK", ".JK", ".KL"}
+# Codes de place -> suffixe Yahoo ("" = États-Unis). Valent pour :
+#   Bloomberg  "MC FP", "AAPL US Equity"      Google Finance "EPA:MC", "NASDAQ:AAPL"
+#   Reuters    "LVMH.PA", "AAPL.O", "NESN.S"  codes MIC "XPAR", "XNAS" et noms "Euronext Paris"
+PLACES = {
+    # Bloomberg
+    "FP": ".PA", "GY": ".DE", "GR": ".DE", "GF": ".F", "NA": ".AS", "BB": ".BR", "SM": ".MC", "IM": ".MI",
+    "PL": ".LS", "LN": ".L", "SW": ".SW", "SE": ".SW", "VX": ".SW", "US": "", "UN": "", "UW": "", "UQ": "",
+    "UR": "", "UA": "", "UP": "", "JP": ".T", "JT": ".T", "CN": ".TO", "CT": ".TO", "AU": ".AX", "AT": ".AX",
+    "HK": ".HK", "DC": ".CO", "SS": ".ST", "FH": ".HE", "NO": ".OL", "AV": ".VI", "ID": ".IR",
+    "SQ": ".MC", "UV": "", "UF": "", "KS": ".KS", "TT": ".TW", "IN": ".NS", "IS": ".NS", "IB": ".BO",
+    "BZ": ".SA", "MM": ".MX", "SP": ".SI", "NZ": ".NZ", "SJ": ".JO", "PW": ".WA", "LI": ".L",
+    # Google Finance
+    "EPA": ".PA", "ETR": ".DE", "FRA": ".F", "AMS": ".AS", "EBR": ".BR", "BME": ".MC", "BIT": ".MI",
+    "ELI": ".LS", "LON": ".L", "SWX": ".SW", "VTX": ".SW", "NASDAQ": "", "NYSE": "", "NYSEARCA": "",
+    "NYSEAMERICAN": "", "BATS": "", "TYO": ".T", "TSE": ".TO", "ASX": ".AX", "HKG": ".HK", "CPH": ".CO",
+    "STO": ".ST", "HEL": ".HE", "OSL": ".OL", "VIE": ".VI",
+    # Codes MIC (norme ISO 10383)
+    "XPAR": ".PA", "XETR": ".DE", "XFRA": ".F", "XAMS": ".AS", "XBRU": ".BR", "XMAD": ".MC", "XMIL": ".MI",
+    "MTAA": ".MI", "XLIS": ".LS", "XLON": ".L", "XSWX": ".SW", "XVTX": ".SW", "XNAS": "", "XNYS": "",
+    "ARCX": "", "XASE": "", "XTKS": ".T", "XTSE": ".TO", "XASX": ".AX", "XHKG": ".HK", "XCSE": ".CO",
+    "XSTO": ".ST", "XHEL": ".HE", "XOSL": ".OL", "XWBO": ".VI", "XDUB": ".IR",
+    # Noms usuels (sans accents, en majuscules)
+    "EURONEXT PARIS": ".PA", "PARIS": ".PA", "EURONEXT": ".PA", "XETRA": ".DE", "FRANCFORT": ".F",
+    "FRANKFURT": ".F", "EURONEXT AMSTERDAM": ".AS", "AMSTERDAM": ".AS", "EURONEXT BRUXELLES": ".BR",
+    "EURONEXT BRUSSELS": ".BR", "BRUXELLES": ".BR", "MADRID": ".MC", "MILAN": ".MI", "BORSA ITALIANA": ".MI",
+    "LISBONNE": ".LS", "LONDRES": ".L", "LONDON": ".L", "LSE": ".L", "SIX": ".SW", "ZURICH": ".SW",
+    "NEW YORK": "", "NYSE ARCA": "", "TOKYO": ".T", "TORONTO": ".TO", "SYDNEY": ".AX", "HONG KONG": ".HK",
+    "COPENHAGUE": ".CO", "STOCKHOLM": ".ST", "HELSINKI": ".HE", "OSLO": ".OL", "VIENNE": ".VI",
+}
+# Suffixes Reuters (RIC) qui diffèrent de ceux de Yahoo
+SUFFIXES_REUTERS = {".O": "", ".N": "", ".OQ": "", ".A": "", ".P": "", ".K": "", ".S": ".SW", ".VX": ".SW",
+                    ".MA": ".MC", ".I": ".IR"}
+# Places essayées pour un ticker "nu" (MC, AIR, TSLA...) : on garde celle dont le cours colle au prix
+PLACES_A_ESSAYER = ["", ".PA", ".DE", ".AS", ".MI", ".MC", ".L", ".SW", ".TO"]
+MOTIF_COURT = re.compile(r"^[A-Z0-9][A-Z0-9\-]{0,5}$")
+
+
+def suffixe_de_place(place):
+    """'Euronext Paris', 'XPAR', 'FP', 'EPA' -> '.PA' ; place inconnue -> None."""
+    return PLACES.get(normaliser(place).upper())
+
+
+def convertir_code_global(code):
+    """Traduit un ticker écrit à la façon de Bloomberg, Google Finance ou Reuters en
+    ticker Yahoo Finance. Ex. 'MC FP' -> 'MC.PA', 'EPA:MC' -> 'MC.PA', 'AAPL US Equity' -> 'AAPL',
+    'NESN.S' -> 'NESN.SW', 'NASDAQ:AAPL' -> 'AAPL'. Renvoie None si le code n'a pas ces formes."""
+    texte = re.sub(r"\s+(EQUITY|EQ)$", "", re.sub(r"\s+", " ", str(code).strip().upper()))
+    m = re.match(r"^([A-Z0-9\-/]{1,12})\s+([A-Z]{2})$", texte)            # Bloomberg "MC FP"
+    if m and m.group(2) in PLACES:
+        racine = m.group(1).replace("/", "-")
+        if PLACES[m.group(2)] == ".HK" and racine.isdigit():
+            racine = racine.zfill(4)                     # Tencent "700 HK" -> "0700.HK"
+        return racine + PLACES[m.group(2)]
+    m = re.match(r"^([A-Z]{2,14}):([A-Z0-9.\-]{1,12})$", texte)           # Google "EPA:MC"
+    if m and m.group(1) in PLACES:
+        return m.group(2) + PLACES[m.group(1)]
+    m = re.match(r"^([A-Z0-9.\-]{1,12}):([A-Z]{2,14})$", texte)           # "MC:EPA", "MC:FP"
+    if m and m.group(2) in PLACES:
+        return m.group(1) + PLACES[m.group(2)]
+    m = re.match(r"^([A-Z0-9\-]{1,12})(\.[A-Z]{1,2})$", texte)            # Reuters "AAPL.O", "NESN.S"
+    if m and m.group(2) in SUFFIXES_REUTERS and m.group(2) not in SUFFIXES_YAHOO:
+        return m.group(1) + SUFFIXES_REUTERS[m.group(2)]
+    return None
+
 
 # Place de cotation préférée selon le pays de l'ISIN (suffixe Yahoo Finance)
 SUFFIXE_PAR_PAYS = {
@@ -346,6 +423,7 @@ def profil_colonne(serie):
         "remplissage": len(valeurs) / max(len(serie), 1),
         "dates": part(dates.notna()) * part(avec_date),
         "isin": part(valeurs.map(isin_valide)),
+        "globaux": part(valeurs.map(lambda v: convertir_code_global(v) is not None)),
         "tickers": part(tickers),
         "types": part(types),
         "devises": part(devises),
@@ -365,13 +443,13 @@ def _score_contenu(p, champ):
     if champ == "date":
         return 5 * p["dates"]
     if champ == "identifiant":
-        return 6 * p["isin"] + 3 * p["tickers"] * texte
+        return 6 * p["isin"] + 6 * p["globaux"] + 3 * p["tickers"] * texte
     if champ == "type":
         return 5 * p["types"] * (1 if p["distincts"] < 0.5 else 0.5)
     if champ == "devise":
         return 5 * p["devises"]
     if champ == "nom":
-        return (3 * texte * (1 - p["isin"]) * (1 - p["types"]) * (1 - p["devises"])
+        return (3 * texte * (1 - p["isin"]) * (1 - p["globaux"]) * (1 - p["types"]) * (1 - p["devises"])
                 * (1 - 0.4 * p["tickers"]) * min(1, p["longueur"] / 6) * p["remplissage"])
     return 0.0
 
@@ -530,6 +608,11 @@ def appliquer_correspondance(tableau, correspondance, types=None, identifiants=N
     identifiant = col("identifiant").astype(str).str.strip()
     df["identifiant"] = identifiant
     df["ticker"] = identifiant.map(lambda x: (identifiants or {}).get(x, x)).str.strip().str.upper()
+    if correspondance.get("place"):                      # ticker "nu" + colonne de place : MC + XPAR -> MC.PA
+        suffixes = col("place").map(suffixe_de_place)
+        nus = df["ticker"].str.match(MOTIF_COURT.pattern) & suffixes.notna() & \
+            ~identifiant.isin(list((identifiants or {}).keys()))
+        df.loc[nus, "ticker"] = df.loc[nus, "ticker"] + suffixes[nus]
     df["nom"] = col("nom").astype(str).str.strip() if correspondance.get("nom") else identifiant
     quantite = convertir_nombres(col("quantite"))
     prix = convertir_nombres(col("prix")) if correspondance.get("prix") else None
@@ -614,12 +697,23 @@ def en_csv(transactions):
 # 4. Des codes ISIN et des noms vers les tickers Yahoo Finance
 # ======================================================================
 def nature_identifiant(valeur, tickers_connus=()):
-    """'isin', 'ticker' (déjà utilisable) ou 'nom' (à rechercher)."""
+    """Nature d'un identifiant de titre :
+        'isin'   : code ISIN (FR0000121014)
+        'ticker' : déjà un ticker Yahoo Finance (MC.PA, ou connu du référentiel comme AAPL)
+        'global' : ticker Bloomberg / Google Finance / Reuters, traduisible (MC FP, EPA:MC, AAPL.O)
+        'court'  : ticker sans place de cotation (MC, AIR, TSLA) : à identifier
+        'nom'    : nom de société (à rechercher)."""
     texte = str(valeur).strip().upper()
     if MOTIF_ISIN.match(texte):
         return "isin"
-    if texte in tickers_connus or ("." in texte and MOTIF_TICKER.match(texte)):
+    if texte in tickers_connus:
         return "ticker"
+    if "." in texte and MOTIF_TICKER.match(texte) and texte[texte.rfind("."):] in SUFFIXES_YAHOO:
+        return "ticker"
+    if convertir_code_global(texte):
+        return "global"
+    if MOTIF_COURT.match(texte):
+        return "court"
     return "nom"
 
 
@@ -666,7 +760,7 @@ def resoudre_identifiants(valeurs, noms=None, tickers_connus=(), chercher=None):
     chercher: fonction de recherche (remplaçable dans les tests)
 
     Renvoie un tableau : identifiant, nature, ticker proposé, nom trouvé, statut
-    ("tel quel", "trouvé", "introuvable").
+    ("tel quel", "converti" (format Bloomberg, Google...), "trouvé", "introuvable").
     """
     chercher = chercher or _chercher_yahoo
     lignes = []
@@ -674,7 +768,9 @@ def resoudre_identifiants(valeurs, noms=None, tickers_connus=(), chercher=None):
         valeur = str(valeur).strip()
         nature = nature_identifiant(valeur, tickers_connus)
         ticker, nom, statut = valeur.upper(), (noms or {}).get(valeur, ""), "tel quel"
-        if nature != "ticker":
+        if nature == "global":
+            ticker, statut = convertir_code_global(valeur), "converti"
+        elif nature != "ticker":
             requetes = [valeur] + ([noms[valeur]] if noms and noms.get(valeur) and nature == "isin" else [])
             resultat = None
             for requete in requetes:
@@ -692,6 +788,94 @@ def resoudre_identifiants(valeurs, noms=None, tickers_connus=(), chercher=None):
                 ticker, statut = ("" if nature == "isin" else valeur.upper()), "introuvable"
         lignes.append({"identifiant": valeur, "nature": nature, "ticker": ticker, "nom": nom, "statut": statut})
     return pd.DataFrame(lignes, columns=["identifiant", "nature", "ticker", "nom", "statut"])
+
+
+def marche_des_candidats(tickers, debut):
+    """Devises (d'après le suffixe) et cours historiques d'une liste de tickers candidats."""
+    from pathlib import Path
+
+    from .devises import devise_par_suffixe, normaliser as normaliser_devise, ticker_change
+    from .market_data import obtenir_historique
+    info = {t: normaliser_devise(devise_par_suffixe(t)) for t in tickers}
+    changes = sorted({ticker_change(d) for d, _ in info.values() if d != "EUR"})
+    cache = Path(__file__).resolve().parent.parent / "data" / "cache_candidats.csv"
+    historique, _ = obtenir_historique(list(tickers) + changes, debut, chemin_cache=cache)
+    return info, historique
+
+
+def _ecart_median(lignes, cours, devise, facteur, taux):
+    """Plus petit écart médian (en log) entre les prix du fichier et les cours d'un candidat,
+    parmi les trois lectures possibles du prix (cotation, devise principale, euros)."""
+    meilleur = math.inf
+    for lecture in ("cotation", "devise", "euros"):
+        ecarts = []
+        for _, l in lignes.iterrows():
+            reference = _valeur_au(cours, l["date"])
+            if lecture == "cotation":
+                lu = l["prix"]
+            elif lecture == "devise":
+                lu = l["prix"] / facteur
+            else:
+                t = 1.0 if devise == "EUR" else (_valeur_au(taux, l["date"]) if taux is not None else float("nan"))
+                lu = l["prix"] * t / facteur
+            if reference > 0 and lu > 0 and not math.isnan(lu):
+                ecarts.append(abs(math.log(lu / reference)))
+        if ecarts:
+            meilleur = min(meilleur, float(pd.Series(ecarts).median()))
+    return meilleur
+
+
+def reconnaitre_par_les_prix(transactions, codes, tickers_connus=(), chercher=None, marche=marche_des_candidats):
+    """Retrouve la place de cotation d'un ticker "nu" (MC, AIR, TTE, TSLA) : on essaie
+    plusieurs places (New York, Paris, Francfort...) et on garde celle dont le cours
+    correspond le mieux aux prix d'achat et de vente du fichier, à la date de chaque opération.
+
+    Exemple : "MC" à 740 € en janvier 2024 -> MC.PA (LVMH, 740 €) et non MC (Moelis, 50 $).
+    Renvoie {code: ticker Yahoo} pour les codes reconnus avec un écart médian < 15 %.
+    """
+    chercher = chercher or _chercher_yahoo
+    bases = {}
+    for t in tickers_connus:
+        bases.setdefault(str(t).split(".")[0].upper(), []).append(t)
+    candidats = {}
+    for code in codes:
+        liste = list(bases.get(code, []))
+        try:
+            liste += [r["symbol"] for r in chercher(code)[:5]
+                      if r.get("symbol") and r.get("quoteType", "EQUITY") in ("EQUITY", "ETF")]
+        except Exception:
+            pass
+        liste += [code + suffixe for suffixe in PLACES_A_ESSAYER]
+        candidats[code] = list(dict.fromkeys(x.upper() for x in liste))
+    tous = sorted({c for liste in candidats.values() for c in liste})
+    if not tous:
+        return {}
+    debut = (transactions["date"].min() - pd.Timedelta(days=10)).strftime("%Y-%m-%d")
+    try:
+        info, historique = marche(tous, debut)
+    except Exception:
+        return {}
+    trouves = {}
+    for code, liste in candidats.items():
+        lignes = transactions[(transactions["ticker"] == code) & transactions["type"].isin(["ACHAT", "VENTE"])]
+        if lignes.empty:
+            continue
+        scores = []
+        for rang, candidat in enumerate(liste):
+            if candidat not in historique.columns or historique[candidat].dropna().empty:
+                continue
+            devise, facteur = info.get(candidat, ("EUR", 1.0))
+            taux = historique.get(f"EUR{devise}=X")
+            scores.append((_ecart_median(lignes, historique[candidat], devise, facteur, taux), rang, candidat))
+        if not scores:
+            continue
+        meilleur = min(scores)[0]
+        # À écart presque égal (même titre coté à Paris et à Francfort), on garde l'ordre de préférence
+        proches = [s for s in scores if s[0] <= meilleur + 0.02]
+        ecart, _, candidat = min(proches, key=lambda s: s[1])
+        if ecart < math.log(1.15):
+            trouves[code] = candidat
+    return trouves
 
 
 # ======================================================================
@@ -880,15 +1064,30 @@ def importer_automatiquement(brut, chercher=None, marche=donnees_de_marche):
                 noms.setdefault(v, n.strip())
     from .analyse import charger_referentiel
     connus = set(charger_referentiel().index)
-    a_chercher = [v for v in identifiants if nature_identifiant(v, connus) != "ticker"]
+    natures = {v: nature_identifiant(v, connus) for v in identifiants}
+    a_chercher = [v for v in identifiants if natures[v] in ("isin", "nom", "global")]
+    courts = [v for v in identifiants if natures[v] == "court"]
     correspondances_titres, noms_trouves = {}, {}
+
+    # Tickers sans place de cotation (MC, AIR, TSLA) : identifiés grâce aux cours du marché
+    if courts:
+        provisoire, _ = appliquer_correspondance(tableau, correspondance)
+        restants = [c for c in courts if (provisoire["ticker"] == c.upper()).any()]   # sans colonne "place"
+        reconnus = reconnaitre_par_les_prix(provisoire, [c.upper() for c in restants], connus, chercher=chercher)
+        for c in restants:
+            if c.upper() in reconnus:
+                correspondances_titres[c] = reconnus[c.upper()]
+            else:
+                a_chercher.append(c)                      # sinon : moteur de recherche
+        resume["tickers_reconnus"] = sum(1 for c in restants if c.upper() in reconnus)
+
     if a_chercher:
         resolution = resoudre_identifiants(a_chercher, noms, connus, chercher=chercher)
-        resume["titres_convertis"] = int((resolution["statut"] == "trouvé").sum())
+        resume["titres_convertis"] = int(resolution["statut"].isin(["trouvé", "converti"]).sum())
         if (resolution["statut"] == "introuvable").any():
             return {"sur": False, "transactions": None, "resume": resume,
                     "raison": "Titre(s) introuvable(s) : " + ", ".join(resolution.loc[resolution["statut"] == "introuvable", "identifiant"])}
-        correspondances_titres = dict(zip(resolution["identifiant"], resolution["ticker"]))
+        correspondances_titres.update(dict(zip(resolution["identifiant"], resolution["ticker"])))
         noms_trouves = {tk: n for tk, n in zip(resolution["ticker"], resolution["nom"]) if n}
 
     transactions, rapport = appliquer_correspondance(tableau, correspondance, identifiants=correspondances_titres)

@@ -140,3 +140,53 @@ def test_informations_autour_du_tableau_ignorees():
     assert r["sur"]
     assert list(r["transactions"]["ticker"]) == ["MC.PA", "TTE.PA"]
     assert list(r["transactions"]["nom"]) == ["MC.PA", "TTE.PA"]      # le résumé n'est pas pris pour un nom
+
+
+# ----------------------------------------------------------------------
+# Tickers Bloomberg, Google Finance, Reuters et tickers "nus"
+# ----------------------------------------------------------------------
+def test_tickers_bloomberg_google_reuters():
+    assert imp.convertir_code_global("MC FP Equity") == "MC.PA"
+    assert imp.convertir_code_global("AAPL US Equity") == "AAPL"
+    assert imp.convertir_code_global("NESN SW") == "NESN.SW"
+    assert imp.convertir_code_global("7203 JT") == "7203.T"
+    assert imp.convertir_code_global("700 HK Equity") == "0700.HK"      # Hong Kong : 4 chiffres
+    assert imp.convertir_code_global("BRK/B US") == "BRK-B"
+    assert imp.convertir_code_global("EPA:MC") == "MC.PA"
+    assert imp.convertir_code_global("NASDAQ:AAPL") == "AAPL"
+    assert imp.convertir_code_global("NESN.S") == "NESN.SW"             # Reuters
+    assert imp.convertir_code_global("MC.PA") is None                   # déjà au format Yahoo
+
+
+def test_fichier_avec_tickers_bloomberg():
+    texte = ("Date,Ticker Bloomberg,Name,Side,Quantity,Price\n"
+             "2024-01-16,MC FP Equity,LVMH,Buy,3,740\n"
+             "2024-01-16,AAPL US Equity,Apple,Buy,10,185\n"
+             "2024-02-01,NESN SW Equity,Nestle,Buy,10,99\n")
+    r = imp.importer_automatiquement(texte.encode(), chercher=lambda q: [], marche=lambda t: ({}, None))
+    assert r["sur"]
+    assert list(r["transactions"]["ticker"]) == ["MC.PA", "AAPL", "NESN.SW"]
+
+
+def test_ticker_nu_et_colonne_place():
+    texte = ("Date;Code;Place;Quantité;Prix\n"
+             "16/01/2024;MC;XPAR;3;740\n"
+             "16/01/2024;AAPL;XNAS;10;185\n")
+    tableau, _ = imp.lire_tableau_brut(texte.encode())
+    c = imp.proposer_correspondance(tableau)
+    assert c["place"] == "Place"
+    df, _ = imp.appliquer_correspondance(tableau, c)
+    assert list(df["ticker"]) == ["MC.PA", "AAPL"]
+
+
+def test_ticker_nu_reconnu_par_le_prix():
+    # "MC" à 740 € : c'est LVMH à Paris (MC.PA), pas Moelis à New York (MC, environ 50 $)
+    t = _transactions([["2024-01-16", "ACHAT", "MC", "LVMH", 3, 740.0, 2.0],
+                       ["2024-01-17", "ACHAT", "TSLA", "Tesla", 2, 215.0, 1.0]])
+    historique = pd.DataFrame({"MC": 50.0, "MC.PA": 745.0, "MC.DE": 744.0, "TSLA": 212.0, "TSLA.DE": 195.0,
+                               "EURUSD=X": 1.09}, index=DATES)
+    info = {"MC": ("USD", 1.0), "MC.PA": ("EUR", 1.0), "MC.DE": ("EUR", 1.0), "TSLA": ("USD", 1.0),
+            "TSLA.DE": ("EUR", 1.0)}
+    trouves = imp.reconnaitre_par_les_prix(t, ["MC", "TSLA"], chercher=lambda q: [],
+                                           marche=lambda tickers, debut: (info, historique))
+    assert trouves == {"MC": "MC.PA", "TSLA": "TSLA"}    # à écart égal, Paris passe avant Francfort

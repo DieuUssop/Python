@@ -22,8 +22,8 @@ un tableau de bord web interactif et dans un rapport PDF généré automatiqueme
 | **Gestion d'actifs** | Attribution de performance de Brinson-Fachler face au MSCI ACWI (lissage de Cariño) ; budget de risque et parité des risques ; backtest de stratégies de rééquilibrage et d'investissement progressif |
 | **Restitution** | Tableau de bord Streamlit en 3 espaces (analyse, conseil patrimonial, gestion d'actifs), version en ligne de commande, rapport PDF de synthèse |
 | **Langues** | Tableau de bord disponible en français et en anglais (sélecteur FR / EN dans la barre latérale) ; le rapport PDF et la version en ligne de commande restent en français |
-| **Import libre** | Fichier CSV ou Excel quelconque (export de banque ou de courtier, tableau personnel, même sans ligne de titres) : colonnes reconnues par leur nom, leur contenu et la cohérence des chiffres, codes ISIN convertis en tickers, prix vérifiés avec les cours du jour et reconvertis dans la devise du titre ; assistant d'import en cas de doute — voir docs/GUIDE_IMPORT.md |
-| **Fiabilité** | 103 tests automatiques, contrôle croisé du gain total, cache hors ligne |
+| **Import libre** | Fichier CSV ou Excel quelconque (export de banque ou de courtier, tableau personnel, même sans ligne de titres) : colonnes reconnues par leur nom, leur contenu et la cohérence des chiffres, codes ISIN, tickers Bloomberg / Google / Reuters et tickers sans place de cotation convertis en tickers Yahoo, prix vérifiés avec les cours du jour et reconvertis dans la devise du titre ; assistant d'import en cas de doute — voir docs/GUIDE_IMPORT.md |
+| **Fiabilité** | 107 tests automatiques, contrôle croisé du gain total, cache hors ligne |
 
 ## Démarrage rapide
 
@@ -41,7 +41,7 @@ python main.py                                      # analyse de data/transactio
 python main.py data/transactions_mondial.csv        # analyse d'un autre portefeuille
 python generer_portefeuille_mondial.py              # crée le fonds actions monde (69 titres)
 python generer_portefeuille_diversifie.py           # crée le portefeuille diversifié (50 lignes, depuis 2017)
-python -m pytest                                    # lance les 103 tests
+python -m pytest                                    # lance les 107 tests
 ```
 
 Python 3.11 ou plus récent est nécessaire, ainsi qu'une connexion Internet au premier lancement.
@@ -125,7 +125,7 @@ portfolio_tracker/
 │   ├── vues_gestion.py              # espace « Gestion d'actifs » du tableau de bord
 │   └── rapport.py                   # rapport PDF (reportlab)
 ├── assets/style.css · .streamlit/config.toml   # apparence du tableau de bord
-├── tests/                           # 103 tests automatiques (pytest)
+├── tests/                           # 107 tests automatiques (pytest)
 └── docs/                            # guides pas à pas des étapes du projet
 ```
 
