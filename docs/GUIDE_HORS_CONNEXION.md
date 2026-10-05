@@ -19,6 +19,7 @@ Le dossier `data/base/` contient :
 | `titres.csv` | La fiche de chaque titre : ticker Yahoo, nom, ISIN (quand il est connu), pays, région, secteur, classe d'actifs, devise, indices dont il fait partie |
 | `cours/paquet_00.npz` … `paquet_31.npz` | Les cours de clôture quotidiens, rangés en 32 paquets compressés |
 | `memoire.csv` | La mémoire des titres reconnus : chaque ISIN, nom ou code Bloomberg déjà converti en ticker Yahoo |
+| `pays.geojson` | Les contours des pays, pour que la carte du monde s'affiche sans Internet (téléchargés une fois) |
 
 L'univers couvert (≈ 3 500 actions) : S&P 500, Russell 1000, Nasdaq-100, CAC 40, SBF 120,
 DAX, MDAX, SDAX, FTSE 100, FTSE 250, Euro Stoxx 50, AEX, BEL 20, IBEX 35, FTSE MIB, SMI,
@@ -176,7 +177,7 @@ y sont donc temporaires (un avertissement l'indique). L'espace personnel est fai
 python -m pytest
 ```
 
-Résultat attendu : **121 passed** (dont 9 tests sur les comptes — mauvais mot de passe refusé,
+Résultat attendu : **135 passed** (dont 9 tests sur les comptes — mauvais mot de passe refusé,
 données d'un autre illisibles, fichier modifié détecté, blocage après 5 essais, changement de mot
 de passe… — et 5 tests sur la base de titres).
 

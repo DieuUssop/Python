@@ -6,7 +6,7 @@ projet : colonnes nommées autrement, lignes de titre avant le tableau, codes
 ISIN au lieu des tickers, montant total au lieu du prix unitaire, ventes
 notées avec une quantité négative... Ce module traite ces cas en 4 étapes :
 
-    1. lire_tableau_brut()        : lire le fichier tel quel (CSV ou Excel),
+    1. lire_tableau_brut()        : lire le fichier tel quel (CSV, Excel ou PDF),
                                     trouver la ligne des titres de colonnes ;
     2. proposer_correspondance()  : deviner quelle colonne est la date, la
                                     quantité, le prix... (l'utilisateur peut corriger) ;
@@ -290,7 +290,7 @@ def _lignes_csv(texte):
 
 
 def feuilles_excel(brut):
-    """Noms des feuilles d'un fichier Excel (liste vide pour un CSV)."""
+    """Noms des feuilles d'un fichier Excel (liste vide pour un CSV ou un PDF)."""
     if brut[:2] != b"PK":
         return []
     return list(pd.ExcelFile(io.BytesIO(brut)).sheet_names)
@@ -306,8 +306,134 @@ def meilleure_feuille(brut):
     return max(feuilles, key=lambda f: int(toutes[f].notna().sum().sum()))
 
 
+# ----------------------------------------------------------------------
+# PDF : relevé d'opérations (tableau) ou avis d'opéré (texte)
+# ----------------------------------------------------------------------
+class PdfIllisible(ValueError):
+    """PDF scanné (image) : pas de texte à lire."""
+
+
+MESSAGE_SCAN = ("PDF scanné (image) : impossible à lire automatiquement. Exportez le relevé en PDF depuis "
+                "votre espace bancaire, ou en Excel / CSV, ou saisissez l'opération à la main.")
+COLONNES_AVIS = ["Date", "Sens", "ISIN", "Libellé", "Quantité", "Cours", "Devise", "Frais", "Montant net"]
+_NOMBRE = r"(-?\d[\d \u00a0\u202f.,']*\d|-?\d)"
+_DEVISE = r"(EUR|USD|GBP|GBX|CHF|JPY|CAD|AUD|HKD|DKK|SEK|NOK|€|\$|£)"
+MOTIFS_AVIS = {
+    "date": re.compile(r"(?:date\s*(?:d['’]\s*ex[ée]cution|d['’]\s*op[ée]ration|de\s*n[ée]gociation|"
+                       r"d['’]\s*ex[ée]c\.?|de\s*l['’]\s*op[ée]ration)|ex[ée]cut[ée]e?\s*le|trade\s*date|"
+                       r"execution\s*date)\s*:?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}|\d{4}-\d{2}-\d{2})",
+                       re.IGNORECASE),
+    "date_simple": re.compile(r"date\s*:?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}|\d{4}-\d{2}-\d{2})",
+                              re.IGNORECASE),
+    "quantite": re.compile(r"(?:quantit[ée]\s*(?:ex[ée]cut[ée]e)?|qt[ée]|nombre\s*de\s*titres|nombre|quantity|"
+                           r"nominal)\s*:?\s*" + _NOMBRE, re.IGNORECASE),
+    "cours": re.compile(r"(?:cours\s*(?:d['’]\s*ex[ée]cution|ex[ée]cut[ée]|net|brut|unitaire)?|prix\s*(?:unitaire|"
+                        r"d['’]\s*ex[ée]cution|d['’]\s*achat|de\s*vente)?|price|execution\s*price)\s*:?\s*"
+                        + _DEVISE + r"?\s*" + _NOMBRE + r"\s*" + _DEVISE + "?", re.IGNORECASE),
+    "frais": re.compile(r"(?:courtage|commission|frais(?:\s*de\s*(?:bourse|courtage|transaction))?|"
+                        r"taxe\s*sur\s*les\s*transactions\s*financi[èe]res|ttf|fees|brokerage)\s*:?\s*"
+                        + _DEVISE + r"?\s*" + _NOMBRE, re.IGNORECASE),
+    "montant": re.compile(r"(?:montant\s*net|net\s*[àa]\s*(?:d[ée]biter|cr[ée]diter|payer|recevoir)|"
+                          r"total\s*net|net\s*amount)\s*:?\s*" + _DEVISE + r"?\s*" + _NOMBRE, re.IGNORECASE),
+    "montant_simple": re.compile(r"(?:montant\s*total|montant\s*brut|montant)\s*:?\s*" + _DEVISE + r"?\s*"
+                                 + _NOMBRE, re.IGNORECASE),
+    "libelle": re.compile(r"(?:valeur|libell[ée]|titre|d[ée]signation|instrument|security|produit)\s*:\s*([^\n]+)",
+                          re.IGNORECASE),
+}
+MOTIF_ISIN_TEXTE = re.compile(r"\b([A-Z]{2}[A-Z0-9]{9}[0-9])\b")
+MOTIF_SENS = re.compile(r"\b(achat|vente|souscription|rachat|buy|sell|bought|sold|dividende|coupon|dividend)\b",
+                        re.IGNORECASE)
+SYMBOLES = {"€": "EUR", "$": "USD", "£": "GBP"}
+
+
+def _pages_pdf(brut):
+    """Texte et tableaux de chaque page d'un PDF (bibliothèque pdfplumber)."""
+    try:
+        import pdfplumber
+    except ImportError:
+        raise ValueError("Pour lire un PDF, installer pdfplumber : python -m pip install pdfplumber")
+    pages = []
+    with pdfplumber.open(io.BytesIO(brut)) as pdf:
+        for page in pdf.pages:
+            tableaux = []
+            for reglage in ({}, {"vertical_strategy": "text", "horizontal_strategy": "text"}):
+                try:
+                    tableaux = [t for t in page.extract_tables(reglage) if t and len(t) >= 2 and len(t[0]) >= 3]
+                except Exception:
+                    tableaux = []
+                if tableaux:
+                    break
+            pages.append({"texte": page.extract_text() or "", "tableaux": tableaux})
+    return pages
+
+
+def lire_avis_opere(texte):
+    """Lit un avis d'opéré (confirmation d'un ordre exécuté). Renvoie une ligne
+    (liste de textes, dans l'ordre de COLONNES_AVIS) ou None."""
+    isin = next((c for c in MOTIF_ISIN_TEXTE.findall(texte) if isin_valide(c)), None)
+    quantite = MOTIFS_AVIS["quantite"].search(texte)
+    date = MOTIFS_AVIS["date"].search(texte) or MOTIFS_AVIS["date_simple"].search(texte)
+    if not (isin and quantite and date):
+        return None
+    sens = MOTIF_SENS.search(texte)
+    cours = MOTIFS_AVIS["cours"].search(texte)
+    montant = MOTIFS_AVIS["montant"].search(texte) or MOTIFS_AVIS["montant_simple"].search(texte)
+    libelle = MOTIFS_AVIS["libelle"].search(texte)
+    devise = ""
+    if cours:
+        devise = cours.group(1) or cours.group(3) or ""
+    devise = SYMBOLES.get(devise, devise.upper())
+    frais = sum(v for v in convertir_nombres(pd.Series([m.group(2) for m in MOTIFS_AVIS["frais"].finditer(texte)]))
+                if v == v)
+    return [date.group(1), sens.group(1) if sens else "ACHAT", isin,
+            libelle.group(1).strip()[:60] if libelle else "", quantite.group(1).strip(),
+            cours.group(2).strip() if cours else "", devise, f"{frais:.2f}" if frais else "",
+            montant.group(2).strip() if montant else ""]
+
+
+def grille_pdf(brut):
+    """Cellules d'un PDF : les tableaux qu'il contient (relevé d'opérations), sinon
+    un avis d'opéré par page. Lève PdfIllisible pour un PDF scanné."""
+    pages = _pages_pdf(brut)
+    texte_total = "".join(p["texte"] for p in pages)
+    if len(texte_total.strip()) < 20:
+        raise PdfIllisible(MESSAGE_SCAN)
+    # 1. Relevé : les tableaux (le plus large d'abord ; lignes de même largeur mises bout à bout)
+    # (un vrai tableau d'opérations contient des dates sur plusieurs lignes)
+    tableaux = [t for p in pages for t in p["tableaux"]
+                if sum(any(MOTIF_DATE.match(str(c or "").strip()) for c in ligne) for ligne in t) >= 2]
+    if tableaux:
+        largeur = max((len(t[0]) for t in tableaux), key=lambda l: sum(len(t) for t in tableaux if len(t[0]) == l))
+        grille = []
+        for t in tableaux:
+            if len(t[0]) != largeur:
+                continue
+            for ligne in t:
+                cellules = ["" if c is None else " ".join(str(c).split()) for c in ligne]
+                if grille and cellules == grille[0]:            # en-tête répété sur chaque page
+                    continue
+                grille.append(cellules)
+        if len(grille) >= 2:
+            return grille, "pdf_tableau"
+    # 2. Avis d'opéré : une opération par page (ou par fichier)
+    lignes = [l for l in (lire_avis_opere(p["texte"]) for p in pages) if l]
+    if not lignes:
+        ligne = lire_avis_opere(texte_total)
+        lignes = [ligne] if ligne else []
+    if lignes:
+        return [COLONNES_AVIS] + lignes, "pdf_avis"
+    raise ValueError("Aucune opération trouvée dans ce PDF (ni tableau d'opérations, ni avis d'opéré lisible).")
+
+
+def nature_fichier(brut):
+    """"pdf", "excel" ou "csv"."""
+    return "pdf" if brut[:5] == b"%PDF-" else "excel" if brut[:2] == b"PK" else "csv"
+
+
 def _grille(brut, feuille=None):
     """Toutes les cellules du fichier, sous forme de liste de lignes (textes)."""
+    if brut[:5] == b"%PDF-":
+        return grille_pdf(brut)
     if brut[:2] == b"PK":                                # .xlsx = archive ZIP
         try:
             feuille = feuille if feuille is not None else meilleure_feuille(brut)

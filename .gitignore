@@ -14,3 +14,8 @@ data/base/echecs.csv
 data/base/*.tmp
 data/base/cache_candidats.csv
 .installe
+
+# Installateur Windows : dossier de fabrication et résultat (trop lourd pour GitHub,
+# à publier dans une « Release » GitHub ou à partager par OneDrive / WeTransfer)
+build_installateur/
+installateur_windows/

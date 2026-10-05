@@ -166,3 +166,21 @@ table.criteres .num { text-align: right; font-variant-numeric: tabular-nums; }
 .verdict.ko { background: var(--negatif-fond); color: var(--negatif); }
 .verdict-titre { font-weight: 700; font-size: 1.05rem; }
 .verdict-texte { font-size: 0.86rem; margin-top: 0.25rem; color: var(--texte); }
+
+/* ---------- Onglet « Expositions » : pastilles orange et constats ---------- */
+.pastille.attention { color: #9a5b00; background: #fff3dd; }
+.constat { border-left: 4px solid var(--bordure); background: var(--fond-carte); border-radius: 0 10px 10px 0;
+           padding: 0.7rem 0.95rem; margin: 0 0 0.6rem; box-shadow: 0 1px 2px rgba(15, 42, 74, 0.05); }
+.constat.alerte { border-left-color: var(--negatif); background: #fffafa; }
+.constat.attention { border-left-color: #e8a33d; background: #fffdf8; }
+.constat.ok { border-left-color: var(--positif); }
+.constat-entete { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.15rem; }
+.constat-dimension { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--texte-3); }
+.constat-titre { font-weight: 600; font-size: 0.93rem; color: var(--texte); }
+.constat-risque { font-size: 0.85rem; color: var(--texte-2); margin-top: 0.25rem; }
+.constat-pistes { margin: 0.3rem 0 0 1.1rem; padding: 0; font-size: 0.85rem; color: var(--texte); }
+.constat-pistes li { margin: 0.1rem 0; }
+.synthese { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.6rem; margin: 0.2rem 0 0.9rem; }
+.synthese-case { border: 1px solid var(--bordure); border-radius: 12px; padding: 0.65rem 0.8rem; background: var(--fond-carte); }
+.synthese-nom { font-size: 0.78rem; color: var(--texte-2); margin-bottom: 0.3rem; }
+.synthese-chiffre { font-size: 0.8rem; color: var(--texte-3); margin-top: 0.3rem; }

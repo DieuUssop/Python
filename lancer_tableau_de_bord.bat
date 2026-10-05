@@ -6,5 +6,5 @@ if not exist .installe (
     echo Premiere utilisation : installation des bibliotheques - Internet necessaire...
     python -m pip install -r requirements.txt && echo ok> .installe
 )
-python -m streamlit run app.py
+python lanceur.py
 pause

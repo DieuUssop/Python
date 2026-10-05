@@ -10,3 +10,4 @@ pytest
 openpyxl
 cryptography>=42
 lxml
+pdfplumber

@@ -833,3 +833,336 @@ MOTIFS = [
     (r"Hausse des taux de (\d+) points?", r"Interest rates rise by \1 point"),
     (r"indice (.+)", r"index \1"),
 ]
+
+
+# ======================================================================
+# Ajouts : expositions, carte du monde, indices, PDF, nouvelles opérations
+# ======================================================================
+TEXTES.update({
+    # --- Diagnostic d'exposition (src/expositions.py) ---
+    "{poids} du portefeuille est exposé à des devises étrangères, dont {devise} pour {poids_devise}.":
+        "{poids} of the portfolio is exposed to foreign currencies, including {devise} for {poids_devise}.",
+    "Une baisse de ces devises face à l'euro réduit la performance, même si les titres montent : une baisse de 10 % du dollar coûterait environ {perte} au portefeuille.":
+        "A fall of these currencies against the euro reduces performance even if the securities rise: a 10% "
+        "drop in the dollar would cost the portfolio about {perte}.",
+    "Pour une partie de la poche, choisir des ETF couverts en euros (« EUR Hedged »).":
+        "For part of the allocation, choose euro-hedged ETFs (\"EUR Hedged\").",
+    "Le risque de change diversifie aussi : le dollar monte souvent en période de crise. Couvrir partiellement est un compromis courant.":
+        "Currency risk also diversifies: the dollar often rises in a crisis. Partial hedging is a common compromise.",
+    "Risque de change limité : {poids} hors euro.": "Limited currency risk: {poids} outside the euro.",
+    "Une seule action, {nom}, représente {poids} du portefeuille.": "A single stock, {nom}, makes up {poids} of the portfolio.",
+    "Le risque propre à une entreprise (résultats, procès, scandale) n'est pas diversifié : une chute de 30 % de ce titre coûterait {perte} au portefeuille.":
+        "Company-specific risk (earnings, lawsuits, scandals) is not diversified: a 30% fall in this stock would "
+        "cost the portfolio {perte}.",
+    "Réduire la ligne progressivement ou la compléter par des titres du même secteur.":
+        "Reduce the position gradually or complement it with other stocks from the same sector.",
+    "Repère réglementaire : un fonds UCITS ne peut pas dépasser 10 % sur un émetteur.":
+        "Regulatory benchmark: a UCITS fund may not exceed 10% in a single issuer.",
+    "Les {n} actions de plus de 5 % totalisent {poids} (règle 5/10/40 dépassée).":
+        "The {n} stocks above 5% add up to {poids} (5/10/40 rule exceeded).",
+    "Règle des fonds UCITS : les lignes de plus de 5 % ne doivent pas dépasser 40 % au total. Au-delà, le portefeuille dépend de quelques entreprises.":
+        "UCITS rule: positions above 5% must not exceed 40% in total. Beyond that, the portfolio depends on a "
+        "few companies.",
+    "Ramener certaines lignes sous 5 % ou ajouter des ETF diversifiés.":
+        "Bring some positions below 5% or add diversified ETFs.",
+    "{noms} : détenu(s) en direct ET probablement aussi via votre ETF {indice}.":
+        "{noms}: held directly AND probably also through your {indice} ETF.",
+    "L'exposition réelle à ces entreprises est plus forte que leur seule ligne ne le laisse penser.":
+        "Your real exposure to these companies is higher than their own position suggests.",
+    "En tenir compte avant de renforcer ces lignes.": "Take this into account before adding to these positions.",
+    "Aucune ligne trop concentrée ({n} lignes, équivalent à {eff} lignes de même poids).":
+        "No overly concentrated position ({n} positions, equivalent to {eff} equal-weight positions).",
+    "Duration moyenne des obligations : {duration} ans. Une hausse des taux de 1 point coûterait environ {perte} au portefeuille.":
+        "Average bond duration: {duration} years. A 1-point rise in interest rates would cost the portfolio "
+        "about {perte}.",
+    "Plus la duration est longue, plus le prix des obligations baisse quand les taux montent (et monte quand ils baissent).":
+        "The longer the duration, the more bond prices fall when rates rise (and rise when they fall).",
+    "Raccourcir la duration (obligations 1-3 ans) pour réduire la sensibilité aux taux.":
+        "Shorten duration (1-3 year bonds) to reduce interest-rate sensitivity.",
+    "Biais domestique : la France représente {poids} de la poche actions.":
+        "Home bias: France makes up {poids} of the equity allocation.",
+    "Les investisseurs surpondèrent souvent leur propre pays : le patrimoine (emploi, immobilier) est alors déjà exposé à la même économie.":
+        "Investors often overweight their own country, while their wealth (job, real estate) is already exposed "
+        "to the same economy.",
+    "Un ETF monde éligible au PEA permet de garder l'enveloppe tout en diversifiant.":
+        "A PEA-eligible world ETF keeps the tax wrapper while diversifying.",
+    "Les pays émergents représentent {poids} de la poche actions.": "Emerging markets make up {poids} of the equity allocation.",
+    "Marchés plus volatils, avec des risques politiques, de gouvernance et de change plus élevés.":
+        "More volatile markets, with higher political, governance and currency risks.",
+    "Limiter cette poche selon le profil, ou la faire porter par un ETF large plutôt que par quelques titres.":
+        "Limit this allocation according to the profile, or hold it through a broad ETF rather than a few stocks.",
+    "Répartition géographique proche du marché mondial (premier pays : {pays}, {poids}).":
+        "Geographic allocation close to the world market (largest country: {pays}, {poids}).",
+    "Le secteur {secteur} pèse {poids} de la poche actions ({monde} dans le marché mondial).":
+        "The {secteur} sector makes up {poids} of the equity allocation ({monde} in the world market).",
+    "Le portefeuille dépend d'un seul cycle économique : un retournement du secteur (valorisations, taux, réglementation) pèserait lourd sur la performance.":
+        "The portfolio depends on a single economic cycle: a sector downturn (valuations, rates, regulation) "
+        "would weigh heavily on performance.",
+    "Équilibrer avec des secteurs peu représentés, notamment défensifs (santé, consommation de base, services publics).":
+        "Balance with under-represented sectors, especially defensive ones (health care, consumer staples, utilities).",
+    "Un ETF monde équipondéré ou sectoriel peut corriger le biais.": "An equal-weight world ETF or a sector ETF can correct the bias.",
+    "Peu de secteurs défensifs : {poids} (santé, consommation de base, services publics).":
+        "Few defensive sectors: {poids} (health care, consumer staples, utilities).",
+    "Ces secteurs amortissent généralement les baisses de marché : sans eux, le portefeuille souffre davantage en récession.":
+        "These sectors usually cushion market falls: without them, the portfolio suffers more in a recession.",
+    "Ajouter une poche défensive pour lisser les baisses.": "Add a defensive allocation to smooth out declines.",
+    "Répartition sectorielle équilibrée (premier secteur : {secteur}, {poids}).":
+        "Balanced sector allocation (largest sector: {secteur}, {poids}).",
+    "{n} lignes très corrélées entre elles ({rho} en moyenne) pèsent {poids} : {noms}. {n} lignes, mais en pratique un seul pari.":
+        "{n} highly correlated positions ({rho} on average) weigh {poids}: {noms}. {n} positions, but in "
+        "practice a single bet.",
+    "La diversification n'est qu'apparente : ces titres baissent ensemble.":
+        "The diversification is only apparent: these securities fall together.",
+    "Remplacer une partie de ce bloc par des actifs peu corrélés (autres secteurs, obligations, or).":
+        "Replace part of this block with weakly correlated assets (other sectors, bonds, gold).",
+    "Ou regrouper ces lignes dans un seul ETF du même thème, moins risqué.":
+        "Or combine these positions into a single, less risky ETF on the same theme.",
+    "Corrélation moyenne élevée entre les lignes : {rho}.": "High average correlation between positions: {rho}.",
+    "Les lignes évoluent dans le même sens : le portefeuille se comporte presque comme un seul actif.":
+        "The positions move together: the portfolio behaves almost like a single asset.",
+    "Ajouter des classes d'actifs différentes (obligations, or) ou d'autres zones.":
+        "Add different asset classes (bonds, gold) or other regions.",
+    "Les jours de forte baisse, la corrélation moyenne monte à {crise} (contre {rho} en temps normal).":
+        "On days of sharp declines, the average correlation rises to {crise} (versus {rho} normally).",
+    "La diversification protège moins quand on en a le plus besoin : c'est typique des crises.":
+        "Diversification protects less when it is needed most: this is typical of crises.",
+    "Voir les stress tests (espace « Conseil patrimonial ») pour mesurer l'impact d'une crise.":
+        "See the stress tests (\"Wealth advisory\" workspace) to measure the impact of a crisis.",
+    "Amortisseurs présents : {noms} ({poids}) évoluent peu avec le reste du portefeuille.":
+        "Shock absorbers present: {noms} ({poids}) move little with the rest of the portfolio.",
+    "Diversification réelle satisfaisante : {blocs} blocs indépendants pour {n} lignes, ratio de diversification {ratio}.":
+        "Satisfactory real diversification: {blocs} independent blocks for {n} positions, diversification "
+        "ratio {ratio}.",
+    "{pays} pèse {poids} de la poche actions ({monde} dans le marché mondial).":
+        "{pays} makes up {poids} of the equity allocation ({monde} in the world market).",
+    "Votre performance dépend fortement de l'économie, de la politique et de la monnaie d'un seul pays. Un choc local (récession, élection, réglementation) toucherait une grande partie du portefeuille.":
+        "Your performance depends heavily on the economy, politics and currency of a single country. A local "
+        "shock (recession, election, regulation) would hit a large part of the portfolio.",
+    "Diversifier une partie de cette poche avec un ETF monde (MSCI World ou ACWI).":
+        "Diversify part of this allocation with a world ETF (MSCI World or ACWI).",
+    "Renforcer les zones sous-représentées plutôt que de vendre, si la fiscalité l'impose.":
+        "Add to under-represented regions rather than selling, if taxes make selling costly.",
+    "Surpondération marquée d'un pays par rapport au marché mondial.": "Marked overweight of one country versus the world market.",
+    "Vérifier que ce choix est volontaire (conviction, biais domestique).": "Check that this choice is deliberate (conviction, home bias).",
+    "très forte": "very strong", "forte": "strong", "modérée": "moderate", "faible": "weak",
+    "Bon": "Good", "À surveiller": "To monitor", "À corriger": "To fix", "Non concerné": "Not applicable",
+    "Géographie": "Geography", "Secteurs": "Sectors", "Devises": "Currencies", "Concentration": "Concentration",
+    "Taux": "Interest rates", "Diversification réelle": "Real diversification",
+    # --- Graphiques ---
+    "Autres ({n})": "Other ({n})",
+    "%{customdata[2]} titre(s)": "%{customdata[2]} security(ies)",
+    "%{z:.1%} de la poche actions": "%{z:.1%} of the equity allocation",
+    "… et {n} autre(s)": "… and {n} more",
+    # --- Indices de référence (src/indices.py) ---
+    "Actions": "Equities", "Obligations": "Bonds", "Monétaire": "Money market", "Mixtes": "Multi-asset",
+    "MSCI World": "MSCI World", "MSCI ACWI": "MSCI ACWI", "S&P 500": "S&P 500", "Nasdaq-100": "Nasdaq-100",
+    "Stoxx Europe 600": "Stoxx Europe 600", "Euro Stoxx 50": "Euro Stoxx 50", "CAC 40": "CAC 40",
+    "MSCI ACWI, monde avec émergents (ETF, dividendes réinvestis)":
+        "MSCI ACWI, world including emerging markets (ETF, dividends reinvested)",
+    "Nasdaq-100 (ETF, dividendes réinvestis)": "Nasdaq-100 (ETF, dividends reinvested)",
+    "Stoxx Europe 600 (ETF, dividendes réinvestis)": "Stoxx Europe 600 (ETF, dividends reinvested)",
+    "MSCI Marchés émergents (ETF, dividendes réinvestis)": "MSCI Emerging Markets (ETF, dividends reinvested)",
+    "MSCI Émergents": "MSCI Emerging",
+    "Emprunts d'État zone euro (ETF, coupons réinvestis)": "Euro area government bonds (ETF, coupons reinvested)",
+    "Emprunts d'État €": "€ government bonds",
+    "Obligations d'entreprises en euros (ETF, hors coupons)": "Euro corporate bonds (ETF, excluding coupons)",
+    "Oblig. entreprises €": "€ corporate bonds",
+    "Monétaire €STR (ETF, intérêts réinvestis)": "Money market €STR (ETF, interest reinvested)",
+    "€STR": "€STR",
+    "Mixte prudent : 20 % actions monde / 80 % obligations €": "Conservative mix: 20% world equities / 80% € bonds",
+    "Mixte équilibré : 60 % actions monde / 40 % obligations €": "Balanced mix: 60% world equities / 40% € bonds",
+    "Mixte dynamique : 80 % actions monde / 20 % obligations €": "Growth mix: 80% world equities / 20% € bonds",
+    "Mixte 20/80": "Mix 20/80", "Mixte 60/40": "Mix 60/40", "Mixte 80/20": "Mix 80/20",
+    "Actions, obligations, monétaire, ou indice mixte actions / obligations recalculé chaque mois":
+        "Equities, bonds, money market, or a multi-asset equity / bond index rebalanced monthly",
+    "Indice {famille} : le bêta, l'alpha et la corrélation mesurent la sensibilité à un marché d'actions ; face à cet indice, ils ont peu de sens. Comparez surtout les rendements et les volatilités.":
+        "{famille} index: beta, alpha and correlation measure sensitivity to an equity market; against this "
+        "index they make little sense. Compare returns and volatilities instead.",
+    # --- Tableau de bord ---
+    "Portefeuille d'exemple": "Sample portfolio",
+    "Portefeuille actuel": "Current portfolio",
+    "Régions (poche actions)": "Regions (equity allocation)",
+    "Secteurs (poche actions)": "Sectors (equity allocation)",
+    "Ou envoyer un autre fichier (CSV, Excel ou PDF)": "Or upload another file (CSV, Excel or PDF)",
+    "Colonnes : date, type (ACHAT, VENTE, DIVIDENDE), ticker (code Yahoo Finance), nom, quantite, prix, frais. CSV à virgules ou à points-virgules, fichier Excel, ou PDF (relevé d'opérations, avis d'opéré). Prioritaire sur le portefeuille choisi ci-dessus.":
+        "Columns: date, type (ACHAT = buy, VENTE = sell, DIVIDENDE = dividend), ticker (Yahoo Finance code), "
+        "name, quantity, price, fees. Comma or semicolon CSV, Excel file, or PDF (transaction statement, trade "
+        "confirmation). Takes priority over the portfolio selected above.",
+    "Expositions": "Exposures",
+    "Si la VaR historique dépasse la VaR paramétrique, les pertes extrêmes sont plus fréquentes que ne le prévoit la loi normale (« queues épaisses »). Corrélations et diversification : onglet « Expositions ».":
+        "If historical VaR exceeds parametric VaR, extreme losses are more frequent than the normal distribution "
+        "predicts (\"fat tails\"). Correlations and diversification: \"Exposures\" tab.",
+    "Présence dans le monde": "Worldwide presence",
+    "Poids de chaque pays dans la poche actions · plus la couleur est foncée, plus le pays pèse · survoler un pays pour le détail":
+        "Weight of each country in the equity allocation · the darker the colour, the larger the weight · hover "
+        "over a country for details",
+    "ETF répartis selon la composition de leur indice (approximation au {date}).":
+        "ETFs allocated according to the composition of their index (approximation as of {date}).",
+    "Hors carte : {detail}.": "Not on the map: {detail}.",
+    "{n} groupes · en % de la valeur": "{n} groups · as % of value",
+    "{n} groupes · en % de la poche actions": "{n} groups · as % of the equity allocation",
+    "Mettre à jour ce portefeuille avec de nouveaux mouvements : avis d'opéré PDF, export Excel / CSV ou saisie manuelle":
+        "Update this portfolio with new transactions: PDF trade confirmation, Excel / CSV export or manual entry",
+    "Télécharger le fichier mis à jour": "Download the updated file",
+    "{nom} (mis à jour)": "{nom} (updated)",
+    # --- Onglet Expositions (src/vues_expositions.py) ---
+    "Seuils adaptés au profil": "Thresholds for profile",
+    "Hors euro : {poids}": "Outside the euro: {poids}",
+    "Plus grosse ligne : {poids}": "Largest position: {poids}",
+    "Corrélation moyenne : {rho}": "Average correlation: {rho}",
+    "Par titre": "By security",
+    "Analyse des expositions...": "Analysing exposures...",
+    "Profil défini dans l'espace « Conseil patrimonial » (questionnaire), ou choisi ici.":
+        "Profile set in the \"Wealth advisory\" workspace (questionnaire), or chosen here.",
+    "1er pays : {pays} {poids}": "Top country: {pays} {poids}",
+    "1er secteur : {secteur} {poids}": "Top sector: {secteur} {poids}",
+    "Duration : {d} ans": "Duration: {d} years",
+    "Pas d'obligations": "No bonds",
+    "Géographie et secteurs": "Geography and sectors",
+    "Devises et taux": "Currencies and rates",
+    "Au moins deux lignes sont nécessaires.": "At least two positions are needed.",
+    "Expositions et diversification": "Exposures and diversification",
+    "Analyse en transparence : chaque ETF est réparti selon la composition de son indice (approximation au {date})":
+        "Look-through analysis: each ETF is allocated according to the composition of its index (approximation "
+        "as of {date})",
+    "Constats et pistes": "Findings and suggestions",
+    "Analyse pédagogique fondée sur des règles simples et des données passées : elle ne constitue pas un conseil en investissement.":
+        "Educational analysis based on simple rules and past data: it is not investment advice.",
+    "Afficher": "Show",
+    "Corrélations historiques des rendements quotidiens ({n} jours) : elles ne sont pas garanties à l'avenir.":
+        "Historical correlations of daily returns ({n} days): they are not guaranteed in the future.",
+    "{n} point(s) à surveiller ou à corriger": "{n} point(s) to monitor or fix",
+    "Aucun point d'attention": "Nothing to flag",
+    "Points positifs ({n})": "Strengths ({n})",
+    "Exposition réelle aux devises": "Real currency exposure",
+    "Tout le portefeuille, ETF répartis selon les pays de leur indice":
+        "Whole portfolio, ETFs allocated according to the countries in their index",
+    "Un ETF coté en euros reste exposé aux devises des actions qu'il contient, sauf s'il est couvert (« EUR Hedged »). L'or, coté en dollars, est compté à part.":
+        "A euro-listed ETF remains exposed to the currencies of the stocks it holds, unless it is hedged "
+        "(\"EUR Hedged\"). Gold, priced in dollars, is shown separately.",
+    "Sensibilité aux taux": "Interest-rate sensitivity",
+    "Poche obligataire": "Bond allocation",
+    "Le portefeuille ne contient pas d'obligations.": "The portfolio holds no bonds.",
+    "Les plus grosses lignes": "Largest positions",
+    "Poids et poids cumulé": "Weight and cumulative weight",
+    "Corrélation moyenne": "Average correlation",
+    "Blocs indépendants": "Independent blocks",
+    "Les jours de forte baisse": "On sharp-decline days",
+    "Corrélations entre les titres": "Correlations between securities",
+    "Titres regroupés par blocs qui évoluent ensemble · rouge = évoluent ensemble, bleu = en sens inverse":
+        "Securities grouped into blocks that move together · red = move together, blue = move in opposite directions",
+    "Corrélations entre groupes": "Correlations between groups",
+    "Rendement de chaque groupe (lignes pondérées par leur poids)": "Return of each group (positions weighted by size)",
+    "Paires les plus corrélées": "Most correlated pairs",
+    "Lignes qui diversifient le mieux": "Best diversifiers",
+    "Corrélation avec le reste du portefeuille": "Correlation with the rest of the portfolio",
+    "Pas de poche actions à analyser.": "No equity allocation to analyse.",
+    "Principaux écarts par pays": "Main differences by country",
+    "Sur- et sous-pondérations de la poche actions face à {indice}":
+        "Over- and underweights of the equity allocation versus {indice}",
+    "Part de la valeur et part du risque par région": "Share of value and share of risk by region",
+    "Une région qui apporte plus de risque que de valeur est plus volatile ou plus corrélée au reste":
+        "A region that brings more risk than value is more volatile or more correlated with the rest",
+    "Approximation : variation du prix ≈ − duration × variation des taux. Les obligations retrouvent ensuite un rendement plus élevé.":
+        "Approximation: price change ≈ − duration × change in rates. Bonds then earn a higher yield.",
+    "5 premières lignes": "Top 5 positions", "10 premières lignes": "Top 10 positions",
+    "Actions de plus de 5 %": "Stocks above 5%", "Cumul": "Cumulative",
+    "pondérée par les poids": "weighted by position size",
+    "Corrélation typique entre deux euros investis dans deux lignes différentes":
+        "Typical correlation between two euros invested in two different positions",
+    "Somme des volatilités pondérées / volatilité du portefeuille": "Sum of weighted volatilities / portfolio volatility",
+    "Groupes de titres corrélés à plus de 0,7 : chacun ne compte que pour un pari":
+        "Groups of securities correlated above 0.7: each counts as a single bet",
+    "corrélation moyenne (10 % pires jours)": "average correlation (worst 10% of days)",
+    "Les corrélations montent pendant les crises : la diversification protège alors moins":
+        "Correlations rise during crises: diversification then protects less",
+    "Lien": "Strength", "Blocs de titres corrélés": "Blocks of correlated securities",
+    "Corrélation moyenne supérieure à 0,7": "Average correlation above 0.7",
+    "**{poids}** · {noms} (corrélation {rho})": "**{poids}** · {noms} (correlation {rho})",
+    "Pays": "Country",
+    "équivalent à {n} lignes de même poids": "equivalent to {n} equal-weight positions",
+    "Nombre effectif = 1 / Σ poids² (inverse de l'indice de Herfindahl)":
+        "Effective number = 1 / Σ weight² (inverse of the Herfindahl index)",
+    "Limite UCITS : 40 %": "UCITS limit: 40%",
+    "Règle 5/10/40 des fonds : une ligne ≤ 10 %, et les lignes > 5 % ≤ 40 % au total":
+        "Fund 5/10/40 rule: one position ≤ 10%, and positions > 5% ≤ 40% in total",
+    "Duration moyenne": "Average duration", "{d} ans": "{d} years",
+    "Si les taux montent de 1 point": "If rates rise by 1 point",
+    "Durée de vie moyenne pondérée des flux : mesure la sensibilité aux taux":
+        "Weighted average life of cash flows: measures interest-rate sensitivity",
+    "≈ {montant}": "≈ {montant}",
+    # --- Gestion d'actifs ---
+    "Le diagnostic de diversification (régions, secteurs, devises, corrélations, ratio de diversification) se trouve dans « Analyse du portefeuille » › onglet « Expositions ».":
+        "The diversification diagnosis (regions, sectors, currencies, correlations, diversification ratio) is in "
+        "\"Portfolio analysis\" › \"Exposures\" tab.",
+    "Les 20 plus gros contributeurs au risque · une ligne dont la part du risque dépasse sa part de la valeur est plus volatile ou plus corrélée au reste":
+        "The 20 largest risk contributors · a position whose share of risk exceeds its share of value is more "
+        "volatile or more correlated with the rest",
+    "Volatilité actuelle": "Current volatility",
+    "Volatilité en parité des risques": "Risk-parity volatility",
+    "Mêmes titres, risque réparti également": "Same securities, risk spread equally",
+    # --- Mon compte et nouvelles opérations ---
+    "Fichier CSV, Excel ou PDF, de n'importe quel format": "CSV, Excel or PDF file, in any layout",
+    "Ajouter des opérations": "Add transactions",
+    "Annuler le dernier ajout": "Undo last addition",
+    "Revenir à la version du {date}": "Go back to the version of {date}",
+    "Aucun ajout à annuler.": "Nothing to undo.",
+    "Retour au tableau de bord": "Back to the dashboard",
+    "Titre introuvable : {titre}. Indiquez son ticker Yahoo Finance (ex. MC.PA).":
+        "Security not found: {titre}. Enter its Yahoo Finance ticker (e.g. MC.PA).",
+    "Portefeuille : {nom}": "Portfolio: {nom}",
+    "Envoyez seulement les nouveaux mouvements : un avis d'opéré (PDF), un export des dernières opérations (Excel, CSV ou PDF), ou saisissez un ordre à la main. Les opérations déjà présentes sont reconnues et ne sont pas ajoutées deux fois.":
+        "Upload only the new transactions: a trade confirmation (PDF), an export of recent transactions (Excel, "
+        "CSV or PDF), or enter an order manually. Transactions already present are recognised and not added twice.",
+    "Depuis un fichier": "From a file", "Saisie manuelle": "Manual entry",
+    "Fichiers (CSV, Excel ou PDF)": "Files (CSV, Excel or PDF)",
+    "{n} opération(s) ajoutée(s) · {total} au total ({avant} avant)":
+        "{n} transaction(s) added · {total} in total ({avant} before)",
+    "Enregistrer les opérations": "Save transactions", "Tout effacer": "Clear all",
+    "Date": "Date",
+    "Prix unitaire (devise du titre) ou montant du dividende": "Unit price (security currency) or dividend amount",
+    "Frais (€)": "Fees (€)", "Ajouter à la liste": "Add to the list",
+    "Vérification avant enregistrement": "Check before saving",
+    "Décochez une ligne pour ne pas l'ajouter. Les cellules sont modifiables.":
+        "Untick a row to leave it out. Cells can be edited.",
+    "{n} opération(s) ajoutée(s) à « {nom} ». Vous pouvez annuler cet ajout depuis « Mon compte ».":
+        "{n} transaction(s) added to \"{nom}\". You can undo this from \"My account\".",
+    "{n} opération(s) ajoutée(s) pour cette session. Téléchargez le fichier mis à jour pour le garder.":
+        "{n} transaction(s) added for this session. Download the updated file to keep it.",
+    "Lecture de {nom}...": "Reading {nom}...",
+    "{nom} : {n} opération(s) lue(s).": "{nom}: {n} transaction(s) read.",
+    "{nom} : {raison}": "{nom}: {raison}",
+    "Ticker, ISIN, nom ou code Bloomberg": "Ticker, ISIN, name or Bloomberg code",
+    "Pour un format inhabituel, envoyez le fichier depuis la barre latérale : l'assistant d'import vous guidera.":
+        "For an unusual layout, upload the file from the sidebar: the import assistant will guide you.",
+    "Ajouter": "Add", "Prix": "Price", "Indiquez le titre.": "Enter the security.",
+    "Recherche du titre...": "Looking up the security...",
+    "déjà dans le portefeuille": "already in the portfolio", "nouvelle": "new",
+    "Opération datée dans le futur : {titre}, le {date}.": "Transaction dated in the future: {titre}, on {date}.",
+    "Quantité ou prix nul pour {titre}, le {date}.": "Zero quantity or price for {titre}, on {date}.",
+    "Vente de {quantite} {titre} le {date}, mais seulement {detenu} détenu(s) à cette date.":
+        "Sale of {quantite} {titre} on {date}, but only {detenu} held on that date.",
+    "PDF scanné (image) : impossible à lire automatiquement. Exportez le relevé en PDF depuis votre espace bancaire, ou en Excel / CSV, ou saisissez l'opération à la main.":
+        "Scanned PDF (image): it cannot be read automatically. Export the statement as a PDF from your online "
+        "banking, or as Excel / CSV, or enter the transaction manually.",
+    "Aucune opération trouvée dans ce PDF (ni tableau d'opérations, ni avis d'opéré lisible).":
+        "No transaction found in this PDF (no transaction table and no readable trade confirmation).",
+    "Pour lire un PDF, installer pdfplumber : python -m pip install pdfplumber":
+        "To read a PDF, install pdfplumber: python -m pip install pdfplumber",
+})
+
+DONNEES.update({
+    "France": "France", "Allemagne": "Germany", "Pays-Bas": "Netherlands", "Espagne": "Spain", "Italie": "Italy",
+    "Belgique": "Belgium", "Finlande": "Finland", "Irlande": "Ireland", "Autriche": "Austria",
+    "Portugal": "Portugal", "Grèce": "Greece", "Slovaquie": "Slovakia", "Slovénie": "Slovenia",
+    "Luxembourg": "Luxembourg", "Suède": "Sweden", "Danemark": "Denmark", "Norvège": "Norway",
+    "Pologne": "Poland", "Hongrie": "Hungary", "Tchéquie": "Czech Republic", "Israël": "Israel",
+    "Australie": "Australia", "Nouvelle-Zélande": "New Zealand", "Hong Kong": "Hong Kong",
+    "Singapour": "Singapore", "Chine": "China", "Taïwan": "Taiwan", "Corée du Sud": "South Korea",
+    "Inde": "India", "Brésil": "Brazil", "Mexique": "Mexico", "Afrique du Sud": "South Africa",
+    "Arabie saoudite": "Saudi Arabia", "Émirats arabes unis": "United Arab Emirates", "Qatar": "Qatar",
+    "Koweït": "Kuwait", "Indonésie": "Indonesia", "Malaisie": "Malaysia", "Thaïlande": "Thailand",
+    "Philippines": "Philippines", "Turquie": "Turkey", "Chili": "Chile", "Pérou": "Peru",
+    "Colombie": "Colombia", "Égypte": "Egypt", "Zone euro": "Euro area", "Monétaire": "Money market",
+    "Sans pays (or)": "No country (gold)", "Autres pays": "Other countries",
+})

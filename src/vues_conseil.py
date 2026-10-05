@@ -70,6 +70,7 @@ def _profil(res):
 
     resultat = pf.profil_depuis_reponses(reponses)
     profil = resultat["profil"]
+    st.session_state["profil_client"] = profil.nom          # repris par l'onglet « Expositions »
     part_actions = pf.part_actions(res["positions"])
     test = pf.adequation(profil, ind["volatilite"], ind["max_drawdown"], part_actions=part_actions)
 

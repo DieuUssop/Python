@@ -4,7 +4,8 @@
 
 N'importe qui peut envoyer **son** fichier depuis la barre latérale du tableau de bord (« Ou envoyer un autre fichier »), sans respecter le format du projet :
 
-- un **export de banque ou de courtier** (relevé d'opérations en CSV ou Excel) ;
+- un **export de banque ou de courtier** (relevé d'opérations en CSV, Excel ou **PDF**) ;
+- un **avis d'opéré en PDF** (la confirmation envoyée par la banque après chaque ordre) ;
 - un **tableau Excel personnel**, avec ses propres noms de colonnes ;
 - des titres désignés par leur **code ISIN** (FR0000121014) ou leur **nom**, au lieu du ticker Yahoo Finance.
 
@@ -77,8 +78,26 @@ Quand la détection automatique a un doute, l'assistant s'ouvre, en 4 étapes (i
 - Les frais de garde, virements et impôts sont ignorés (ils ne concernent pas un titre).
 - La conversion des devises utilise le taux de change du marché ; celui de la banque diffère légèrement (sa marge de change), d'où de petits écarts.
 - La vérification des prix et la recherche des tickers ont besoin d'Internet ; sans connexion, les prix sont gardés tels quels et c'est signalé.
+- Un **PDF scanné** (photo ou scan papier) ne contient pas de texte : il est refusé avec un message clair (exporter le relevé en PDF depuis l'espace bancaire, en Excel / CSV, ou saisir l'opération à la main).
 - Un fichier très inhabituel (deux tableaux d'opérations l'un sous l'autre, cellules fusionnées, tableau collé à un autre sans colonne vide) peut encore demander l'assistant.
 
 ## Pour les tests
 
 `tests/test_import_auto.py` vérifie la détection par le contenu (fichier sans titres de colonnes), la clé ISIN, l'ordre jour/mois et les conversions de devises (cours simulés). `tests/test_import_libre.py` vérifie la lecture d'un relevé de courtier fictif : lignes de titre, ISIN, « Achat Comptant », quantité négative, montant net, ligne de frais de garde.
+`tests/test_pdf.py` vérifie la lecture d'un relevé PDF (tableau), d'un avis d'opéré (date d'exécution et non d'édition, ISIN, quantité, cours, devise) et le refus d'un PDF scanné.
+
+## Les PDF
+
+- **Relevé avec un tableau** : les tableaux du PDF sont extraits (bibliothèque *pdfplumber*), puis lus comme un fichier Excel, avec la même détection automatique.
+- **Avis d'opéré** : le texte est lu ligne à ligne : date d'exécution, sens (achat / vente), code ISIN, quantité, cours et devise, courtage et taxes, montant net. Un PDF de plusieurs pages contenant un avis par page donne une opération par page.
+- **PDF scanné** : refusé (pas de texte à lire).
+
+## Mettre à jour son portefeuille (sans tout renvoyer)
+
+Bouton **« Ajouter des opérations »** (barre latérale, ou « Mon compte » pour un portefeuille enregistré) :
+
+1. envoyer seulement les nouveaux mouvements : un ou plusieurs avis d'opéré PDF, un export des dernières opérations (Excel, CSV, PDF), ou **saisir un ordre à la main** (date, type, titre par son ticker, son ISIN, son nom ou son code Bloomberg, quantité, prix, frais) ;
+2. **vérifier** : le tableau est modifiable ; les opérations **déjà présentes** (même date, titre, type, quantité, prix à 0,5 % près — cas d'un relevé qui chevauche l'ancien) sont décochées ; une **vente de titres non détenus** ou une **date future** bloque l'enregistrement ;
+3. **enregistrer** : les opérations sont fusionnées et triées par date. Dans « Mon espace », le portefeuille est rechiffré et le bouton **« Annuler le dernier ajout »** permet de revenir en arrière. Sans compte, le fichier mis à jour est proposé au téléchargement.
+
+Ajouter deux fois le même fichier ne change rien. Tests : `tests/test_mouvements.py`.

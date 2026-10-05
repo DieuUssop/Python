@@ -22,12 +22,19 @@ un tableau de bord web interactif et dans un rapport PDF généré automatiqueme
 | **Gestion d'actifs** | Attribution de performance de Brinson-Fachler face au MSCI ACWI (lissage de Cariño) ; budget de risque et parité des risques ; backtest de stratégies de rééquilibrage et d'investissement progressif |
 | **Restitution** | Tableau de bord Streamlit en 3 espaces (analyse, conseil patrimonial, gestion d'actifs), version en ligne de commande, rapport PDF de synthèse |
 | **Langues** | Tableau de bord disponible en français et en anglais (sélecteur FR / EN dans la barre latérale) ; le rapport PDF et la version en ligne de commande restent en français |
-| **Import libre** | Fichier CSV ou Excel quelconque (export de banque ou de courtier, tableau personnel, même sans ligne de titres) : colonnes reconnues par leur nom, leur contenu et la cohérence des chiffres, codes ISIN, tickers Bloomberg / Google / Reuters et tickers sans place de cotation convertis en tickers Yahoo, prix vérifiés avec les cours du jour et reconvertis dans la devise du titre ; assistant d'import en cas de doute — voir docs/GUIDE_IMPORT.md |
+| **Import libre** | Fichier CSV, Excel ou PDF (relevé, avis d'opéré) quelconque (export de banque ou de courtier, tableau personnel, même sans ligne de titres) : colonnes reconnues par leur nom, leur contenu et la cohérence des chiffres, codes ISIN, tickers Bloomberg / Google / Reuters et tickers sans place de cotation convertis en tickers Yahoo, prix vérifiés avec les cours du jour et reconvertis dans la devise du titre ; assistant d'import en cas de doute — voir docs/GUIDE_IMPORT.md |
 | **Hors connexion** | Base locale de plusieurs milliers de titres (grands indices mondiaux, ETF, indices, taux de change) avec leurs cours depuis 2015 ; mémoire des titres reconnus (ISIN, noms) ; l'application et l'import de fichiers fonctionnent sans Internet — voir docs/GUIDE_HORS_CONNEXION.md |
 | **Espace personnel** | Comptes utilisateurs ; portefeuilles enregistrés chiffrés avec le mot de passe (PBKDF2 + AES), lisibles par leur seul propriétaire ; changement de mot de passe, suppression du compte (RGPD) |
-| **Fiabilité** | 121 tests automatiques, contrôle croisé du gain total, base cumulative hors ligne |
+| **Expositions** | Analyse en transparence (ETF répartis selon leur indice) : carte du monde, pays, secteurs, devise réelle, concentration (règle 5/10/40), sensibilité aux taux, diversification réelle (blocs de titres corrélés, ratio de diversification) ; diagnostic vert / orange / rouge avec risques et pistes, selon le profil — voir docs/GUIDE_EXPOSITIONS.md |
+| **Indices de référence** | 14 indices : actions (monde, États-Unis, Europe, France, émergents), obligations, monétaire (€STR) et mixtes 20/80, 60/40, 80/20 calculés par l'outil |
+| **Mise à jour** | Ajout de nouvelles opérations sans renvoyer tout l'historique (avis d'opéré PDF, Excel, CSV, saisie manuelle), doublons détectés, contrôles, annulation du dernier ajout |
+| **Fiabilité** | 135 tests automatiques, contrôle croisé du gain total, base cumulative hors ligne |
 
 ## Démarrage rapide
+
+**Pour les utilisateurs** : installer `Installer_Portfolio_Tracker.exe` (aucun Python nécessaire,
+fonctionne hors connexion) — voir docs/GUIDE_INSTALLATEUR.md. Pour le fabriquer : double-cliquer sur
+`fabriquer_installateur.bat`.
 
 **Sous Windows**, double-cliquer sur :
 
@@ -46,7 +53,7 @@ python generer_portefeuille_mondial.py              # crée le fonds actions mon
 python generer_portefeuille_diversifie.py           # crée le portefeuille diversifié (50 lignes, depuis 2017)
 python construire_base_titres.py                    # base locale hors connexion (≈ 1 h, une fois)
 python construire_base_titres.py --mise-a-jour      # ajoute les derniers cours (quelques minutes)
-python -m pytest                                    # lance les 121 tests
+python -m pytest                                    # lance les 135 tests
 ```
 
 Python 3.11 ou plus récent est nécessaire, ainsi qu'une connexion Internet pour l'installation.
@@ -98,6 +105,9 @@ portfolio_tracker/
 ├── lancer_tableau_de_bord.bat       # raccourcis Windows
 ├── lancer_analyse.bat
 ├── construire_base_titres.py · construire_base.bat  # base locale de titres (hors connexion)
+├── lanceur.py                       # ouvre le tableau de bord (raccourci, .bat), sur cet ordinateur uniquement
+├── fabriquer_installateur.bat/.ps1  # fabrique l'installateur Windows (Python embarqué + Inno Setup)
+├── installateur/portfolio_tracker.iss  # recette de l'installateur (Inno Setup)
 ├── requirements.txt · pytest.ini · .gitignore
 ├── data/
 │   ├── transactions.csv             # portefeuille du particulier
@@ -110,6 +120,11 @@ portfolio_tracker/
 │   ├── config.py                    # réglages (indice, taux sans risque, VaR, poids max, projection)
 │   ├── portfolio.py                 # transactions, PRU, plus-values, historique jour par jour
 │   ├── market_data.py               # cours Yahoo Finance, complétés par la base locale hors ligne
+│   ├── indices.py                   # indices de référence (actions, obligations, monétaire, mixtes)
+│   ├── composition_etf.py           # composition par pays et secteurs des indices suivis par les ETF
+│   ├── expositions.py               # expositions en transparence, corrélations, diagnostic
+│   ├── fond_de_carte.py             # contours des pays (carte du monde hors connexion)
+│   ├── mouvements.py                # ajout de nouvelles opérations (doublons, contrôles, fusion)
 │   ├── base_titres.py               # base locale de titres, cours depuis 2015 et mémoire des titres
 │   ├── devises.py                   # détection des devises et conversion en euros
 │   ├── metrics.py                   # TWR, TRI, volatilité, drawdown, Sharpe, bêta, VaR...
@@ -130,14 +145,16 @@ portfolio_tracker/
 │   ├── vues_import.py               # assistant d'import du tableau de bord
 │   ├── coffre.py                    # empreinte des mots de passe et chiffrement (PBKDF2, Fernet)
 │   ├── comptes.py                   # comptes utilisateurs et espaces personnels chiffrés
+│   ├── vues_expositions.py          # onglet « Expositions »
+│   ├── vues_mouvements.py           # page « Ajouter des opérations »
 │   ├── vues_compte.py               # connexion, « Mon espace », page « Mon compte »
 │   ├── langues.py                   # choix de la langue (FR / EN) et fonctions de traduction
 │   ├── traductions.py               # dictionnaire français -> anglais du tableau de bord
 │   ├── vues_conseil.py              # espace « Conseil patrimonial » du tableau de bord
 │   ├── vues_gestion.py              # espace « Gestion d'actifs » du tableau de bord
 │   └── rapport.py                   # rapport PDF (reportlab)
-├── assets/style.css · .streamlit/config.toml   # apparence du tableau de bord
-├── tests/                           # 121 tests automatiques (pytest)
+├── assets/style.css · assets/icone.ico · .streamlit/config.toml   # apparence du tableau de bord
+├── tests/                           # 135 tests automatiques (pytest)
 └── docs/                            # guides pas à pas des étapes du projet
 ```
 

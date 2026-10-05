@@ -1,0 +1,138 @@
+"""
+mouvements.py — Ajouter de nouvelles opérations à un portefeuille existant.
+
+Au lieu de renvoyer tout l'historique modifié, l'utilisateur envoie seulement
+ses nouveaux mouvements (un avis d'opéré PDF, un export Excel des dernières
+opérations, ou une saisie à la main). Ce module :
+
+    1. repère les DOUBLONS : opération déjà présente (même date, même titre, même
+       type, même quantité, prix à 0,5 % près) — cas d'un relevé qui chevauche
+       l'ancien ; ils sont exclus par défaut ;
+    2. CONTRÔLE la cohérence : vente de plus de titres que ceux détenus à cette
+       date (bloquant), date dans le futur, quantité ou prix nul ;
+    3. FUSIONNE l'ancien et le nouveau, trié par date.
+
+Ajouter deux fois le même fichier ne change donc rien (les opérations sont
+reconnues comme déjà présentes).
+"""
+
+import pandas as pd
+
+COLONNES = ["date", "type", "ticker", "nom", "quantite", "prix", "frais"]
+TOLERANCE_PRIX = 0.005
+ORDRE_TYPES = {"ACHAT": 0, "DIVIDENDE": 1, "VENTE": 2}       # le même jour : achat avant vente
+
+
+def lire(contenu):
+    """Fichier au format du projet (octets ou DataFrame) -> tableau standard."""
+    if isinstance(contenu, pd.DataFrame):
+        tableau = contenu.copy()
+    else:
+        import io
+        tableau = pd.read_csv(io.BytesIO(contenu) if isinstance(contenu, bytes) else io.StringIO(contenu))
+    for c in COLONNES:
+        if c not in tableau.columns:
+            tableau[c] = "" if c in ("nom",) else 0.0
+    tableau = tableau[COLONNES].copy()
+    tableau["date"] = pd.to_datetime(tableau["date"])
+    tableau["type"] = tableau["type"].astype(str).str.upper().str.strip()
+    tableau["ticker"] = tableau["ticker"].astype(str).str.strip()
+    for c in ["quantite", "prix", "frais"]:
+        tableau[c] = pd.to_numeric(tableau[c], errors="coerce").fillna(0.0)
+    tableau["nom"] = tableau["nom"].fillna("").astype(str)
+    return tableau
+
+
+def en_csv(tableau):
+    sortie = tableau[COLONNES].copy()
+    sortie["date"] = pd.to_datetime(sortie["date"]).dt.strftime("%Y-%m-%d")
+    return sortie.to_csv(index=False, float_format="%.6g").encode("utf-8")
+
+
+def _trier(tableau):
+    t = tableau.assign(_ordre=tableau["type"].map(ORDRE_TYPES).fillna(1))
+    return t.sort_values(["date", "_ordre"], kind="stable").drop(columns="_ordre").reset_index(drop=True)
+
+
+def _meme_operation(a, b):
+    if a["date"] != b["date"] or a["ticker"] != b["ticker"] or a["type"] != b["type"]:
+        return False
+    if abs(a["quantite"] - b["quantite"]) > 1e-6:
+        return False
+    reference = max(abs(a["prix"]), abs(b["prix"]), 1e-9)
+    return abs(a["prix"] - b["prix"]) / reference <= TOLERANCE_PRIX
+
+
+def reperer_doublons(existant, nouvelles):
+    """Série booléenne (index des nouvelles) : vrai si l'opération est déjà dans l'existant
+    (ou en double dans les nouvelles elles-mêmes)."""
+    deja = []
+    vues = []
+    par_cle = {}
+    for _, e in existant.iterrows():
+        par_cle.setdefault((e["date"], e["ticker"], e["type"]), []).append(e)
+    for i, n in nouvelles.iterrows():
+        candidats = par_cle.get((n["date"], n["ticker"], n["type"]), []) + vues
+        doublon = any(_meme_operation(n, c) for c in candidats)
+        deja.append(doublon)
+        if not doublon:
+            vues.append(n)
+    return pd.Series(deja, index=nouvelles.index, dtype=bool)
+
+
+def controler(fusion, aujourdhui=None):
+    """Contrôles de cohérence sur le portefeuille fusionné.
+
+    Renvoie une liste d'alertes : {"bloquant", "message", "valeurs", "ticker", "date"}.
+    Les messages sont en français (clés de traduction)."""
+    aujourdhui = pd.Timestamp(aujourdhui or pd.Timestamp.today().normalize())
+    alertes = []
+    for _, ligne in fusion[fusion["date"] > aujourdhui].iterrows():
+        alertes.append({"bloquant": True, "ticker": ligne["ticker"], "date": ligne["date"],
+                        "message": "Opération datée dans le futur : {titre}, le {date}.",
+                        "valeurs": {"titre": ligne["nom"] or ligne["ticker"],
+                                    "date": ligne["date"].strftime("%d/%m/%Y")}})
+    for _, ligne in fusion[(fusion["type"] != "DIVIDENDE") & ((fusion["quantite"] <= 0) | (fusion["prix"] <= 0))].iterrows():
+        alertes.append({"bloquant": True, "ticker": ligne["ticker"], "date": ligne["date"],
+                        "message": "Quantité ou prix nul pour {titre}, le {date}.",
+                        "valeurs": {"titre": ligne["nom"] or ligne["ticker"],
+                                    "date": ligne["date"].strftime("%d/%m/%Y")}})
+    detenu = {}
+    for _, ligne in _trier(fusion).iterrows():
+        signe = {"ACHAT": 1, "VENTE": -1}.get(ligne["type"], 0)
+        detenu[ligne["ticker"]] = detenu.get(ligne["ticker"], 0.0) + signe * ligne["quantite"]
+        if detenu[ligne["ticker"]] < -1e-6:
+            alertes.append({"bloquant": True, "ticker": ligne["ticker"], "date": ligne["date"],
+                            "message": "Vente de {quantite} {titre} le {date}, mais seulement {detenu} détenu(s) "
+                                       "à cette date.",
+                            "valeurs": {"titre": ligne["nom"] or ligne["ticker"], "quantite": f"{ligne['quantite']:g}",
+                                        "date": ligne["date"].strftime("%d/%m/%Y"),
+                                        "detenu": f"{detenu[ligne['ticker']] + ligne['quantite']:g}"}})
+            detenu[ligne["ticker"]] = 0.0
+    return alertes
+
+
+def preparer(existant, nouvelles):
+    """Analyse des nouvelles opérations avant enregistrement.
+
+    Renvoie (nouvelles avec les colonnes « inclure » et « statut », alertes)."""
+    existant, nouvelles = lire(existant), lire(nouvelles)
+    doublons = reperer_doublons(existant, nouvelles)
+    nouvelles = nouvelles.assign(inclure=~doublons,
+                                 statut=["déjà dans le portefeuille" if d else "nouvelle" for d in doublons])
+    return nouvelles, controler(fusionner(existant, nouvelles))
+
+
+def fusionner(existant, nouvelles):
+    """Ancien + nouvelles opérations retenues (colonne « inclure » si présente), triées par date."""
+    existant, retenues = lire(existant), nouvelles
+    if "inclure" in retenues.columns:
+        retenues = retenues[retenues["inclure"].astype(bool)]
+    retenues = lire(retenues[COLONNES])
+    return _trier(pd.concat([existant, retenues], ignore_index=True))
+
+
+def fusionner_operations(existant, nouvelles):
+    """Fonction tout-en-un : (fusion, doublons exclus, alertes)."""
+    preparees, alertes = preparer(existant, nouvelles)
+    return fusionner(existant, preparees), preparees[~preparees["inclure"]], alertes

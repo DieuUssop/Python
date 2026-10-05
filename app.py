@@ -31,19 +31,24 @@ import streamlit as st
 from src import config, langues
 from src import graphiques_interactifs as gi
 from src import interface as ui
-from src import import_fichier, vues_compte, vues_conseil, vues_gestion, vues_import
+from src import (expositions, fond_de_carte, import_fichier, indices, vues_compte, vues_conseil,
+                 vues_expositions, vues_gestion, vues_import, vues_mouvements)
 from src.analyse import analyse_complete
 from src.interface import euros, nombre, pct, tendance
 from src.langues import t, td
 from src.optimisation import optimiser_portefeuille
 from src.simulation import parametres_historiques, simuler
 
-FICHIER_PAR_DEFAUT = Path("data/transactions.csv")
-# Tous les fichiers de transactions disponibles (ex. transactions_mondial.csv)
+# Portefeuilles d'exemple du projet (le portefeuille « particulier » data/transactions.csv
+# sert à main.py et aux tests ; il n'est proposé dans le tableau de bord que s'il est seul,
+# pour ne pas être confondu avec les portefeuilles personnels de « Mon espace »)
+FICHIER_PAR_DEFAUT = Path("data/transactions_diversifie.csv")
 FICHIERS_DISPONIBLES = sorted(Path("data").glob("transactions*.csv"),
                               key=lambda f: (f != FICHIER_PAR_DEFAUT, f.name))
 FICHIERS_DISPONIBLES = [f for f in FICHIERS_DISPONIBLES if "sauvegarde" not in f.name]
-NOMS_PORTEFEUILLES = {"transactions.csv": "Mon portefeuille",
+if len(FICHIERS_DISPONIBLES) > 1:
+    FICHIERS_DISPONIBLES = [f for f in FICHIERS_DISPONIBLES if f.name != "transactions.csv"]
+NOMS_PORTEFEUILLES = {"transactions.csv": "Portefeuille d'exemple",
                       "transactions_mondial.csv": "Portefeuille actions monde",
                       "transactions_diversifie.csv": "Portefeuille diversifié (multi-actifs)"}
 FEUILLE_DE_STYLE = Path("assets/style.css")
@@ -54,14 +59,9 @@ MODELE_CSV = ("date,type,ticker,nom,quantite,prix,frais\n"
               "2024-05-22,DIVIDENDE,MC.PA,LVMH,0,39.00,0.00\n"
               "2024-09-18,VENTE,MC.PA,LVMH,1,700.00,2.00\n")
 
-# Indices de référence proposés dans le menu : {code Yahoo: nom affiché}
-INDICES = {
-    "CW8.PA": "MSCI World (ETF CW8, dividendes réinvestis)",
-    "ESE.PA": "S&P 500 (ETF ESE, dividendes réinvestis)",
-    "^FCHI": "CAC 40 (hors dividendes)",
-    "^STOXX50E": "Euro Stoxx 50 (hors dividendes)",
-}
-NOMS_COURTS = {"CW8.PA": "MSCI World", "ESE.PA": "S&P 500", "^FCHI": "CAC 40", "^STOXX50E": "Euro Stoxx 50"}
+# Indices de référence proposés dans le menu (actions, obligations, monétaire, mixtes) : src/indices.py
+INDICES = {code: i.nom for code, i in indices.INDICES.items()}
+NOMS_COURTS = {code: i.court for code, i in indices.INDICES.items()}
 
 # ----------------------------------------------------------------------
 # Langue du visiteur (choisie plus bas avec le sélecteur FR | EN de la barre
@@ -180,9 +180,10 @@ with st.sidebar:
             help=t("Vos portefeuilles enregistrés, puis les portefeuilles d'exemple du projet"),
         )
     fichier_envoye = st.file_uploader(
-        t("Ou envoyer un autre fichier (CSV ou Excel)"), type=["csv", "xlsx"],
+        t("Ou envoyer un autre fichier (CSV, Excel ou PDF)"), type=["csv", "xlsx", "pdf"],
         help=t("Colonnes : date, type (ACHAT, VENTE, DIVIDENDE), ticker (code Yahoo Finance), nom, "
-               "quantite, prix, frais. CSV à virgules ou à points-virgules, ou fichier Excel. "
+               "quantite, prix, frais. CSV à virgules ou à points-virgules, fichier Excel, ou PDF "
+               "(relevé d'opérations, avis d'opéré). "
                "Prioritaire sur le portefeuille choisi ci-dessus."),
     )
     st.download_button(t("Télécharger un modèle de fichier"), data=MODELE_CSV.encode("utf-8-sig"),
@@ -191,6 +192,7 @@ with st.sidebar:
     # Emplacement réservé juste sous l'envoi : le bouton « Enregistrer dans mon espace »
     # y est affiché une fois le fichier lu (plus bas dans le script).
     zone_enregistrement = st.container()
+    zone_operations = st.container()            # « Ajouter des opérations » (affiché une fois le portefeuille lu)
     if fichier_envoye is not None and session_compte is None:
         zone_enregistrement.caption(t("Pour garder ce fichier, connectez-vous ou créez un compte "
                                       "(« Mon espace », en haut de la barre latérale)."))
@@ -204,7 +206,8 @@ with st.sidebar:
     code_indice = st.selectbox(
         t("Indice de référence"), options=list(INDICES),
         index=list(INDICES).index(config.INDICE_REFERENCE) if config.INDICE_REFERENCE in INDICES else 0,
-        format_func=lambda code: t(INDICES[code]),
+        format_func=lambda code: f"{t(indices.indice(code).famille)} · {t(INDICES[code])}",
+        help=t("Actions, obligations, monétaire, ou indice mixte actions / obligations recalculé chaque mois"),
     )
     taux_sans_risque = st.number_input(
         t("Taux sans risque (% par an)"), min_value=0.0, max_value=10.0,
@@ -220,6 +223,11 @@ with st.sidebar:
     if st.button(t("Actualiser les cours"), icon=":material/refresh:", width="stretch"):
         st.cache_data.clear()   # on oublie les résultats en mémoire...
         st.rerun()              # ... et on relance la page
+
+# Page « Ajouter des opérations » (nouveaux mouvements d'un portefeuille) : src/vues_mouvements.py
+if st.session_state.get("ajout_operations"):
+    vues_mouvements.page(session_compte, importer_auto)
+    st.stop()
 
 # Page « Mon compte » (gestion des portefeuilles, mot de passe, suppression)
 if session_compte is not None and st.session_state.get("page_compte"):
@@ -265,6 +273,29 @@ elif fichier_choisi is not None:
 else:
     st.error(t("Aucun fichier de transactions : envoyez un fichier CSV depuis la barre latérale."))
     st.stop()
+
+# Opérations ajoutées pendant cette session à un portefeuille d'exemple ou à un fichier envoyé
+# (sans compte : rien n'est enregistré, le fichier mis à jour est proposé au téléchargement)
+origine = hashlib.md5(contenu).hexdigest()[:12]
+fusion_session = st.session_state.get("fusion_session")
+mis_a_jour = bool(fusion_session and fusion_session["origine"] == origine)
+if mis_a_jour:
+    contenu = fusion_session["contenu"]
+    nom_fichier = t("{nom} (mis à jour)", nom=Path(nom_fichier).stem)
+with zone_operations:
+    if st.button(t("Ajouter des opérations"), icon=":material/playlist_add:", width="stretch",
+                 help=t("Mettre à jour ce portefeuille avec de nouveaux mouvements : avis d'opéré PDF, export "
+                        "Excel / CSV ou saisie manuelle"), key="bouton_ajout_operations"):
+        if isinstance(fichier_choisi, tuple) and fichier_envoye is None and session_compte is not None:
+            cible = {"type": "perso", "id": fichier_choisi[1], "nom": fichier_choisi[2], "contenu": contenu}
+        else:
+            cible = {"type": "session", "origine": origine, "nom": Path(str(nom_fichier)).stem, "contenu": contenu}
+        vues_mouvements.ouvrir(cible)
+        st.rerun()
+    if mis_a_jour:
+        st.download_button(t("Télécharger le fichier mis à jour"), data=contenu, icon=":material/download:",
+                           file_name=f"{Path(str(fusion_session['nom'])).stem}_mis_a_jour.csv", mime="text/csv",
+                           width="stretch", key="telecharger_fusion")
 
 try:
     with st.spinner(t("Récupération des cours et calcul des indicateurs...")):
@@ -379,8 +410,9 @@ if espace == "Gestion d'actifs":
     html(ui.pied_de_page(PIED_DE_PAGE))
     st.stop()
 
-onglets = st.tabs([t("Vue d'ensemble"), t("Positions"), t("Performance"), t("Risque"), t("Optimisation"),
-                   t("Projection"), t("Transactions")])
+onglets = st.tabs([t("Vue d'ensemble"), t("Positions"), t("Performance"), t("Risque"), t("Expositions"),
+                   t("Optimisation"), t("Projection"), t("Transactions")])
+transparence = expositions.transparence(positions)        # ETF répartis selon leur indice (src/expositions.py)
 
 # ----------------------------------------------------------------------
 # 1. Vue d'ensemble
@@ -394,16 +426,37 @@ with onglets[0]:
         html(ui.titre_section(t("Répartition"), t("Poids de chaque ligne dans la valeur totale")))
         graphique(gi.fig_repartition(positions))
 
-    # Répartition par classe d'actifs, région et secteur (si le référentiel classe les titres)
-    groupes = [(c, t(libelle)) for c, libelle in [("classe", "Par classe d'actifs"), ("region", "Par région"),
-                                                  ("secteur", "Par secteur")]
-               if c in positions.columns and positions[c].nunique() > 1]
+    # Carte du monde : poche actions, ETF répartis selon la composition de leur indice
+    carte = expositions.carte_pays(transparence, positions)
+    if len(carte):
+        with st.container(border=True):
+            html(ui.titre_section(t("Présence dans le monde"),
+                                  t("Poids de chaque pays dans la poche actions · plus la couleur est foncée, plus "
+                                    "le pays pèse · survoler un pays pour le détail")))
+            graphique(gi.fig_carte_monde(carte, fond_de_carte.charger()))
+            hors = expositions.part_hors_carte(transparence)
+            notes = [t("ETF répartis selon la composition de leur indice (approximation au {date}).",
+                       date=expositions.ce.DATE_SOURCE)]
+            if hors.sum() > 0.005:
+                notes.append(t("Hors carte : {detail}.", detail=", ".join(
+                    f"{td(k)} {pct(v, signe=False, decimales=0)}" for k, v in hors.items() if v > 0.001)))
+            html(ui.note(" ".join(notes)))
+
+    # Répartition par classe d'actifs, région et secteur (en transparence), en anneaux
+    groupes = [(transparence.groupby("classe")["poids"].sum(), t("Par classe d'actifs")),
+               (expositions.repartition(transparence, "region", "Actions", normaliser=True), t("Par région")),
+               (expositions.repartition(transparence, "secteur", "Actions", normaliser=True), t("Par secteur"))]
+    groupes = [(g, libelle) for g, libelle in groupes if len(g) > 1]
     if groupes:
-        for colonne_st, (colonne, libelle) in zip(st.columns(len(groupes), gap="medium"), groupes):
+        for colonne_st, (poids, libelle) in zip(st.columns(len(groupes), gap="medium"), groupes):
             with colonne_st, st.container(border=True):
-                html(ui.titre_section(libelle, t("{n} groupes · poids en % de la valeur",
-                                                 n=positions[colonne].nunique())))
-                graphique(gi.fig_repartition_groupes(positions, colonne))
+                sous_titre = (t("{n} groupes · en % de la valeur", n=len(poids)) if libelle == t("Par classe d'actifs")
+                              else t("{n} groupes · en % de la poche actions", n=len(poids)))
+                html(ui.titre_section(libelle, sous_titre))
+                total = resume["valeur_actuelle"] * (1 if libelle == t("Par classe d'actifs")
+                                                     else transparence.loc[transparence["classe"] == "Actions",
+                                                                           "poids"].sum())
+                graphique(gi.fig_anneau(poids, total))
 
     html(ui.grille([
         ui.carte(t("Plus-values latentes"), euros(resume["pv_latentes"], signe=True),
@@ -486,6 +539,12 @@ with onglets[2]:
         ))
         graphique(gi.fig_drawdown(ind))
 
+    if indices.indice(code_indice).famille in ("Obligations", "Monétaire"):
+        html(ui.note(t("Indice {famille} : le bêta, l'alpha et la corrélation mesurent la sensibilité à un "
+                       "marché d'actions ; face à cet indice, ils ont peu de sens. Comparez surtout les "
+                       "rendements et les volatilités.", famille=t(indices.indice(code_indice).famille) if langues.anglais()
+                       else t(indices.indice(code_indice).famille).lower()),
+                     attention=True))
     html(ui.grille([
         ui.carte(t("Bêta"), nombre(av["beta"]), detail=t("1 = comme l'indice"),
                  aide=t("Sensibilité du portefeuille aux mouvements de l'indice")),
@@ -515,22 +574,25 @@ with onglets[3]:
                  aide=t("Perte moyenne les jours où la VaR est dépassée")),
     ]))
 
-    gauche, droite = st.columns([3, 2], gap="medium")
-    with gauche, st.container(border=True):
+    with st.container(border=True):
         html(ui.titre_section(t("Distribution des rendements quotidiens"),
                               t("VaR paramétrique (loi normale) : {valeur}",
                                 valeur=pct(av["var_parametrique"], signe=False))))
         graphique(gi.fig_distribution_rendements(ind, av, niveau_var))
         html(ui.note(t("Si la VaR historique dépasse la VaR paramétrique, les pertes extrêmes sont plus "
-                       "fréquentes que ne le prévoit la loi normale (« queues épaisses »).")))
-    with droite, st.container(border=True):
-        html(ui.titre_section(t("Corrélations"), t("Rendements quotidiens des titres détenus")))
-        graphique(gi.fig_correlations(res["correlations"]))
+                       "fréquentes que ne le prévoit la loi normale (« queues épaisses »). Corrélations et "
+                       "diversification : onglet « Expositions ».")))
 
 # ----------------------------------------------------------------------
-# 5. Optimisation de Markowitz
+# 5. Expositions et diversification réelle : src/vues_expositions.py
 # ----------------------------------------------------------------------
 with onglets[4]:
+    vues_expositions.afficher(res, cle_calculs, code_indice)
+
+# ----------------------------------------------------------------------
+# 6. Optimisation de Markowitz
+# ----------------------------------------------------------------------
+with onglets[5]:
     n_titres = len(positions)
     # Seuls les poids maximaux qui permettent d'investir 100 % sont proposés.
     choix_possibles = [p for p in [0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50, 1.0] if p * n_titres >= 1]
@@ -550,7 +612,7 @@ with onglets[4]:
         st.stop()
 
     cartes = []
-    for cle, nom in [("actuel", "Mon portefeuille"), ("variance_min", "Variance minimale"),
+    for cle, nom in [("actuel", "Portefeuille actuel"), ("variance_min", "Variance minimale"),
                      ("sharpe_max", "Sharpe maximal")]:
         p = opti[cle]
         cartes.append(ui.carte(
@@ -588,9 +650,9 @@ with onglets[4]:
                        "marché, sans garantie pour l'avenir."), attention=True))
 
 # ----------------------------------------------------------------------
-# 6. Projection (Monte-Carlo)
+# 7. Projection (Monte-Carlo)
 # ----------------------------------------------------------------------
-with onglets[5]:
+with onglets[6]:
     rendements = ind["rendements"]
     mu_hist, sigma_hist = parametres_historiques(rendements)
 
@@ -671,9 +733,9 @@ with onglets[5]:
                        "se vérifient, ce qui n'est jamais garanti."), attention=True))
 
 # ----------------------------------------------------------------------
-# 7. Transactions
+# 8. Transactions
 # ----------------------------------------------------------------------
-with onglets[6]:
+with onglets[7]:
     transactions = res["transactions"]
     with st.container(border=True):
         html(ui.titre_section(t("Historique des opérations")))

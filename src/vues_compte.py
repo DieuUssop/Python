@@ -138,8 +138,8 @@ def page_compte(s, importer=None):
 
     # 0. Ajouter un portefeuille (CSV ou Excel, lu automatiquement)
     with st.container(border=True):
-        html(ui.titre_section(t("Ajouter un portefeuille"), t("Fichier CSV ou Excel, de n'importe quel format")))
-        fichier = st.file_uploader(t("Fichier à enregistrer"), type=["csv", "xlsx"], key="ajout_compte",
+        html(ui.titre_section(t("Ajouter un portefeuille"), t("Fichier CSV, Excel ou PDF, de n'importe quel format")))
+        fichier = st.file_uploader(t("Fichier à enregistrer"), type=["csv", "xlsx", "pdf"], key="ajout_compte",
                                    label_visibility="collapsed")
         if fichier is not None and importer is not None:
             brut = fichier.getvalue()
@@ -183,6 +183,19 @@ def page_compte(s, importer=None):
                         width="stretch"):
                 s.supprimer(p["id"])
                 st.rerun()
+            e, f, _ = st.columns([3, 3, 4])
+            if e.button(t("Ajouter des opérations"), icon=":material/playlist_add:", key=f"ajout_{p['id']}",
+                        width="stretch"):
+                from . import vues_mouvements
+                vues_mouvements.ouvrir({"type": "perso", "id": p["id"], "nom": p["nom"], "contenu": s.lire(p["id"])})
+                st.rerun()
+            if p.get("precedente") and f.button(t("Annuler le dernier ajout"), icon=":material/undo:",
+                                                key=f"annuler_{p['id']}", width="stretch",
+                                                help=t("Revenir à la version du {date}",
+                                                       date=p["precedente"].get("maj", ""))):
+                s.annuler_dernier_ajout(p["id"])
+                st.rerun()
+            st.divider()
 
     # 2. Mot de passe
     with st.container(border=True):

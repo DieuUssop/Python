@@ -158,42 +158,47 @@ def graphique_comparaison(avance, nom_indice, chemin_png):
     plt.close(fig)
 
 
-def graphique_correlations(matrice, chemin_png):
-    """Carte de chaleur de la matrice de corrélation.
+def graphique_correlations(matrice, chemin_png, ordre=None, noms=None, titre="Corrélation des rendements quotidiens"):
+    """Carte de chaleur des corrélations, lisible même avec beaucoup de titres.
 
-    Palette "divergente" : bleu = corrélation négative, gris = nulle,
-    rouge = positive. Les valeurs sont écrites dans chaque case.
+    - ordre : titres regroupés par blocs qui évoluent ensemble (expositions.ordre_regroupement) ;
+    - triangle inférieur seulement, sans la diagonale (toujours égale à 1) ;
+    - palette divergente : bleu = négative, blanc = nulle, rouge = positive ;
+    - valeurs écrites dans les cases jusqu'à 12 lignes.
     """
     palette = LinearSegmentedColormap.from_list(
-        "divergente", ["#184f95", "#f0efec", "#b52f2f"])
-    n = len(matrice)
-    # Taille adaptée au nombre de titres, plafonnée pour rester raisonnable.
-    fig, ax = plt.subplots(figsize=(min(1.3 * n + 2.5, 12), min(1.1 * n + 1.5, 10)), dpi=120)
-    taille_texte = 9 if n <= 8 else 7
-    image = ax.imshow(matrice.values, cmap=palette, vmin=-1, vmax=1)
-
-    ax.set_xticks(range(n), matrice.columns, rotation=45, ha="right")
-    ax.set_yticks(range(n), matrice.index)
-    ax.tick_params(colors="#333333", labelsize=9 if n <= 20 else 6, length=0)
-    for i in range(n if n <= 15 else 0):          # au-delà de 15 titres : pas de chiffres (illisibles)
-        for j in range(n):
-            valeur = matrice.values[i, j]
-            couleur_texte = "white" if abs(valeur) > 0.6 else "#1a1a19"
-            ax.text(j, i, f"{round(valeur, 2) + 0.0:.2f}", ha="center", va="center",
-                    fontsize=taille_texte, color=couleur_texte)
-    # Fines lignes blanches entre les cases
+        "divergente", ["#1c5cab", "#8fb6e6", "#f7f7f5", "#eaa48f", "#a8322a"])
+    palette.set_bad("white")
+    ordre = [o for o in (ordre or list(matrice.index)) if o in matrice.index]
+    m = matrice.loc[ordre, ordre]
+    noms = noms or {}
+    court = lambda c: (lambda x: x if len(x) <= 18 else x[:17] + "…")(str(noms.get(c, c)))
+    lignes, colonnes = ordre[1:], ordre[:-1]
+    valeurs = np.array([[m.at[a, b] if j < i else np.nan for j, b in enumerate(colonnes)]
+                        for i, a in enumerate(lignes, start=1)], dtype=float)
+    n = len(lignes)
+    cote = min(max(0.32 * n + 2.5, 4.5), 11)
+    fig, ax = plt.subplots(figsize=(cote + 1.2, cote), dpi=120)
+    image = ax.imshow(np.ma.masked_invalid(valeurs), cmap=palette, vmin=-1, vmax=1)
+    ax.set_xticks(range(n), [court(c) for c in colonnes], rotation=60, ha="right")
+    ax.set_yticks(range(n), [court(c) for c in lignes])
+    ax.tick_params(colors="#333333", labelsize=9 if n <= 15 else 7 if n <= 30 else 5.5, length=0)
+    if n <= 12:
+        for i in range(n):
+            for j in range(i + 1):
+                valeur = valeurs[i, j]
+                ax.text(j, i, f"{valeur:.2f}".replace(".", ","), ha="center", va="center",
+                        fontsize=8 if n > 8 else 9, color="white" if abs(valeur) > 0.6 else "#1a1a19")
     ax.set_xticks(np.arange(-0.5, n), minor=True)
     ax.set_yticks(np.arange(-0.5, n), minor=True)
-    ax.grid(which="minor", color="white", linewidth=2)
+    ax.grid(which="minor", color="white", linewidth=1 if n > 20 else 2)
     ax.tick_params(which="minor", length=0)
-    for cote in ax.spines.values():
-        cote.set_visible(False)
-
-    barre = fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
+    for bord in ax.spines.values():
+        bord.set_visible(False)
+    barre = fig.colorbar(image, ax=ax, fraction=0.035, pad=0.03, ticks=[-1, -0.5, 0, 0.5, 1])
     barre.outline.set_visible(False)
     barre.ax.tick_params(colors=GRIS, labelsize=8)
-    ax.set_title("Corrélation des rendements quotidiens", loc="left",
-                 fontsize=12, fontweight="bold", color="#1a1a19")
+    ax.set_title(titre, loc="left", fontsize=12, fontweight="bold", color="#1a1a19")
     fig.tight_layout()
     fig.savefig(chemin_png)
     plt.close(fig)

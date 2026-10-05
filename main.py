@@ -289,7 +289,9 @@ histo.round(2).to_csv("data/historique.csv")
 graphique_historique(histo, "graphique_historique.png")
 graphique_performance(ind, "graphique_performance.png")
 graphique_comparaison(av, config.NOM_INDICE, "graphique_comparaison.png")
-graphique_correlations(res["correlations"], "graphique_correlations.png")
+from src.expositions import ordre_regroupement            # titres regroupés par blocs corrélés
+graphique_correlations(res["correlations"], "graphique_correlations.png",
+                       ordre=ordre_regroupement(res["correlations"]), noms=res["positions"]["nom"].to_dict())
 graphique_frontiere(opti, "graphique_frontiere.png")
 graphique_poids(opti, "graphique_poids.png")
 graphique_projection(sim, "graphique_projection.png")

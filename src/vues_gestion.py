@@ -136,34 +136,27 @@ def _budget(res, cle, taux_sans_risque):
     except Exception as erreur:
         st.warning(t("Budget de risque indisponible : {erreur}", erreur=erreur))
         return
+    # Le diagnostic (régions, secteurs, devises, corrélations, ratio de diversification) est dans
+    # Analyse du portefeuille > Expositions : ici, on se concentre sur la construction d'allocations.
     actuel = b["comparaison"].loc["Portefeuille actuel"]
+    parite = b["comparaison"].loc["Parité des risques"]
     premiere = b["par_ligne"].iloc[0]
     html(ui.grille([
-        ui.carte(t("Volatilité"), pct(actuel["volatilite"], signe=False), detail=t("Estimée sur l'historique")),
-        ui.carte(t("Ratio de diversification"), nombre(actuel["ratio_diversification"]),
-                 detail=t("1 = aucune diversification")),
-        ui.carte(t("Nombre effectif de paris"), nombre(actuel["nb_effectif_paris"], 1),
-                 detail=t("pour {n} lignes", n=len(b["par_ligne"]))),
+        ui.carte(t("Volatilité actuelle"), pct(actuel["volatilite"], signe=False), detail=t("Estimée sur l'historique")),
         ui.carte(t("Plus gros contributeur"), pct(premiere["part_risque"], signe=False, decimales=1),
                  detail=t("{nom} ({part} de la valeur)", nom=premiere["nom"],
                           part=pct(premiere["poids"], signe=False, decimales=1))),
+        ui.carte(t("Volatilité en parité des risques"), pct(parite["volatilite"], signe=False),
+                 detail=t("Mêmes titres, risque réparti également")),
     ]))
+    html(ui.note(t("Le diagnostic de diversification (régions, secteurs, devises, corrélations, ratio de "
+                   "diversification) se trouve dans « Analyse du portefeuille » › onglet « Expositions ».")))
 
-    gauche, droite = st.columns([3, 2], gap="medium")
-    with gauche, st.container(border=True):
+    with st.container(border=True):
         html(ui.titre_section(t("Part de la valeur et part du risque"),
-                              t("Les 20 plus gros contributeurs au risque")))
+                              t("Les 20 plus gros contributeurs au risque · une ligne dont la part du risque "
+                                "dépasse sa part de la valeur est plus volatile ou plus corrélée au reste")))
         graphique(gi.fig_poids_et_risque(b["par_ligne"]))
-    with droite, st.container(border=True):
-        html(ui.titre_section(t("Par région")))
-        r = b["par_region"]
-        st.dataframe(pd.DataFrame({
-            t("Région"): [td(x) for x in r.index],
-            t("Part de la valeur"): [pct(v, signe=False, decimales=1) for v in r["poids"]],
-            t("Part du risque"): [pct(v, signe=False, decimales=1) for v in r["part_risque"]],
-        }), hide_index=True, width="stretch")
-        html(ui.note(t("Une ligne dont la part du risque dépasse sa part de la valeur est plus volatile "
-                       "ou plus corrélée au reste du portefeuille que la moyenne.")))
 
     with st.container(border=True):
         html(ui.titre_section(t("Quatre façons de répartir les mêmes titres"),

@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import config
+from . import config, indices
 from .devises import (convertir_cours, convertir_prix_historiques, convertir_transactions,
                       detecter_devises, devises_etrangeres, ticker_change)
 from .market_data import obtenir_cours, obtenir_historique
@@ -65,7 +65,10 @@ def analyse_complete(source_csv,
     # Étape 1 : les transactions, telles que saisies (vérification du fichier)
     brut = Portfolio(source_csv)
     titres = brut.tous_les_tickers()
-    tous = titres + ([indice] if indice not in titres else [])
+    # L'indice de référence peut être un ETF, un indice ou un composite (src/indices.py) :
+    # on télécharge tous ses tickers possibles, puis on construit sa série.
+    candidats_indice = [c for c in indices.tickers_a_telecharger(indice) if c not in titres]
+    tous = titres + candidats_indice
 
     # Étape 8 : devise de chaque titre et taux de change nécessaires
     info_devises = detecter_devises(tous)
@@ -75,8 +78,6 @@ def analyse_complete(source_csv,
     # Étape 3 : historique des cours (titres + indice + taux de change, en un seul
     # téléchargement : le cache hors ligne contient ainsi tout le nécessaire)
     prix_hist_brut, source_hist = obtenir_historique(tous + tickers_change, brut.date_debut())
-    if indice not in prix_hist_brut.columns:
-        raise ValueError(f"Impossible de récupérer l'historique de l'indice {indice}.")
     manquants = [t for t in tickers_change if t not in prix_hist_brut.columns]
     if manquants:
         raise ValueError(f"Taux de change introuvables : {manquants}")
@@ -94,6 +95,10 @@ def analyse_complete(source_csv,
         prix_hist = convertir_prix_historiques(prix_hist, info_devises, taux_hist)
     else:
         portefeuille = brut
+    # Série de l'indice de référence (en euros), ajoutée comme une colonne de plus
+    serie_indice, tickers_indice = indices.construire(prix_hist, indice)
+    prix_hist = prix_hist.drop(columns=[c for c in candidats_indice if c in prix_hist.columns])
+    prix_hist[indice] = serie_indice
 
     # Étape 2 : cours actuels (et taux de change actuels), puis valorisation
     prix, source_cours = obtenir_cours(portefeuille.tickers() + tickers_change)

@@ -38,6 +38,7 @@ import urllib.request
 import pandas as pd
 
 from src import base_titres as base
+from src import fond_de_carte
 from src.devises import devise_par_suffixe
 from src.import_fichier import convertir_code_global, isin_valide
 
@@ -99,6 +100,8 @@ ETF = {
     # Obligations et or (UCITS)
     "IBCA.DE": "iShares € Govt Bond 1-3yr", "EUNH.DE": "iShares Core € Govt Bond", "IBCI.DE": "iShares € Inflation Linked",
     "EUN5.DE": "iShares Core € Corp Bond", "EUNW.DE": "iShares € High Yield Corp Bond", "4GLD.DE": "Xetra-Gold",
+    "DBXN.DE": "Xtrackers II Eurozone Government Bond 1C", "XEON.DE": "Xtrackers II EUR Overnight Rate Swap",
+    "CSH2.PA": "Amundi Smart Overnight Return",
     # ETF américains très courants
     "SPY": "SPDR S&P 500", "VOO": "Vanguard S&P 500", "IVV": "iShares Core S&P 500", "VTI": "Vanguard Total Stock Market",
     "QQQ": "Invesco QQQ", "DIA": "SPDR Dow Jones", "IWM": "iShares Russell 2000", "VEA": "Vanguard FTSE Developed",
@@ -325,12 +328,18 @@ def main():
         print(f"⏳ Mise à jour de {len(tickers)} titres depuis le {debut}...")
         telecharger(tickers, debut, set(), nom="titres")
         print(f"✅ Base à jour (dernier cours : {base.derniere_date():%d/%m/%Y})")
+        if not fond_de_carte.chemin().exists():
+            fond_de_carte.telecharger()
         return
 
     print("⏳ 1. Composition des indices (Wikipédia)...")
     titres = univers()
     base.ajouter_titres(titres)
     print(f"✅ {len(titres)} titres dans la fiche des titres (data/base/titres.csv)")
+    if fond_de_carte.telecharger():
+        print("✅ Fond de carte du monde enregistré (data/base/pays.geojson)")
+    else:
+        print("   Fond de carte non téléchargé : la carte du monde s'affichera seulement avec Internet")
     if "--liste" in arguments:
         return
 

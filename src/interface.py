@@ -57,7 +57,7 @@ def tendance(x):
 # Briques HTML
 # ----------------------------------------------------------------------
 def pastille(texte, sens="neutre"):
-    """Petite étiquette colorée : verte (positive), rouge (negative) ou grise."""
+    """Petite étiquette colorée : verte (positive), rouge (negative), orange (attention) ou grise."""
     return f'<span class="pastille {sens}">{escape(texte)}</span>'
 
 
@@ -164,3 +164,32 @@ def verdict(ok, titre, texte):
     """Encadré vert (adapté) ou rouge (non adapté)."""
     return (f'<div class="verdict {"ok" if ok else "ko"}"><div class="verdict-titre">{escape(titre)}</div>'
             f'<div class="verdict-texte">{escape(texte)}</div></div>')
+
+
+NIVEAUX = {"ok": ("Bon", "positive"), "attention": ("À surveiller", "attention"), "alerte": ("À corriger", "negative")}
+
+
+def pastille_niveau(niveau):
+    """Pastille verte « Bon », orange « À surveiller » ou rouge « À corriger »."""
+    if niveau is None:
+        return pastille(t("Non concerné"), "neutre")
+    texte, sens = NIVEAUX[niveau]
+    return pastille(t(texte), sens)
+
+
+def synthese(cases):
+    """Cases de synthèse : [(nom, niveau, chiffre clé), ...]."""
+    contenu = "".join(
+        f'<div class="synthese-case"><div class="synthese-nom">{escape(nom)}</div>{pastille_niveau(niveau)}'
+        f'<div class="synthese-chiffre">{escape(chiffre)}</div></div>' for nom, niveau, chiffre in cases)
+    return f'<div class="synthese">{contenu}</div>'
+
+
+def constat(niveau, dimension, titre, risque="", pistes=()):
+    """Un constat du diagnostic : niveau, ce qu'on observe, le risque, les pistes."""
+    liste = "".join(f"<li>{escape(p)}</li>" for p in pistes)
+    return (f'<div class="constat {niveau}"><div class="constat-entete">{pastille_niveau(niveau)}'
+            f'<span class="constat-dimension">{escape(dimension)}</span></div>'
+            f'<div class="constat-titre">{escape(titre)}</div>'
+            + (f'<div class="constat-risque">{escape(risque)}</div>' if risque else "")
+            + (f'<ul class="constat-pistes">{liste}</ul>' if liste else "") + '</div>')

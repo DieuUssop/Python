@@ -171,8 +171,11 @@ class Session:
         """Portefeuilles de l'utilisateur : liste de dictionnaires (id, nom, cree, maj, operations)."""
         return sorted(self._index(), key=lambda p: p["nom"].lower())
 
-    def enregistrer(self, nom, contenu, identifiant=None):
-        """Enregistre (ou remplace) un portefeuille ; contenu = fichier CSV au format du projet (octets)."""
+    def enregistrer(self, nom, contenu, identifiant=None, garder_precedente=False):
+        """Enregistre (ou remplace) un portefeuille ; contenu = fichier CSV au format du projet (octets).
+
+        garder_precedente : conserver la version remplacée (chiffrée) pour pouvoir
+        « Annuler le dernier ajout »."""
         nom = str(nom).strip() or "Portefeuille"
         index = self._index()
         if identifiant is None:
@@ -180,8 +183,15 @@ class Session:
             identifiant = existant["id"] if existant else uuid.uuid4().hex
         maintenant = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M")
         operations = max(0, contenu.count(b"\n") - 1) if isinstance(contenu, bytes) else 0
-        _ecrire(self.dossier / f"{identifiant}.enc", coffre.chiffrer(self._cle, contenu))
+        fichier = self.dossier / f"{identifiant}.enc"
         fiche = next((p for p in index if p["id"] == identifiant), None)
+        if garder_precedente and fiche and fichier.exists():
+            os.replace(fichier, self.dossier / f"{identifiant}.prec.enc")
+            fiche["precedente"] = {"maj": fiche.get("maj"), "operations": fiche.get("operations")}
+        elif fiche:
+            fiche.pop("precedente", None)
+            (self.dossier / f"{identifiant}.prec.enc").unlink(missing_ok=True)
+        _ecrire(fichier, coffre.chiffrer(self._cle, contenu))
         if fiche:
             fiche.update({"nom": nom, "maj": maintenant, "operations": operations})
         else:
@@ -196,6 +206,18 @@ class Session:
             raise ErreurCompte("Portefeuille introuvable.")
         return coffre.dechiffrer(self._cle, (self.dossier / f"{identifiant}.enc").read_bytes())
 
+    def annuler_dernier_ajout(self, identifiant):
+        """Revient à la version précédente d'un portefeuille (avant le dernier ajout d'opérations)."""
+        index = self._index()
+        fiche = next((p for p in index if p["id"] == identifiant), None)
+        precedente = self.dossier / f"{identifiant}.prec.enc"
+        if fiche is None or "precedente" not in fiche or not precedente.exists():
+            raise ErreurCompte("Aucun ajout à annuler.")
+        os.replace(precedente, self.dossier / f"{identifiant}.enc")
+        fiche.update({"maj": fiche["precedente"]["maj"], "operations": fiche["precedente"]["operations"]})
+        fiche.pop("precedente")
+        self._sauver_index(index)
+
     def renommer(self, identifiant, nom):
         index = self._index()
         for p in index:
@@ -206,6 +228,7 @@ class Session:
     def supprimer(self, identifiant):
         index = [p for p in self._index() if p["id"] != identifiant]
         (self.dossier / f"{identifiant}.enc").unlink(missing_ok=True)
+        (self.dossier / f"{identifiant}.prec.enc").unlink(missing_ok=True)
         self._sauver_index(index)
 
     # -- compte --
@@ -225,8 +248,12 @@ class Session:
         fiche["iterations"] = coffre.ITERATIONS
         fiche["empreinte"] = coffre.empreinte(nouveau, fiche["sel_empreinte"], fiche["iterations"])
         nouvelle_cle = coffre.cle_de_chiffrement(nouveau, fiche["sel_cle"], fiche["iterations"])
+        precedentes = {p["id"]: coffre.dechiffrer(self._cle, (self.dossier / f"{p['id']}.prec.enc").read_bytes())
+                       for p in index if (self.dossier / f"{p['id']}.prec.enc").exists()}
         for identifiant, contenu in contenus.items():                  # ... puis rechiffré
             _ecrire(self.dossier / f"{identifiant}.enc", coffre.chiffrer(nouvelle_cle, contenu))
+        for identifiant, contenu in precedentes.items():
+            _ecrire(self.dossier / f"{identifiant}.prec.enc", coffre.chiffrer(nouvelle_cle, contenu))
         self._cle = nouvelle_cle
         self._sauver_index(index)
         _ecrire_registre(registre)

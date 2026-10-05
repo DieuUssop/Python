@@ -27,6 +27,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (Image, KeepTogether, PageBreak, Paragraph, SimpleDocTemplate,
                                 Spacer, Table, TableStyle)
 
+from . import expositions as ex
 from . import graphiques as g
 
 # Couleurs (les mêmes que le tableau de bord)
@@ -153,10 +154,10 @@ def _tableau(entetes, lignes, largeurs=None, alignement_droite_a_partir_de=1):
     return tableau
 
 
-def _image_graphique(fonction, *arguments, largeur=LARGEUR_UTILE):
+def _image_graphique(fonction, *arguments, largeur=LARGEUR_UTILE, **options):
     """Dessine un graphique matplotlib en mémoire et le renvoie comme image PDF."""
     tampon = io.BytesIO()
-    fonction(*arguments, tampon)          # les fonctions de graphiques.py acceptent un fichier en mémoire
+    fonction(*arguments, tampon, **options)   # les fonctions de graphiques.py acceptent un fichier en mémoire
     tampon.seek(0)
     largeur_px, hauteur_px = ImageReader(tampon).getSize()
     tampon.seek(0)
@@ -251,31 +252,72 @@ def generer_rapport(res, destination, nom_indice, taux_sans_risque, niveau_var,
         story.append(Paragraph(escape(f"Titres en devise étrangère, convertis en euros au taux du jour ({resume_devises})."),
                                st["note"]))
 
-    # Répartition par classe d'actifs, région et secteur (si le référentiel classe les titres)
-    groupes = [(c, t) for c, t in [("classe", "Classe d'actifs"), ("region", "Région"), ("secteur", "Secteur")]
-               if c in positions.columns and positions[c].nunique() > 1]
-    for colonne, libelle in groupes:
-        repartition = positions.groupby(colonne).agg(poids=("poids_pct", "sum"), valeur=("valeur", "sum"),
-                                                     lignes=("poids_pct", "size")).sort_values("poids", ascending=False)
+    # Répartition par classe d'actifs, région et secteur, en transparence (ETF répartis selon leur indice)
+    transp = ex.transparence(positions)
+    valeur_totale = positions["valeur"].sum()
+    part_actions = transp.loc[transp["classe"] == "Actions", "poids"].sum()
+    for libelle, poids, base in [("Classe d'actifs", transp.groupby("classe")["poids"].sum(), "du portefeuille"),
+                                 ("Région", ex.repartition(transp, "region", "Actions", normaliser=True), "des actions"),
+                                 ("Secteur", ex.repartition(transp, "secteur", "Actions", normaliser=True),
+                                  "des actions")]:
+        poids = poids.sort_values(ascending=False)
+        if len(poids) < 2:
+            continue
+        valeur = valeur_totale * (1 if base == "du portefeuille" else part_actions)
         story.append(KeepTogether([
-            Paragraph(f"Répartition par {libelle.lower()}", st["h2"]),
-            _tableau([libelle, "Lignes", "Valeur", "Poids"],
-                     [[escape(str(g)), str(int(r["lignes"])), euros(r["valeur"]), pct(r["poids"] / 100, signe=False, decimales=1)]
-                      for g, r in repartition.iterrows()],
-                     largeurs=[7 * cm, 2.5 * cm, 4 * cm, LARGEUR_UTILE - 13.5 * cm]),
+            Paragraph(f"Répartition par {libelle.lower()} (en % {base})", st["h2"]),
+            _tableau([libelle, "Valeur", "Poids"],
+                     [[escape(str(k)), euros(v * valeur), pct(v, signe=False, decimales=1)] for k, v in poids.items()],
+                     largeurs=[8 * cm, 4 * cm, LARGEUR_UTILE - 12 * cm]),
         ]))
+    story.append(Paragraph(escape("Analyse en transparence : chaque ETF est réparti selon la composition approximative "
+                                  "de son indice (pays et secteurs)."), st["note"]))
+    story.append(PageBreak())
 
-    # Corrélations : lisibles seulement pour un nombre raisonnable de titres
-    if len(res["correlations"]) <= 20:
-        story.append(Spacer(1, 10))
-        story.append(_image_graphique(g.graphique_correlations, res["correlations"],
-                                      largeur=LARGEUR_UTILE * 0.8))
-    else:
-        corr = res["correlations"].to_numpy()
-        n = len(corr)
-        moyenne = (corr.sum() - n) / (n * n - n)     # moyenne hors diagonale (la diagonale vaut 1)
-        story.append(Spacer(1, 6))
-        story.append(Paragraph(f"Corrélation moyenne entre les {n} titres : {nombre(moyenne)}.", st["note"]))
+    # ---------------- Page 2 bis : expositions et diversification ----------------
+    story.append(Paragraph("Expositions et diversification", st["h1"]))
+    div = ex.diversification(res["prix_hist"], positions)
+    try:
+        from .analyse import charger_fiches
+        doublons = ex.doublons_probables(positions, transp, charger_fiches())
+    except Exception:
+        doublons = []
+    f_pct = lambda x: pct(x, signe=False, decimales=0)
+    constats = ex.diagnostic(positions, transp, div, f_pct=f_pct, doublons=doublons)
+    niveaux = ex.synthese(constats)
+    libelles = {"geographie": "Géographie", "secteurs": "Secteurs", "devises": "Devises",
+                "concentration": "Concentration", "taux": "Taux", "diversification": "Diversification réelle"}
+    etats = {"ok": "Bon", "attention": "À surveiller", "alerte": "À corriger", None: "Non concerné"}
+    story.append(_tableau(["Dimension", "Diagnostic"], [[libelles[d], etats[niveaux[d]]] for d in ex.DIMENSIONS],
+                          largeurs=[6 * cm, LARGEUR_UTILE - 6 * cm]))
+    story.append(Spacer(1, 6))
+    for c in [c for c in constats if c["niveau"] != "ok"][:8]:
+        v = c["valeurs"]
+        texte = f"<b>{escape(etats[c['niveau']])} · {escape(c['titre'].format(**v))}</b>"
+        if c["risque"]:
+            texte += f"<br/>{escape(c['risque'].format(**v))}"
+        if c["pistes"]:
+            texte += "<br/>" + "<br/>".join("– " + escape(p.format(**v)) for p in c["pistes"])
+        story.append(Paragraph(texte, st["texte"]))
+        story.append(Spacer(1, 4))
+    story.append(Paragraph(escape(
+        f"Corrélation moyenne pondérée entre les lignes : {nombre(div['moyenne'])} · ratio de diversification : "
+        f"{nombre(div['ratio'])} · {div['nb_blocs']} blocs indépendants pour {len(div['poids'])} lignes."),
+        st["texte"]))
+    if len(div["correlations"]) >= 2:
+        if len(div["correlations"]) <= 25:
+            story.append(_image_graphique(g.graphique_correlations, div["correlations"], ordre=div["ordre"],
+                                          noms=positions["nom"].to_dict(), largeur=LARGEUR_UTILE * 0.85))
+        else:                                  # beaucoup de titres : corrélations entre classes ou régions
+            colonne = "region" if positions["region"].nunique() > 2 else "classe"
+            corr, _ = ex.correlations_par_groupe(div["rendements"], div["poids"], positions[colonne])
+            if len(corr) >= 2:
+                story.append(_image_graphique(
+                    g.graphique_correlations, corr, ordre=ex.ordre_regroupement(corr),
+                    titre="Corrélation entre " + ("régions" if colonne == "region" else "classes d'actifs"),
+                    largeur=LARGEUR_UTILE * 0.7))
+    story.append(Paragraph(escape("Analyse pédagogique fondée sur des règles simples et des données passées : "
+                                  "elle ne constitue pas un conseil en investissement."), st["note"]))
     story.append(PageBreak())
 
     # ---------------- Page 3 : performance ----------------
