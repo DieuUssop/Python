@@ -18,6 +18,7 @@ Fermer la fenêtre noire arrête l'application.
 """
 
 import os
+import signal
 import socket
 import subprocess
 import sys
@@ -28,7 +29,8 @@ from pathlib import Path
 
 RACINE = Path(__file__).resolve().parent
 PORTS = range(8501, 8511)
-INSTALLE = (RACINE / "python" / "python.exe").exists()      # version installée (Python embarqué)
+INSTALLE = (RACINE / "python" / "python.exe").exists() or bool(os.environ.get("PORTFOLIO_INSTALLE"))
+# (version installée : Python embarqué sous Windows, application Mac)
 
 # Pas de proxy pour parler à son propre ordinateur
 _OUVREUR = urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -43,9 +45,20 @@ def est_le_tableau_de_bord(port):
         return False
 
 
+NAVIGATEURS_MAC = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                   "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+                   "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"]
+
+
 def navigateur_application():
-    """Chemin de Microsoft Edge (installé sur Windows 10 et 11) ou de Google Chrome, ou None."""
-    if os.environ.get("PORTFOLIO_NAVIGATEUR") == "classique" or os.name != "nt":
+    """Navigateur capable d'ouvrir une « fenêtre d'application » : Microsoft Edge (installé sur
+    Windows 10 et 11) ou Google Chrome ; sur Mac, Chrome, Edge ou Brave s'ils sont installés
+    (sinon le tableau de bord s'ouvre dans Safari). Renvoie None si aucun."""
+    if os.environ.get("PORTFOLIO_NAVIGATEUR") == "classique":
+        return None
+    if sys.platform == "darwin":
+        return next((n for n in NAVIGATEURS_MAC if Path(n).exists()), None)
+    if os.name != "nt":
         return None
     dossiers = [os.environ.get(v) for v in ("ProgramFiles(x86)", "ProgramFiles", "LOCALAPPDATA")]
     for dossier in [d for d in dossiers if d]:
@@ -105,6 +118,10 @@ def main():
     if INSTALLE:
         commande += ["--server.fileWatcherType", "none"]  # le code ne change pas : inutile de le surveiller
     serveur = subprocess.Popen(commande, cwd=RACINE, env=dict(os.environ, PYTHONIOENCODING="utf-8"))
+    # Fenêtre fermée (Mac : Terminal) : on arrête aussi le serveur
+    for nom in ("SIGTERM", "SIGHUP"):
+        if hasattr(signal, nom):
+            signal.signal(getattr(signal, nom), lambda *_: (serveur.terminate(), sys.exit(0)))
 
     debut = time.time()
     while time.time() - debut < 180:

@@ -53,6 +53,39 @@ l'installe par-dessus l'ancienne version : **ses comptes et portefeuilles sont c
 
 ---
 
+## Partie 1 bis — Faire fabriquer Windows ET Mac par GitHub (recommandé)
+
+Un Mac est nécessaire pour fabriquer une application Mac : GitHub en prête un
+gratuitement. Le fichier `.github/workflows/installateurs.yml` (déjà dans le projet)
+fabrique **les deux installateurs** sur les machines de GitHub — ton PC n'est pas utilisé.
+
+1. Envoie le projet sur GitHub (Commit + Push dans GitHub Desktop), base de titres comprise.
+2. Sur la page du dépôt : onglet **Actions** → **Fabriquer les installateurs** →
+   bouton **Run workflow** → **Run workflow**.
+   (La première fois, GitHub peut demander d'activer les Actions : bouton vert « I understand… ».)
+3. Attendre 20 à 40 minutes (pastille jaune → verte).
+4. Onglet **Releases** : une nouvelle version contient
+   - `Installer_Portfolio_Tracker.exe` (Windows),
+   - `Portfolio_Tracker_Mac.dmg` (Mac Apple Silicon).
+   C'est le lien de cette Release qu'il suffit de partager.
+
+En cas d'échec (pastille rouge) : cliquer sur l'étape en rouge et m'envoyer une capture du message.
+Dépôt public : gratuit et illimité. Dépôt privé : quota gratuit de GitHub (suffisant pour
+quelques fabrications par mois ; une fabrication Mac compte pour 10 fois sa durée).
+
+### Installation sur Mac (les utilisateurs)
+
+1. Ouvrir `Portfolio_Tracker_Mac.dmg` et glisser **Portfolio Tracker** sur **Applications**.
+2. Première ouverture (application hors App Store, non signée par Apple) :
+   - macOS 15 et plus : Réglages Système → Confidentialité et sécurité → **Ouvrir quand même** ;
+   - macOS 12 à 14 : clic droit sur l'application → **Ouvrir** → **Ouvrir**.
+3. Une fenêtre **Terminal** s'ouvre (l'équivalent de la fenêtre noire de Windows) puis le tableau
+   de bord. Fermer le Terminal pour quitter.
+4. Données : `~/Library/Application Support/Portfolio Tracker` (comptes chiffrés, conservés lors
+   d'une mise à jour : il suffit de remplacer l'application dans Applications).
+
+Mac Intel (avant fin 2020) : non pris en charge par cette application, utiliser le site en ligne.
+
 ## Partie 2 — Installer Portfolio Tracker (les utilisateurs)
 
 1. Double-cliquer sur `Installer_Portfolio_Tracker.exe`.
@@ -97,7 +130,7 @@ supprimer aussi les comptes et portefeuilles (définitif), ou les garder pour un
 
 ## Limites
 
-- Windows 64 bits uniquement (pas de Mac).
+- Windows 64 bits ; Mac Apple Silicon via la fabrication GitHub (Partie 1 bis).
 - Pas de mise à jour automatique : il faut redistribuer le nouveau fichier.
 - Programme non signé : l'avertissement Windows est normal (un certificat de signature coûte
   plusieurs centaines d'euros par an).

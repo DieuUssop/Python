@@ -5,6 +5,9 @@
 #ifndef Version
   #define Version "1.0"
 #endif
+#ifndef Source
+  #define Source "..\build_installateur\programme"
+#endif
 
 [Setup]
 AppId={{8F3B2A61-5C4D-4E7A-9B1F-2D6C8E4A7B90}
@@ -45,7 +48,7 @@ Type: filesandordirs; Name: "{app}\python"
 Type: filesandordirs; Name: "{app}\src"
 
 [Files]
-Source: "..\build_installateur\programme\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#Source}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\Portfolio Tracker"; Filename: "{app}\python\python.exe"; Parameters: """{app}\lanceur.py"""; WorkingDir: "{app}"; IconFilename: "{app}\assets\icone.ico"; Comment: "Suivi et analyse de portefeuille"

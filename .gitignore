@@ -19,3 +19,5 @@ data/base/cache_candidats.csv
 # à publier dans une « Release » GitHub ou à partager par OneDrive / WeTransfer)
 build_installateur/
 installateur_windows/
+build_mac/
+installateur_mac/

@@ -15,7 +15,10 @@ $ProgressPreference = "SilentlyContinue"          # téléchargements beaucoup p
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $Racine          = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Travail         = Join-Path $Racine "build_installateur"
+# Dossier de fabrication HORS du projet (et donc hors OneDrive) : des milliers de petits
+# fichiers temporaires que OneDrive essaierait sinon de synchroniser.
+$Travail         = Join-Path $env:LOCALAPPDATA "PortfolioTracker_fabrication"
+$AncienTravail   = Join-Path $Racine "build_installateur"
 $Telechargements = Join-Path $Travail "telechargements"
 $Programme       = Join-Path $Travail "programme"
 $Sortie          = Join-Path $Racine "installateur_windows"
@@ -39,8 +42,10 @@ if (Test-Path (Join-Path $Racine "data\base\cours")) {
     Write-Host "    La base de titres n'est pas construite (data\base\cours absent)." -ForegroundColor Yellow
     Write-Host "    Sans elle, l'application installée aura besoin d'Internet pour les cours." -ForegroundColor Yellow
     Write-Host "    Pour la construire : double-cliquer sur construire_base.bat (environ 1 h)." -ForegroundColor Yellow
-    $reponse = Read-Host "    Continuer quand même ? (O/N)"
-    if ($reponse -notmatch '^[oOyY]') { exit 0 }
+    if (-not $env:PORTFOLIO_CI) {                     # sur GitHub (fabrication automatique) : on continue
+        $reponse = Read-Host "    Continuer quand même ? (O/N)"
+        if ($reponse -notmatch '^[oOyY]') { exit 0 }
+    }
 }
 
 # ---------------------------------------------------------------- 2. Inno Setup
@@ -89,7 +94,7 @@ if (-not $ZipPython) { Echec "téléchargement de Python impossible (connexion I
 Etape "4/7 Copie du projet"
 if (Test-Path $Programme) { Remove-Item -Recurse -Force $Programme }
 New-Item -ItemType Directory -Force -Path $Programme | Out-Null
-$dossiersExclus = @($Travail, $Sortie, (Join-Path $Racine ".git"), (Join-Path $Racine "data\comptes"),
+$dossiersExclus = @($Travail, $AncienTravail, $Sortie, (Join-Path $Racine ".git"), (Join-Path $Racine "data\comptes"),
                     (Join-Path $Racine "tests"), (Join-Path $Racine "installateur"),
                     "__pycache__", ".pytest_cache", ".github", ".vscode")
 $fichiersExclus = @("*.bat", "*.ps1", ".installe", "cache_*.csv", "progression.json", "echecs.csv", "*.tmp",
@@ -135,7 +140,7 @@ Get-ChildItem $Programme -Recurse -Directory -Filter "__pycache__" |
 # ---------------------------------------------------------------- 7. Installateur
 Etape "7/7 Fabrication de l'installateur (quelques minutes)"
 $Version = Get-Date -Format "yyyy.MM.dd"
-& $ISCC "/Qp" "/DVersion=$Version" (Join-Path $Racine "installateur\portfolio_tracker.iss")
+& $ISCC "/Qp" "/DVersion=$Version" "/DSource=$Programme" (Join-Path $Racine "installateur\portfolio_tracker.iss")
 if ($LASTEXITCODE -ne 0) { Echec "la compilation Inno Setup a échoué (voir ci-dessus)." }
 
 $exe = Join-Path $Sortie "Installer_Portfolio_Tracker.exe"
@@ -143,4 +148,4 @@ $taille = (Get-Item $exe).Length / 1MB
 Write-Host ""
 Write-Host ("Installateur prêt : {0} ({1:N0} Mo), version {2}" -f $exe, $taille, $Version) -ForegroundColor Green
 Write-Host "C'est ce fichier unique qu'il faut partager (OneDrive, Google Drive, WeTransfer, clé USB)."
-Start-Process explorer.exe $Sortie
+if (-not $env:PORTFOLIO_CI) { Start-Process explorer.exe $Sortie }

@@ -1,0 +1,30 @@
+PORTFOLIO TRACKER - INSTALLATION SUR MAC
+========================================
+
+1. Glissez « Portfolio Tracker » sur le dossier « Applications ».
+
+2. Ouvrez Applications, puis double-cliquez sur « Portfolio Tracker ».
+
+   La toute première fois, macOS bloque l'application (elle ne vient pas de l'App Store) :
+   - macOS 15 (Sequoia) et plus récent : cliquez « Terminé », puis ouvrez
+     Réglages Système > Confidentialité et sécurité, descendez jusqu'au message sur
+     « Portfolio Tracker » et cliquez « Ouvrir quand même » ; confirmez.
+   - macOS 12 à 14 : clic droit (ou Ctrl + clic) sur l'application > Ouvrir > Ouvrir.
+   Ce n'est à faire qu'une seule fois.
+
+3. Une fenêtre Terminal s'ouvre, puis le tableau de bord (dans Chrome ou Edge en mode
+   « application » s'ils sont installés, sinon dans Safari).
+   - Laissez la fenêtre Terminal ouverte pendant l'utilisation.
+   - Fermez-la (puis « Fermer ») pour quitter l'application.
+
+Le tableau de bord fonctionne sur ce Mac uniquement, même sans Internet.
+Vos comptes et portefeuilles (chiffrés) sont rangés dans :
+   ~/Library/Application Support/Portfolio Tracker
+Ils sont conservés quand vous installez une nouvelle version (remplacez simplement
+l'application dans le dossier Applications).
+
+Désinstaller : mettez « Portfolio Tracker » à la corbeille ; pour effacer aussi les comptes,
+supprimez le dossier ci-dessus (Finder > Aller > Aller au dossier...).
+
+Mac requis : Apple Silicon (M1, M2, M3, M4...), macOS 12 ou plus récent.
+Mac Intel (avant fin 2020) : utilisez la version en ligne du tableau de bord.

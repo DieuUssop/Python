@@ -1,0 +1,94 @@
+# Fabrique automatiquement les installateurs Windows (.exe) et Mac (.dmg) sur les
+# machines de GitHub, puis les publie dans une « Release » du dépôt.
+#
+# Pour lancer : onglet « Actions » du dépôt > « Fabriquer les installateurs »
+#               > bouton « Run workflow » (version facultative) > « Run workflow ».
+# Durée : 20 à 40 minutes. Résultat : onglet « Releases » du dépôt.
+name: Fabriquer les installateurs
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Numéro de version (vide = date du jour, ex. 2026.10.05)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      numero: ${{ steps.v.outputs.numero }}
+    steps:
+      - id: v
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "numero=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "numero=$(date +%Y.%m.%d.%H%M)" >> "$GITHUB_OUTPUT"
+          fi
+
+  windows:
+    needs: version
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inno Setup (s'il n'est pas déjà installé)
+        shell: powershell
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+      - name: Fabrication de l'installateur Windows
+        shell: powershell
+        env:
+          PORTFOLIO_CI: "1"
+        run: .\fabriquer_installateur.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installateur-windows
+          path: installateur_windows/Installer_Portfolio_Tracker.exe
+          retention-days: 7
+
+  mac:
+    needs: version
+    runs-on: macos-14
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fabrication de l'application Mac
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash installateur/fabriquer_mac.sh "${{ needs.version.outputs.numero }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installateur-mac
+          path: installateur_mac/Portfolio_Tracker_Mac.dmg
+          retention-days: 7
+
+  publication:
+    needs: [version, windows, mac]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: fichiers
+      - name: Publication dans les Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.version.outputs.numero }}
+          name: Portfolio Tracker ${{ needs.version.outputs.numero }}
+          body: |
+            **Windows** : télécharger `Installer_Portfolio_Tracker.exe`, double-cliquer, puis Suivant > Installer > Terminer.
+            Si Windows affiche « Windows a protégé votre ordinateur » : « Informations complémentaires » > « Exécuter quand même ».
+
+            **Mac (Apple Silicon)** : télécharger `Portfolio_Tracker_Mac.dmg`, l'ouvrir, glisser l'application dans « Applications ».
+            Première ouverture : Réglages Système > Confidentialité et sécurité > « Ouvrir quand même » (macOS 15+),
+            ou clic droit > Ouvrir (macOS 12 à 14).
+
+            L'application fonctionne hors connexion ; les comptes et portefeuilles restent sur l'ordinateur, chiffrés.
+          files: |
+            fichiers/installateur-windows/Installer_Portfolio_Tracker.exe
+            fichiers/installateur-mac/Portfolio_Tracker_Mac.dmg
