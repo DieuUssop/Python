@@ -98,6 +98,14 @@ def obtenir_cours(tickers):
         # "except" attrape n'importe quel problème (pas d'Internet, Yahoo en
         # panne...) pour que le programme ne plante pas.
         prix, date_maj = _lire_cache()
+        # Titres absents du cache : derniers cours connus de la base locale de titres
+        try:
+            from . import base_titres
+            for t, (valeur, date) in base_titres.derniers_cours([t for t in tickers if t not in prix]).items():
+                prix[t] = valeur
+                date_maj = min(date_maj or f"{date:%Y-%m-%d}", f"{date:%Y-%m-%d}")
+        except Exception:
+            pass
         if not prix:
             raise RuntimeError(
                 "Impossible de récupérer les cours : pas de connexion à Yahoo "
@@ -145,6 +153,34 @@ def telecharger_historique(tickers, debut):
     return clotures
 
 
+def _enrichir_base(histo):
+    """Ajoute les cours téléchargés à la base locale de titres (mémoire hors connexion)."""
+    try:
+        from . import base_titres
+        base_titres.ajouter_cours(histo)
+    except Exception:
+        pass                                        # base absente ou en lecture seule : sans gravité
+
+
+def _completer_par_la_base(histo, tickers, debut):
+    """Ajoute, depuis la base locale, les tickers absents du tableau (hors connexion,
+    ou titre momentanément refusé par Yahoo)."""
+    manquants = [t for t in tickers if histo.empty or t not in histo.columns or histo[t].dropna().empty]
+    if not manquants:
+        return histo
+    try:
+        from . import base_titres
+        complement = base_titres.lire_cours(manquants, pd.Timestamp(debut) - pd.Timedelta(days=10))
+    except Exception:
+        return histo
+    if complement.empty:
+        return histo
+    if histo.empty:
+        return complement
+    histo = histo.drop(columns=[c for c in complement.columns if c in histo.columns])
+    return histo.join(complement, how="outer")
+
+
 def obtenir_historique(tickers, debut, chemin_cache=None):
     """Comme obtenir_cours(), mais pour l'historique : Internet, sinon cache.
 
@@ -158,16 +194,19 @@ def obtenir_historique(tickers, debut, chemin_cache=None):
     cache = chemin_cache or CHEMIN_CACHE_HISTO
     try:
         histo = telecharger_historique(tickers, debut)
+        _enrichir_base(histo)                       # la base garde en mémoire tout ce qui est téléchargé
+        histo = _completer_par_la_base(histo, tickers, debut)
         histo.to_csv(cache)
         source = "Yahoo Finance (en direct)"
     except Exception as erreur:
-        if not cache.exists():
+        # Hors connexion : le dernier cache, complété par la base locale de titres
+        histo = pd.read_csv(cache, index_col=0, parse_dates=True) if cache.exists() else pd.DataFrame()
+        histo = _completer_par_la_base(histo, tickers, debut)
+        if histo.empty:
             raise RuntimeError(
                 "Impossible de récupérer l'historique : pas de connexion à Yahoo "
-                f"Finance et aucun cache disponible.\nDétail : {erreur}"
+                f"Finance et titres absents du cache et de la base locale.\nDétail : {erreur}"
             )
-        # index_col=0 : la 1re colonne (les dates) sert d'index.
-        histo = pd.read_csv(cache, index_col=0, parse_dates=True)
         source = "cache local (Yahoo Finance injoignable)"
 
     manquants = [t for t in tickers if t not in histo.columns]

@@ -26,6 +26,24 @@ from .portfolio import Portfolio
 CHEMIN_REFERENTIEL = Path(__file__).resolve().parent.parent / "data" / "referentiel.csv"
 
 
+def charger_fiches():
+    """Fiche descriptive de chaque titre : le référentiel du projet, complété par la
+    base locale de titres (data/base/titres.csv, plusieurs milliers de titres).
+    Le référentiel l'emporte quand un titre figure dans les deux."""
+    referentiel = charger_referentiel()
+    try:
+        from . import base_titres
+        fiches = base_titres.lire_titres()
+    except Exception:
+        return referentiel
+    if fiches.empty:
+        return referentiel
+    fiches = fiches.replace("", float("nan"))
+    supplement = fiches.loc[~fiches.index.isin(referentiel.index)]
+    colonnes = [c for c in referentiel.columns if c in supplement.columns]
+    return pd.concat([referentiel, supplement[colonnes]])
+
+
 def charger_referentiel():
     """Région, secteur, pays, classe d'actifs et duration de chaque titre
     (fichier data/referentiel.csv).
@@ -86,7 +104,7 @@ def analyse_complete(source_csv,
     positions = portefeuille.valoriser(prix)
     positions["devise"] = [info_devises.get(t, ("EUR", 1.0))[0] for t in positions.index]
     # Classement de chaque ligne (utile pour un portefeuille très diversifié)
-    referentiel = charger_referentiel()
+    referentiel = charger_fiches()
     for colonne in ["region", "secteur", "pays"]:
         positions[colonne] = positions.index.map(referentiel[colonne].to_dict()).fillna("Non classé") \
             if colonne in referentiel.columns else "Non classé"

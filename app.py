@@ -31,7 +31,7 @@ import streamlit as st
 from src import config, langues
 from src import graphiques_interactifs as gi
 from src import interface as ui
-from src import import_fichier, vues_conseil, vues_gestion, vues_import
+from src import import_fichier, vues_compte, vues_conseil, vues_gestion, vues_import
 from src.analyse import analyse_complete
 from src.interface import euros, nombre, pct, tendance
 from src.langues import t, td
@@ -155,6 +155,9 @@ with st.sidebar:
     st.segmented_control("Langue / Language", list(langues.LANGUES), format_func=langues.LANGUES.get,
                          default="fr", key="langue", label_visibility="collapsed")
 
+    # Espace personnel (comptes chiffrés) : src/vues_compte.py
+    session_compte = vues_compte.barre_laterale()
+
     html(ui.bloc_titre(t("Espace de travail")))
     espace = st.radio(
         "Espace de travail", ["Analyse du portefeuille", "Conseil patrimonial", "Gestion d'actifs"],
@@ -166,11 +169,15 @@ with st.sidebar:
 
     html(ui.bloc_titre(t("Données")))
     fichier_choisi = None
-    if FICHIERS_DISPONIBLES:
+    # Les portefeuilles personnels (chiffrés) de l'utilisateur connecté, puis ceux du projet
+    personnels = [("perso", p["id"], p["nom"]) for p in session_compte.lister()] if session_compte else []
+    choix = personnels + FICHIERS_DISPONIBLES
+    if choix:
         fichier_choisi = st.selectbox(
-            t("Portefeuille"), FICHIERS_DISPONIBLES,
-            format_func=lambda f: t(NOMS_PORTEFEUILLES[f.name]) if f.name in NOMS_PORTEFEUILLES else f.name,
-            help=t("Fichiers data/transactions*.csv du projet"),
+            t("Portefeuille"), choix,
+            format_func=lambda f: t("Mon espace · {nom}", nom=f[2]) if isinstance(f, tuple) else
+            (t(NOMS_PORTEFEUILLES[f.name]) if f.name in NOMS_PORTEFEUILLES else f.name),
+            help=t("Vos portefeuilles enregistrés, puis les portefeuilles d'exemple du projet"),
         )
     fichier_envoye = st.file_uploader(
         t("Ou envoyer un autre fichier (CSV ou Excel)"), type=["csv", "xlsx"],
@@ -181,6 +188,12 @@ with st.sidebar:
     st.download_button(t("Télécharger un modèle de fichier"), data=MODELE_CSV.encode("utf-8-sig"),
                        file_name="modele_transactions.csv", mime="text/csv",
                        icon=":material/description:", width="stretch", type="tertiary")
+    # Emplacement réservé juste sous l'envoi : le bouton « Enregistrer dans mon espace »
+    # y est affiché une fois le fichier lu (plus bas dans le script).
+    zone_enregistrement = st.container()
+    if fichier_envoye is not None and session_compte is None:
+        zone_enregistrement.caption(t("Pour garder ce fichier, connectez-vous ou créez un compte "
+                                      "(« Mon espace », en haut de la barre latérale)."))
     if fichier_envoye is not None and st.button(t("Ouvrir l'assistant d'import"), icon=":material/tune:",
                                                 width="stretch", type="tertiary",
                                                 help=t("Pour indiquer vous-même comment lire le fichier envoyé"),
@@ -207,6 +220,11 @@ with st.sidebar:
     if st.button(t("Actualiser les cours"), icon=":material/refresh:", width="stretch"):
         st.cache_data.clear()   # on oublie les résultats en mémoire...
         st.rerun()              # ... et on relance la page
+
+# Page « Mon compte » (gestion des portefeuilles, mot de passe, suppression)
+if session_compte is not None and st.session_state.get("page_compte"):
+    vues_compte.page_compte(session_compte, importer_auto)
+    st.stop()
 
 # ======================================================================
 # CHARGEMENT DES DONNÉES
@@ -238,6 +256,9 @@ if fichier_envoye is not None:
     if resume_import:
         with st.sidebar:
             html(ui.note(vues_import.texte_resume(resume_import)))
+elif isinstance(fichier_choisi, tuple):                       # portefeuille personnel (déchiffré en mémoire)
+    contenu = session_compte.lire(fichier_choisi[1])
+    nom_fichier = fichier_choisi[2]
 elif fichier_choisi is not None:
     contenu = fichier_choisi.read_bytes()
     nom_fichier = fichier_choisi.name
@@ -255,6 +276,10 @@ except Exception as erreur:  # message clair plutôt qu'un plantage
         st.session_state["assistant_force"] = cle_import
         st.rerun()
     st.stop()
+
+if fichier_envoye is not None and session_compte is not None:     # enregistrer le fichier lu dans son espace
+    with zone_enregistrement:
+        vues_compte.bouton_enregistrer(session_compte, contenu, Path(nom_fichier).stem)
 
 resume = res["resume"]
 positions = res["positions"]

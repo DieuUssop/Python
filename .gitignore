@@ -5,3 +5,12 @@ data/cache_*.csv
 data/historique.csv
 data/transactions_sauvegarde.csv
 graphique_*.png
+
+# Espace personnel : comptes chiffrés (ne JAMAIS publier, même chiffrés)
+data/comptes/
+# Base de titres : fichiers de travail du téléchargement
+data/base/progression.json
+data/base/echecs.csv
+data/base/*.tmp
+data/base/cache_candidats.csv
+.installe

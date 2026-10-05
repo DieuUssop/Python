@@ -23,14 +23,17 @@ un tableau de bord web interactif et dans un rapport PDF généré automatiqueme
 | **Restitution** | Tableau de bord Streamlit en 3 espaces (analyse, conseil patrimonial, gestion d'actifs), version en ligne de commande, rapport PDF de synthèse |
 | **Langues** | Tableau de bord disponible en français et en anglais (sélecteur FR / EN dans la barre latérale) ; le rapport PDF et la version en ligne de commande restent en français |
 | **Import libre** | Fichier CSV ou Excel quelconque (export de banque ou de courtier, tableau personnel, même sans ligne de titres) : colonnes reconnues par leur nom, leur contenu et la cohérence des chiffres, codes ISIN, tickers Bloomberg / Google / Reuters et tickers sans place de cotation convertis en tickers Yahoo, prix vérifiés avec les cours du jour et reconvertis dans la devise du titre ; assistant d'import en cas de doute — voir docs/GUIDE_IMPORT.md |
-| **Fiabilité** | 107 tests automatiques, contrôle croisé du gain total, cache hors ligne |
+| **Hors connexion** | Base locale de plusieurs milliers de titres (grands indices mondiaux, ETF, indices, taux de change) avec leurs cours depuis 2015 ; mémoire des titres reconnus (ISIN, noms) ; l'application et l'import de fichiers fonctionnent sans Internet — voir docs/GUIDE_HORS_CONNEXION.md |
+| **Espace personnel** | Comptes utilisateurs ; portefeuilles enregistrés chiffrés avec le mot de passe (PBKDF2 + AES), lisibles par leur seul propriétaire ; changement de mot de passe, suppression du compte (RGPD) |
+| **Fiabilité** | 121 tests automatiques, contrôle croisé du gain total, base cumulative hors ligne |
 
 ## Démarrage rapide
 
 **Sous Windows**, double-cliquer sur :
 
 - `lancer_tableau_de_bord.bat` : ouvre le tableau de bord dans le navigateur ;
-- `lancer_analyse.bat` : analyse complète dans le terminal, graphiques et rapport PDF.
+- `lancer_analyse.bat` : analyse complète dans le terminal, graphiques et rapport PDF ;
+- `construire_base.bat` : construit (≈ 1 h la première fois) ou met à jour la base locale de titres, pour travailler hors connexion.
 
 **En ligne de commande** (depuis le dossier du projet) :
 
@@ -41,11 +44,13 @@ python main.py                                      # analyse de data/transactio
 python main.py data/transactions_mondial.csv        # analyse d'un autre portefeuille
 python generer_portefeuille_mondial.py              # crée le fonds actions monde (69 titres)
 python generer_portefeuille_diversifie.py           # crée le portefeuille diversifié (50 lignes, depuis 2017)
-python -m pytest                                    # lance les 107 tests
+python construire_base_titres.py                    # base locale hors connexion (≈ 1 h, une fois)
+python construire_base_titres.py --mise-a-jour      # ajoute les derniers cours (quelques minutes)
+python -m pytest                                    # lance les 121 tests
 ```
 
-Python 3.11 ou plus récent est nécessaire, ainsi qu'une connexion Internet au premier lancement.
-Ensuite, un cache local permet de travailler hors ligne.
+Python 3.11 ou plus récent est nécessaire, ainsi qu'une connexion Internet pour l'installation.
+Une fois la base locale construite, l'application fonctionne entièrement hors connexion.
 
 ## Format du fichier de transactions
 
@@ -92,16 +97,20 @@ portfolio_tracker/
 ├── generer_portefeuille_diversifie.py # portefeuille diversifié : actions, obligations, or
 ├── lancer_tableau_de_bord.bat       # raccourcis Windows
 ├── lancer_analyse.bat
+├── construire_base_titres.py · construire_base.bat  # base locale de titres (hors connexion)
 ├── requirements.txt · pytest.ini · .gitignore
 ├── data/
 │   ├── transactions.csv             # portefeuille du particulier
 │   ├── transactions_mondial.csv     # fonds actions monde (créé par le script)
 │   ├── transactions_diversifie.csv  # portefeuille diversifié multi-actifs (créé par le script)
-│   └── referentiel.csv              # région, secteur, pays, classe d'actifs, duration de chaque titre
+│   ├── referentiel.csv              # région, secteur, pays, classe d'actifs, duration de chaque titre
+│   ├── base/                        # base locale : titres.csv, memoire.csv, cours/ (32 paquets .npz)
+│   └── comptes/                     # espaces personnels chiffrés (jamais publiés sur GitHub)
 ├── src/
 │   ├── config.py                    # réglages (indice, taux sans risque, VaR, poids max, projection)
 │   ├── portfolio.py                 # transactions, PRU, plus-values, historique jour par jour
-│   ├── market_data.py               # cours Yahoo Finance + cache hors ligne
+│   ├── market_data.py               # cours Yahoo Finance, complétés par la base locale hors ligne
+│   ├── base_titres.py               # base locale de titres, cours depuis 2015 et mémoire des titres
 │   ├── devises.py                   # détection des devises et conversion en euros
 │   ├── metrics.py                   # TWR, TRI, volatilité, drawdown, Sharpe, bêta, VaR...
 │   ├── optimisation.py              # Markowitz (SciPy, SLSQP)
@@ -119,13 +128,16 @@ portfolio_tracker/
 │   ├── interface.py                 # éléments visuels du tableau de bord
 │   ├── import_fichier.py            # lecture libre des fichiers (correspondance, ISIN -> ticker)
 │   ├── vues_import.py               # assistant d'import du tableau de bord
+│   ├── coffre.py                    # empreinte des mots de passe et chiffrement (PBKDF2, Fernet)
+│   ├── comptes.py                   # comptes utilisateurs et espaces personnels chiffrés
+│   ├── vues_compte.py               # connexion, « Mon espace », page « Mon compte »
 │   ├── langues.py                   # choix de la langue (FR / EN) et fonctions de traduction
 │   ├── traductions.py               # dictionnaire français -> anglais du tableau de bord
 │   ├── vues_conseil.py              # espace « Conseil patrimonial » du tableau de bord
 │   ├── vues_gestion.py              # espace « Gestion d'actifs » du tableau de bord
 │   └── rapport.py                   # rapport PDF (reportlab)
 ├── assets/style.css · .streamlit/config.toml   # apparence du tableau de bord
-├── tests/                           # 107 tests automatiques (pytest)
+├── tests/                           # 121 tests automatiques (pytest)
 └── docs/                            # guides pas à pas des étapes du projet
 ```
 
@@ -188,6 +200,8 @@ du gain total (ligne par ligne et jour par jour).
 - Hypothèse de normalité (VaR paramétrique, Monte-Carlo par loi normale) : risques extrêmes sous-estimés.
 - Optimisation de Markowitz sensible à l'erreur d'estimation des rendements espérés.
 - Données Yahoo Finance gratuites, sans garantie d'exactitude.
+- Hors connexion, les cours ne sont pas plus récents que la dernière mise à jour de la base ; un titre absent de la base doit être importé par son ticker Yahoo.
+- Sur la version en ligne (Streamlit Community Cloud), les comptes sont effacés à chaque redémarrage du site : l'espace personnel est fait pour l'application installée sur l'ordinateur ou sur un serveur privé. Mot de passe oublié = portefeuilles illisibles (aucune porte dérobée).
 - Fiscalité simplifiée (pas de barème progressif, plafonds de 150 000 € non modélisés) ; SRI approché par la volatilité.
 - Stress tests et attribution calculés sur des indices hors dividendes et, pour les stress tests, en devise locale.
 

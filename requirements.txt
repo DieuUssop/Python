@@ -8,3 +8,5 @@ streamlit>=1.50
 reportlab
 pytest
 openpyxl
+cryptography>=42
+lxml

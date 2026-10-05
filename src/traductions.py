@@ -668,6 +668,79 @@ TEXTES = {
     "Analyser ce portefeuille": "Analyse this portfolio",
     "Télécharger le fichier converti (format du projet)": "Download the converted file (project format)",
 
+    # ------------------------------------------------------------------
+    # Espace personnel et comptes (vues_compte.py, comptes.py)
+    # ------------------------------------------------------------------
+    "Vos portefeuilles enregistrés, puis les portefeuilles d'exemple du projet":
+        "Your saved portfolios, then the project's sample portfolios",
+    "Mon espace · {nom}": "My space · {nom}",
+    "Déconnexion automatique après 30 minutes d'inactivité.": "Automatically signed out after 30 minutes of inactivity.",
+    "Mon espace": "My space",
+    "Connecté : {identifiant}": "Signed in: {identifiant}",
+    "Mon compte": "My account",
+    "Déconnexion": "Sign out",
+    "Se connecter ou créer un compte": "Sign in or create an account",
+    "Action": "Action",
+    "Enregistrer dans mon espace": "Save to my space",
+    "Nom du portefeuille": "Portfolio name",
+    "Enregistrer": "Save",
+    "« {nom} » est enregistré dans votre espace (chiffré).": "\"{nom}\" has been saved to your space (encrypted).",
+    "Vos portefeuilles sont chiffrés avec une clé tirée de votre mot de passe : personne d'autre (ni les autres "
+    "utilisateurs, ni l'administrateur) ne peut les lire.":
+        "Your portfolios are encrypted with a key derived from your password: nobody else (neither other users "
+        "nor the administrator) can read them.",
+    "Identifiant": "Username",
+    "Mot de passe": "Password",
+    "Mes portefeuilles": "My portfolios",
+    "Aucun portefeuille enregistré pour l'instant : ajoutez-en un ci-dessus.":
+        "No saved portfolio yet: add one above.",
+    "Pour garder ce fichier, connectez-vous ou créez un compte (« Mon espace », en haut de la barre latérale).":
+        "To keep this file, log in or create an account (\"My space\", at the top of the sidebar).",
+    "Ajouter un portefeuille": "Add a portfolio",
+    "Fichier CSV ou Excel, de n'importe quel format": "CSV or Excel file, in any layout",
+    "Fichier à enregistrer": "File to save",
+    "{n} opération(s) reconnue(s).": "{n} transaction(s) recognised.",
+    "Ce fichier n'a pas pu être lu automatiquement. Envoyez-le depuis la barre latérale (« Ou envoyer un autre fichier ») : l'assistant d'import vous guidera, puis le bouton « Enregistrer dans mon espace » apparaîtra sous l'envoi.":
+        "This file could not be read automatically. Upload it from the sidebar (\"Or upload another file\"): the "
+        "import assistant will guide you, then the \"Save to my space\" button will appear below the upload.",
+    "Nom": "Name",
+    "{n} opération(s) · modifié le {date}": "{n} transaction(s) · updated on {date}",
+    "Télécharger": "Download",
+    "Confirmer": "Confirm",
+    "Supprimer": "Delete",
+    "Changer de mot de passe": "Change password",
+    "Vos portefeuilles sont rechiffrés avec le nouveau": "Your portfolios are re-encrypted with the new one",
+    "Mot de passe actuel": "Current password",
+    "Nouveau mot de passe": "New password",
+    "Confirmer le mot de passe": "Confirm password",
+    "Supprimer mon compte": "Delete my account",
+    "Efface définitivement le compte et tous ses portefeuilles (droit à l'effacement, RGPD)":
+        "Permanently erases the account and all its portfolios (right to erasure, GDPR)",
+    "Supprimer définitivement mon compte": "Permanently delete my account",
+    "Version en ligne de démonstration : les comptes et portefeuilles enregistrés ici peuvent être effacés au "
+    "redémarrage du site. Pour les conserver, utilisez l'application sur votre ordinateur.":
+        "Online demo version: accounts and portfolios saved here may be erased when the site restarts. To keep "
+        "them, use the application on your computer.",
+    "Vos portefeuilles seront chiffrés avec votre mot de passe. S'il est oublié, ils seront définitivement "
+    "illisibles, y compris pour l'administrateur.":
+        "Your portfolios will be encrypted with your password. If you forget it, they will be permanently "
+        "unreadable, including for the administrator.",
+    "Se connecter": "Sign in",
+    "Créer mon compte": "Create my account",
+    "Créer un compte": "Create an account",
+    "Vérification...": "Checking...",
+    "Mot de passe modifié.": "Password changed.",
+    "Compte et données supprimés.": "Account and data deleted.",
+    "Identifiant invalide : 3 à 30 caractères parmi lettres minuscules, chiffres, « . », « _ » et « - ».":
+        "Invalid username: 3 to 30 characters among lowercase letters, digits, \".\", \"_\" and \"-\".",
+    "Le mot de passe doit contenir au moins {n} caractères.": "The password must be at least {n} characters long.",
+    "Les deux mots de passe ne sont pas identiques.": "The two passwords do not match.",
+    "Cet identifiant est déjà utilisé.": "This username is already taken.",
+    "Identifiant ou mot de passe incorrect.": "Incorrect username or password.",
+    "Trop d'essais ratés : réessayez dans {n} secondes.": "Too many failed attempts: try again in {n} seconds.",
+    "Portefeuille introuvable.": "Portfolio not found.",
+    "Mot de passe actuel incorrect.": "Current password is incorrect.",
+    "Mot de passe incorrect.": "Incorrect password.",
 }
 
 # ----------------------------------------------------------------------

@@ -752,12 +752,13 @@ def _meilleur_resultat(resultats, isin=None):
     return min(utiles, key=rang)
 
 
-def resoudre_identifiants(valeurs, noms=None, tickers_connus=(), chercher=None):
+def resoudre_identifiants(valeurs, noms=None, tickers_connus=(), chercher=None, memoire=True):
     """Pour chaque identifiant du fichier, propose un ticker Yahoo Finance.
 
     valeurs : identifiants distincts (tickers, codes ISIN ou noms)
     noms    : {identifiant: nom du titre} si le fichier contient aussi le nom
     chercher: fonction de recherche (remplaçable dans les tests)
+    memoire : consulter puis enrichir la mémoire locale (src/base_titres.py)
 
     Renvoie un tableau : identifiant, nature, ticker proposé, nom trouvé, statut
     ("tel quel", "converti" (format Bloomberg, Google...), "trouvé", "introuvable").
@@ -773,7 +774,16 @@ def resoudre_identifiants(valeurs, noms=None, tickers_connus=(), chercher=None):
         elif nature != "ticker":
             requetes = [valeur] + ([noms[valeur]] if noms and noms.get(valeur) and nature == "isin" else [])
             resultat = None
-            for requete in requetes:
+            # 1. D'abord la mémoire et la base locale de titres (rapide, et marche hors connexion)
+            if memoire:
+                try:
+                    from . import base_titres
+                    resultat = _meilleur_resultat(base_titres.chercher_localement(valeur),
+                                                  valeur.upper() if nature == "isin" else None)
+                except Exception:
+                    resultat = None
+            # 2. Sinon, le moteur de recherche de Yahoo Finance
+            for requete in ([] if resultat else requetes):
                 try:
                     resultat = _meilleur_resultat(chercher(requete), valeur.upper() if nature == "isin" else None)
                 except Exception:
@@ -784,6 +794,12 @@ def resoudre_identifiants(valeurs, noms=None, tickers_connus=(), chercher=None):
                 ticker = resultat["symbol"]
                 nom = nom or resultat.get("longname") or resultat.get("shortname") or ""
                 statut = "trouvé"
+                if memoire and not resultat.get("local"):
+                    try:                                 # on retient la réponse pour la prochaine fois
+                        from . import base_titres
+                        base_titres.memoriser(valeur, ticker, nom)
+                    except Exception:
+                        pass
             else:
                 ticker, statut = ("" if nature == "isin" else valeur.upper()), "introuvable"
         lignes.append({"identifiant": valeur, "nature": nature, "ticker": ticker, "nom": nom, "statut": statut})
@@ -1073,7 +1089,12 @@ def importer_automatiquement(brut, chercher=None, marche=donnees_de_marche):
     if courts:
         provisoire, _ = appliquer_correspondance(tableau, correspondance)
         restants = [c for c in courts if (provisoire["ticker"] == c.upper()).any()]   # sans colonne "place"
-        reconnus = reconnaitre_par_les_prix(provisoire, [c.upper() for c in restants], connus, chercher=chercher)
+        try:
+            from . import base_titres
+            racines = connus | set(base_titres.lire_titres().index)
+        except Exception:
+            racines = connus
+        reconnus = reconnaitre_par_les_prix(provisoire, [c.upper() for c in restants], racines, chercher=chercher)
         for c in restants:
             if c.upper() in reconnus:
                 correspondances_titres[c] = reconnus[c.upper()]

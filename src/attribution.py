@@ -203,8 +203,8 @@ def attribution_poche_actions(res, cours_indices, poids_indice=None):
     Les obligations et l'or sont exclus du calcul.
     Le résultat contient en plus "part_actions" : poids actuel de la poche actions.
     """
-    from .analyse import charger_referentiel      # import ici pour éviter un import circulaire
-    referentiel = charger_referentiel()
+    from .analyse import charger_fiches           # import ici pour éviter un import circulaire
+    referentiel = charger_fiches()
     valeurs = res["valeur_par_titre"]
     vide = pd.Series(dtype=object)
     regions = referentiel["region"] if "region" in referentiel.columns else vide

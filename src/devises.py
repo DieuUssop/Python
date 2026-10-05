@@ -60,6 +60,18 @@ def normaliser(devise):
     return (devise or "EUR").upper(), 1.0
 
 
+def _devise_de_la_base(ticker):
+    """Devise enregistrée dans la base locale de titres (utile hors connexion)."""
+    try:
+        from . import base_titres
+        fiches = base_titres.lire_titres()
+        if ticker in fiches.index and fiches.at[ticker, "devise"]:
+            return fiches.at[ticker, "devise"]
+    except Exception:
+        pass
+    return None
+
+
 def detecter_devises(tickers):
     """Devise de chaque ticker : {ticker: (devise, facteur)}.
 
@@ -80,7 +92,7 @@ def detecter_devises(tickers):
             import yfinance as yf
             brutes[ticker] = yf.Ticker(ticker).fast_info["currency"]
         except Exception:
-            brutes[ticker] = devise_par_suffixe(ticker)
+            brutes[ticker] = _devise_de_la_base(ticker) or devise_par_suffixe(ticker)
         cache[ticker] = brutes[ticker]
 
     try:
