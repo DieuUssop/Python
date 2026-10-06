@@ -413,12 +413,30 @@ def _champ(champs, *mots, sauf=()):
     return None
 
 
+def isin_plausible(code):
+    """ISIN valide ET d'allure réaliste : au moins 6 chiffres sur 12. Écarte les faux ISIN
+    qu'une lecture approximative peut fabriquer à partir de mots (« EURONEXT PARIS » lu
+    « EUR0NEXPAR15 », dont la clé de contrôle tombe juste par hasard)."""
+    return isin_valide(code) and sum(ch.isdigit() for ch in code) >= 6
+
+
+def _nom_apres_isin(texte, isin):
+    """Le nom du titre écrit juste après l'ISIN, sur la même ligne, sans le montant final
+    ni les rubriques qui suivent (« QUANTITE : … »)."""
+    m = re.search(re.escape(isin) + r"[ \t]+([^\n]+)", texte or "")
+    if not m:
+        return ""
+    nom = re.split(r"\s+(?:QUANTIT|QTE|COURS|BRUT|COURTAGE|MONTANT)\w*\s*:", m.group(1), flags=re.IGNORECASE)[0]
+    nom = re.sub(r"\s+[+\-]?\d[\d ,.]*$", "", re.sub(r"\s{2,}", " ", nom)).strip()
+    return nom
+
+
 def lire_avis_opere(texte, tableaux=()):
     """Lit un avis d'opéré (confirmation d'un ordre exécuté) : texte « intitulé : valeur »,
     ou intitulés et valeurs rangés dans un tableau. Renvoie une ligne (liste de textes,
     dans l'ordre de COLONNES_AVIS) ou None."""
     champs = _champs_des_tableaux(tableaux)
-    isin = next((c for c in MOTIF_ISIN_TEXTE.findall(texte) if isin_valide(c)), None)
+    isin = next((c for c in MOTIF_ISIN_TEXTE.findall(texte) if isin_plausible(c)), None)
     # Quantité
     m = MOTIFS_AVIS["quantite"].search(texte)
     quantite = m.group(1).strip() if m else _champ(champs, "quantite", "qte", "nombre de titres", "nominal")
@@ -448,13 +466,13 @@ def lire_avis_opere(texte, tableaux=()):
     devise = SYMBOLES.get(devise, devise.upper())
     m = MOTIFS_AVIS["montant"].search(texte) or MOTIFS_AVIS["montant_simple"].search(texte)
     montant = m.group(2).strip() if m else (_champ(champs, "montant net", "net a", "montant") or "")
+    # Libellé : 1) intitulé explicite « Libellé : … » ; 2) le nom qui suit l'ISIN sur la même ligne
+    # (« … FR0013380607 AM.C.C.40 UC.ETF C 2 473,90 ») ; 3) une case de tableau « Désignation ».
     m = MOTIFS_AVIS["libelle"].search(texte)
-    libelle = m.group(1).strip() if m else (_champ(champs, "libelle", "valeur", "titre", "designation",
-                                                   "instrument", sauf=("date", "code")) or "")
-    if not libelle:                      # « … FR0013380607  AM.C.C.40 UC.ETF C   2 473,90 » : le nom suit l'ISIN
-        m = re.search(isin + r"[ \t]+(.+?)(?:[ \t]{2,}[+\-]?\d[\d ,.]*$|$)", texte, re.MULTILINE)
-        libelle = re.sub(r"\s{2,}", " ", m.group(1)).strip() if m else ""
-        libelle = re.sub(r"\s+[+\-]?\d[\d ,.]*$", "", libelle)        # sans le montant en fin de ligne
+    libelle = m.group(1).strip() if m else _nom_apres_isin(texte, isin)
+    if not libelle:
+        case = _champ(champs, "libelle", "valeur", "titre", "designation", "instrument", sauf=("date", "code")) or ""
+        libelle = _nom_apres_isin(case, isin) or case.split("\n")[0].strip()
     textes_frais = [x.group(2) for x in MOTIFS_AVIS["frais"].finditer(texte)]
     if not textes_frais:
         textes_frais = [v for k, v in champs.items() if any(x in k for x in ("courtage", "commission", "frais",
@@ -1348,7 +1366,8 @@ def importer_automatiquement(brut, chercher=None, marche=donnees_de_marche):
     if rapport["erreurs"] or transactions.empty:
         return {"sur": False, "transactions": None, "resume": resume,
                 "raison": " ; ".join(message_erreur(e) for e in rapport["erreurs"]) or "Aucune transaction lue."}
-    if not correspondance.get("nom") and noms_trouves:
+    # Noms officiels (Yahoo Finance) à la place des libellés abrégés des avis d'opéré (« AM.C.C.40 UC.ETF C »)
+    if (not correspondance.get("nom") or resume.get("source_pdf") in ("pdf_avis", "pdf_ocr")) and noms_trouves:
         transactions["nom"] = [noms_trouves.get(tk, n) for tk, n in zip(transactions["ticker"], transactions["nom"])]
     resume["ignorees"] = rapport["ignorees"]
 

@@ -90,7 +90,7 @@ ETF = {
     "CW8.PA": "Amundi MSCI World", "EWLD.PA": "Amundi PEA MSCI World", "WPEA.PA": "iShares MSCI World Swap PEA",
     "ESE.PA": "BNP Paribas Easy S&P 500", "PE500.PA": "Amundi PEA S&P 500", "PUST.PA": "Amundi PEA Nasdaq-100",
     "PAEEM.PA": "Amundi PEA MSCI Emerging Markets", "AEEM.PA": "Amundi MSCI Emerging Markets",
-    "CAC.PA": "Amundi CAC 40", "MSE.PA": "Amundi Euro Stoxx 50", "C50.PA": "Amundi Euro Stoxx 50 II",
+    "CAC.PA": "Amundi CAC 40", "CACC.PA": "Amundi CAC 40 Acc", "MSE.PA": "Amundi Euro Stoxx 50", "C50.PA": "Amundi Euro Stoxx 50 II",
     "IWDA.AS": "iShares Core MSCI World", "EUNL.DE": "iShares Core MSCI World (Xetra)",
     "VWCE.DE": "Vanguard FTSE All-World Acc", "VWRL.AS": "Vanguard FTSE All-World Dist",
     "VUSA.AS": "Vanguard S&P 500", "SXR8.DE": "iShares Core S&P 500 (Xetra)", "CSPX.L": "iShares Core S&P 500",

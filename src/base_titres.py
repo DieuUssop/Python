@@ -43,6 +43,44 @@ NB_PAQUETS = 32
 COLONNES_TITRES = ["ticker", "nom", "isin", "pays", "region", "secteur", "classe", "devise", "indices"]
 COLONNES_MEMOIRE = ["identifiant", "ticker", "nom", "source", "date"]
 
+# ISIN des ETF courants -> (ticker Yahoo, nom). Les ETF n'ont pas d'ISIN dans la fiche des
+# titres : cette table permet de reconnaître un avis d'opéré ou un relevé (qui ne donnent
+# que l'ISIN et un libellé abrégé) SANS Internet. Elle prime sur la mémoire, pour réparer
+# une mauvaise correspondance apprise auparavant.
+ISIN_ETF = {
+    "FR0013380607": ("CACC.PA", "Amundi CAC 40 UCITS ETF Acc"),
+    "FR0007052782": ("CAC.PA", "Amundi CAC 40 UCITS ETF Dist"),
+    "FR0007054358": ("MSE.PA", "Amundi Euro Stoxx 50 UCITS ETF Dist"),
+    "LU1681043599": ("CW8.PA", "Amundi MSCI World UCITS ETF Acc"),
+    "FR0011869353": ("EWLD.PA", "Amundi PEA MSCI World UCITS ETF"),
+    "IE0002XZSHO1": ("WPEA.PA", "iShares MSCI World Swap PEA UCITS ETF"),
+    "FR0011550185": ("ESE.PA", "BNP Paribas Easy S&P 500 UCITS ETF"),
+    "FR0011871128": ("PE500.PA", "Amundi PEA S&P 500 UCITS ETF"),
+    "FR0011871110": ("PUST.PA", "Amundi PEA Nasdaq-100 UCITS ETF"),
+    "FR0013412020": ("PAEEM.PA", "Amundi PEA MSCI Emerging Markets UCITS ETF"),
+    "LU1681045370": ("AEEM.PA", "Amundi MSCI Emerging Markets UCITS ETF"),
+    "LU0908500753": ("MEUD.PA", "Amundi Stoxx Europe 600 UCITS ETF Acc"),
+    "LU1190417599": ("CSH2.PA", "Amundi Smart Overnight Return UCITS ETF"),
+    "IE00B4L5Y983": ("IWDA.AS", "iShares Core MSCI World UCITS ETF"),
+    "IE00BK5BQT80": ("VWCE.DE", "Vanguard FTSE All-World UCITS ETF Acc"),
+    "IE00B3RBWM25": ("VWRL.AS", "Vanguard FTSE All-World UCITS ETF Dist"),
+    "IE00B3XXRP09": ("VUSA.AS", "Vanguard S&P 500 UCITS ETF"),
+    "IE00B5BMR087": ("SXR8.DE", "iShares Core S&P 500 UCITS ETF"),
+    "IE00BKM4GZ66": ("IS3N.DE", "iShares Core MSCI EM IMI UCITS ETF"),
+    "DE0005933931": ("EXS1.DE", "iShares Core DAX UCITS ETF"),
+    "IE00B4K48X80": ("EUNK.DE", "iShares Core MSCI Europe UCITS ETF"),
+    "IE00B6R52259": ("IUSQ.DE", "iShares MSCI ACWI UCITS ETF"),
+    "IE00B3YLTY66": ("SPYI.DE", "SPDR MSCI ACWI IMI UCITS ETF"),
+    "IE0032077012": ("EQQQ.DE", "Invesco Nasdaq-100 UCITS ETF"),
+    "IE00B4WXJJ64": ("EUNH.DE", "iShares Core Euro Govt Bond UCITS ETF"),
+    "IE00B0M62X26": ("IBCI.DE", "iShares Euro Inflation Linked Govt Bond UCITS ETF"),
+    "IE00B3F81R35": ("EUN5.DE", "iShares Core Euro Corporate Bond UCITS ETF"),
+    "IE00B66F4759": ("EUNW.DE", "iShares Euro High Yield Corp Bond UCITS ETF"),
+    "DE000A0S9GB0": ("4GLD.DE", "Xetra-Gold"),
+    "LU0290355717": ("DBXN.DE", "Xtrackers II Eurozone Government Bond UCITS ETF 1C"),
+    "LU0290358497": ("XEON.DE", "Xtrackers II EUR Overnight Rate Swap UCITS ETF"),
+}
+
 _memoire_paquets = {}            # paquets déjà lus : {chemin: (date de modification, tableau)}
 
 
@@ -270,6 +308,9 @@ def chercher_localement(identifiant):
     titres (code ISIN, ticker, nom). Renvoie une liste de résultats au même
     format que le moteur de recherche de Yahoo ({"symbol", "longname", ...})."""
     cle = _cle(identifiant)
+    if cle in ISIN_ETF:
+        ticker, nom = ISIN_ETF[cle]
+        return [{"symbol": ticker, "longname": nom, "quoteType": "ETF", "local": True}]
     memoire = lire_memoire()
     trouve = memoire[memoire["identifiant"] == cle]
     if not trouve.empty:

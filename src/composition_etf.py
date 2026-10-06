@@ -190,7 +190,7 @@ ETF_INDICE = {
     "PUST.PA": "Nasdaq-100", "EQQQ.DE": "Nasdaq-100", "QQQ": "Nasdaq-100",
     "PAEEM.PA": "MSCI Emerging Markets", "AEEM.PA": "MSCI Emerging Markets", "EIMI.L": "MSCI Emerging Markets",
     "IS3N.DE": "MSCI Emerging Markets", "VWO": "MSCI Emerging Markets", "EEM": "MSCI Emerging Markets",
-    "CAC.PA": "CAC 40", "MSE.PA": "Euro Stoxx 50", "C50.PA": "Euro Stoxx 50", "EXS1.DE": "DAX",
+    "CAC.PA": "CAC 40", "CACC.PA": "CAC 40", "C40.PA": "CAC 40", "MSE.PA": "Euro Stoxx 50", "C50.PA": "Euro Stoxx 50", "EXS1.DE": "DAX",
     "EUNK.DE": "MSCI Europe", "MEUD.PA": "MSCI Europe",
     "VEA": "MSCI EAFE", "EFA": "MSCI EAFE", "VTI": "US Total Market", "IWM": "Russell 2000",
     "IBCA.DE": "Emprunts d'État zone euro", "EUNH.DE": "Emprunts d'État zone euro", "DBXN.DE": "Emprunts d'État zone euro",
@@ -209,7 +209,7 @@ MOTIFS_NOM = [
     (r"s&p ?500|sp ?500", "S&P 500"),
     (r"stoxx europe 600|europe 600|msci europe|stoxx 600", "MSCI Europe"),
     (r"euro ?stoxx ?50", "Euro Stoxx 50"),
-    (r"cac ?40", "CAC 40"),
+    (r"cac ?40|\bc\.c\.40\b", "CAC 40"),           # « AM.C.C.40 UC.ETF C » : libellé abrégé d'un avis
     (r"\bdax\b", "DAX"),
     (r"eafe|developed markets ex|ftse developed", "MSCI EAFE"),
     (r"russell 2000", "Russell 2000"),

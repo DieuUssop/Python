@@ -118,8 +118,8 @@ def texte_image(image):
 
 
 def _score(texte):
-    from .import_fichier import MOTIF_ISIN_TEXTE, isin_valide
-    isins = sum(1 for c in MOTIF_ISIN_TEXTE.findall(reparer_isin(texte)) if isin_valide(c))
+    from .import_fichier import MOTIF_ISIN_TEXTE, isin_plausible
+    isins = sum(1 for c in MOTIF_ISIN_TEXTE.findall(reparer_isin(texte)) if isin_plausible(c))
     return 5 * isins + len(MOTS_UTILES.findall(texte)) + len(texte) / 2000
 
 
@@ -152,7 +152,7 @@ def reparer_isin(texte):
     """« FRO013380607 » (lettre O lue à la place du chiffre 0), ou « FRO0013380607 » (un
     caractère en trop) -> « FR0013380607 ». Une correction n'est retenue que si la clé de
     contrôle de l'ISIN corrigé est valide : une mauvaise correction est impossible."""
-    from .import_fichier import isin_valide
+    from .import_fichier import isin_plausible as isin_valide
 
     def candidats(code):
         """(ISIN possible, nombre de caractères du texte qu'il remplace)."""
@@ -166,6 +166,8 @@ def reparer_isin(texte):
 
     def corriger(m):
         brut = m.group(0)
+        if sum(ch.isdigit() for ch in brut[2:14]) < 5:       # un mot (« EURONEXTPARIS »), pas un code
+            return brut
         for candidat, longueur in candidats(brut):
             if len(candidat) == 12 and isin_valide(candidat):
                 reste = brut[longueur:]

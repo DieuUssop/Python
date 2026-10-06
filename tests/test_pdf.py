@@ -156,3 +156,31 @@ def test_isin_mal_lu_corrige():
     assert ocr.reparer_isin("FRO013380607") == "FR0013380607"         # O lu au lieu de 0
     assert ocr.reparer_isin("FRO0013380607") == "FR0013380607"        # un caractère en trop
     assert ocr.reparer_isin("FR0000121015") == "FR0000121015"         # clé fausse : rien n'est inventé
+    texte = ocr.reparer_isin("Lieu: EURONEXTPARIS  FRO013380607")       # un mot n'est jamais pris pour un ISIN
+    assert "EURONEXTPARIS" in texte and imp.MOTIF_ISIN_TEXTE.findall(texte)[0] == "FR0013380607"
+    assert not imp.isin_plausible("EUR0NEXPAR15")
+
+
+def test_avis_bourse_direct_format_pdf():
+    """Avis Bourse Direct téléchargé avec « Format PDF » : la case « Désignation » du tableau
+    contient aussi QUANTITE, COURS… ; le libellé ne doit garder que le nom du titre."""
+    texte = ("Format PDF Le 28/09/2026\nDate Désignation Débit (€) Crédit (€)\n"
+             "28/09/2026 VENTE COMPTANT FR0013380607 AM.C.C.40 UC.ETF C 2 473,90\nQUANTITE : -60\n"
+             "COURS : +41,295 BRUT : +2 477,70\nCOURTAGE : +3,80 TVA : +0,00\n"
+             "Heure Execution: 16:40:51 Lieu: EURONEXT - EURONEXT PARIS\n")
+    case = texte.split("COMPTANT ", 1)[0][-6:] + "COMPTANT FR0013380607 AM.C.C.40 UC.ETF C\nQUANTITE : -60"
+    tableau = [[["Date", "Désignation", "Débit (€)", "Crédit (€)"], ["28/09/2026", case, "", "2 473,90"]]]
+    ligne = imp.lire_avis_opere(texte, tableau)
+    assert ligne[:4] == ["28/09/2026", "VENTE", "FR0013380607", "AM.C.C.40 UC.ETF C"]
+    assert ligne[4] == "-60" and ligne[7] == "3.80"
+
+
+def test_isin_etf_reconnu_sans_internet():
+    """L'ISIN d'un avis d'opéré (FR0013380607 = Amundi CAC 40 Acc) est reconnu hors connexion,
+    et chaque ISIN de la table intégrée a une clé de contrôle valide."""
+    from src import base_titres
+    for isin in base_titres.ISIN_ETF:
+        assert imp.isin_valide(isin), isin
+    sans_internet = lambda requete: (_ for _ in ()).throw(OSError("hors connexion"))
+    tableau = imp.resoudre_identifiants(["FR0013380607"], chercher=sans_internet)
+    assert tableau.loc[0, "ticker"] == "CACC.PA" and tableau.loc[0, "statut"] == "trouvé"

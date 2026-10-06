@@ -177,7 +177,7 @@ y sont donc temporaires (un avertissement l'indique). L'espace personnel est fai
 python -m pytest
 ```
 
-Résultat attendu : **139 passed** (dont 9 tests sur les comptes — mauvais mot de passe refusé,
+Résultat attendu : **141 passed** (dont 9 tests sur les comptes — mauvais mot de passe refusé,
 données d'un autre illisibles, fichier modifié détecté, blocage après 5 essais, changement de mot
 de passe… — et 5 tests sur la base de titres).
 
