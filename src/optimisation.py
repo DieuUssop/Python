@@ -162,7 +162,17 @@ def frontiere_efficiente(mu, cov, poids_max=1.0, nb_points=40):
             continue                      # point impossible : on l'ignore
         r, v = performance(w, mu, cov)
         points.append({"rendement": r, "volatilite": v, **dict(zip(mu.index, w))})
-    return pd.DataFrame(points)
+    return pd.DataFrame(points, columns=["rendement", "volatilite", *mu.index])
+
+
+def enveloppe_efficiente(nuage):
+    """Frontière approchée à partir du nuage de portefeuilles aléatoires : pour chaque
+    niveau de risque, le meilleur rendement déjà atteint. Sert de solution de secours
+    quand l'optimiseur ne trouve aucun point de la frontière exacte (titre à
+    l'historique trop court, contraintes très serrées...)."""
+    trie = nuage.dropna(subset=["rendement", "volatilite"]).sort_values("volatilite")
+    garde = trie[trie["rendement"] >= trie["rendement"].cummax() - 1e-12]
+    return garde[["rendement", "volatilite"]].reset_index(drop=True)
 
 
 # ======================================================================
@@ -218,6 +228,16 @@ def optimiser_portefeuille(prix_hist, positions, taux_sans_risque, poids_max=0.3
     valeur_totale = positions["valeur"].sum()
     poids["ecart_euros_sharpe_max"] = (poids["sharpe_max"] - poids["actuel"]) * valeur_totale
 
+    aleatoires = portefeuilles_aleatoires(mu, cov, taux_sans_risque)
+    try:
+        frontiere = frontiere_efficiente(mu, cov, poids_max, nb_points)
+    except (RuntimeError, ValueError):
+        frontiere = pd.DataFrame(columns=["rendement", "volatilite"])
+    frontiere = frontiere.dropna(subset=["rendement", "volatilite"])
+    approchee = len(frontiere) < 2
+    if approchee:                       # aucun point exact : frontière approchée par le nuage
+        frontiere = enveloppe_efficiente(aleatoires)
+
     return {
         "mu": mu,
         "cov": cov,
@@ -225,8 +245,9 @@ def optimiser_portefeuille(prix_hist, positions, taux_sans_risque, poids_max=0.3
         "actuel": resume(poids_actuels),
         "variance_min": resume(w_min),
         "sharpe_max": resume(w_sharpe),
-        "frontiere": frontiere_efficiente(mu, cov, poids_max, nb_points),
-        "aleatoires": portefeuilles_aleatoires(mu, cov, taux_sans_risque),
+        "frontiere": frontiere,
+        "frontiere_approchee": approchee,
+        "aleatoires": aleatoires,
         "titres_seuls": pd.DataFrame({"rendement": mu, "volatilite": np.sqrt(np.diag(cov)),
                                       "nom": positions["nom"]}),
         "taux_sans_risque": taux_sans_risque,

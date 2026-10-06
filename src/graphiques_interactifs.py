@@ -10,6 +10,7 @@ Chaque fonction reçoit des données et renvoie une "figure" Plotly, que
 app.py affiche avec st.plotly_chart().
 """
 
+import pandas as pd
 import plotly.graph_objects as go
 
 from .langues import anglais, eur, espace_pct, t, td
@@ -443,15 +444,20 @@ def fig_frontiere(opti):
     ))
     # Droite de marché des capitaux
     rf, tangent = opti["taux_sans_risque"], opti["sharpe_max"]
-    vmax = front["volatilite"].max() * 1.05
+    volatilites = [v for v in (front.get("volatilite", pd.Series(dtype=float)).max(),
+                                alea["volatilite"].max() if len(alea) else None, tangent["volatilite"])
+                   if v is not None and v == v]
+    vmax = max(volatilites) * 1.05
     pente = (tangent["rendement"] - rf) / tangent["volatilite"]
     fig.add_trace(go.Scatter(
         x=[0, vmax], y=[rf, rf + pente * vmax], mode="lines", name=t("Droite de marché des capitaux"),
         line=dict(color=GRIS, width=1.5, dash="dash"), hoverinfo="skip",
     ))
-    # Frontière efficiente
+    # Frontière efficiente (approchée par le nuage si l'optimiseur n'a trouvé aucun point exact)
+    nom_frontiere = t("Frontière efficiente (approchée)") if opti.get("frontiere_approchee") \
+        else t("Frontière efficiente")
     fig.add_trace(go.Scatter(
-        x=front["volatilite"], y=front["rendement"], mode="lines", name=t("Frontière efficiente"),
+        x=front.get("volatilite", []), y=front.get("rendement", []), mode="lines", name=nom_frontiere,
         line=dict(color=TEXTE, width=3),
         hovertemplate=t("Volatilité %{x:.1%}<br>Rendement %{y:.1%}") + f"<extra>{t('Frontière')}</extra>",
     ))

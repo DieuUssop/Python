@@ -594,60 +594,64 @@ with onglets[4]:
 # ----------------------------------------------------------------------
 with onglets[5]:
     n_titres = len(positions)
-    # Seuls les poids maximaux qui permettent d'investir 100 % sont proposés.
-    choix_possibles = [p for p in [0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50, 1.0] if p * n_titres >= 1]
-    defaut = config.POIDS_MAX if config.POIDS_MAX in choix_possibles else choix_possibles[-1]
+    if n_titres < 2:
+        st.info(t("L'optimisation compare plusieurs répartitions entre titres : il faut au moins 2 titres dans le portefeuille."))
+    else:
+        # Seuls les poids maximaux qui permettent d'investir 100 % sont proposés.
+        choix_possibles = [p for p in [0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50, 1.0] if p * n_titres >= 1]
+        defaut = config.POIDS_MAX if config.POIDS_MAX in choix_possibles else choix_possibles[-1]
 
-    reglage, _ = st.columns([1, 2])
-    poids_max = reglage.select_slider(
-        t("Poids maximal par titre"), options=choix_possibles, value=defaut,
-        format_func=lambda v: t("sans limite") if v == 1.0 else pct(v, signe=False, decimales=0),
-        help=t("Sans limite, l'optimiseur concentre souvent tout sur 2 ou 3 titres."),
-    )
-    try:
-        with st.spinner(t("Optimisation en cours...")):
-            opti = optimiser(contenu, code_indice, taux_sans_risque, niveau_var, poids_max)
-    except Exception as erreur:
-        st.error(t("Optimisation impossible : {erreur}", erreur=erreur))
-        st.stop()
-
-    cartes = []
-    for cle, nom in [("actuel", "Portefeuille actuel"), ("variance_min", "Variance minimale"),
-                     ("sharpe_max", "Sharpe maximal")]:
-        p = opti[cle]
-        cartes.append(ui.carte(
-            t(nom), f"Sharpe {nombre(p['sharpe'])}",
-            detail=t("Rendement {r} · Volatilité {v}", r=pct(p["rendement"]), v=pct(p["volatilite"], signe=False)),
-        ))
-    html(ui.grille(cartes))
-
-    with st.container(border=True):
-        html(ui.titre_section(t("Frontière efficiente"),
-                              t("Chaque point bleu est un portefeuille tiré au hasard : aucun ne dépasse la frontière")))
-        graphique(gi.fig_frontiere(opti))
-
-    gauche, droite = st.columns([3, 2], gap="medium")
-    with gauche, st.container(border=True):
-        html(ui.titre_section(t("Répartitions comparées"), t("Poids actuels et poids optimaux")))
-        graphique(gi.fig_poids(opti))
-    with droite, st.container(border=True):
-        html(ui.titre_section(t("Ajustements vers le Sharpe maximal"), t("À valeur totale inchangée, hors frais")))
-        ajustements = opti["poids"][["nom", "actuel", "sharpe_max", "ecart_euros_sharpe_max"]]
-        ajustements = ajustements.assign(actuel=ajustements["actuel"] * 100,
-                                         sharpe_max=ajustements["sharpe_max"] * 100)
-        st.dataframe(
-            ajustements.sort_values("ecart_euros_sharpe_max"), hide_index=True, width="stretch",
-            column_config={
-                "nom": st.column_config.TextColumn(t("Titre")),
-                "actuel": st.column_config.NumberColumn(t("Actuel"), format=langues.pct_colonne("%.1f")),
-                "sharpe_max": st.column_config.NumberColumn(t("Optimal"), format=langues.pct_colonne("%.1f")),
-                "ecart_euros_sharpe_max": st.column_config.NumberColumn(
-                    t("Acheter / vendre"), format=langues.eur_colonne("%+.0f")),
-            },
+        reglage, _ = st.columns([1, 2])
+        poids_max = reglage.select_slider(
+            t("Poids maximal par titre"), options=choix_possibles, value=defaut,
+            format_func=lambda v: t("sans limite") if v == 1.0 else pct(v, signe=False, decimales=0),
+            help=t("Sans limite, l'optimiseur concentre souvent tout sur 2 ou 3 titres."),
         )
-        html(ui.note(t("Exercice académique, pas un conseil en investissement. Les rendements espérés "
-                       "sont estimés sur le passé : l'optimiseur surexploite les titres qui ont le mieux "
-                       "marché, sans garantie pour l'avenir."), attention=True))
+        try:
+            with st.spinner(t("Optimisation en cours...")):
+                opti = optimiser(contenu, code_indice, taux_sans_risque, niveau_var, poids_max)
+        except Exception as erreur:
+            st.error(t("Optimisation impossible : {erreur}", erreur=erreur))
+            opti = None
+
+        if opti is not None:
+            cartes = []
+            for cle, nom in [("actuel", "Portefeuille actuel"), ("variance_min", "Variance minimale"),
+                             ("sharpe_max", "Sharpe maximal")]:
+                p = opti[cle]
+                cartes.append(ui.carte(
+                    t(nom), f"Sharpe {nombre(p['sharpe'])}",
+                    detail=t("Rendement {r} · Volatilité {v}", r=pct(p["rendement"]), v=pct(p["volatilite"], signe=False)),
+                ))
+            html(ui.grille(cartes))
+
+            with st.container(border=True):
+                html(ui.titre_section(t("Frontière efficiente"),
+                                      t("Chaque point bleu est un portefeuille tiré au hasard : aucun ne dépasse la frontière")))
+                graphique(gi.fig_frontiere(opti))
+
+            gauche, droite = st.columns([3, 2], gap="medium")
+            with gauche, st.container(border=True):
+                html(ui.titre_section(t("Répartitions comparées"), t("Poids actuels et poids optimaux")))
+                graphique(gi.fig_poids(opti))
+            with droite, st.container(border=True):
+                html(ui.titre_section(t("Ajustements vers le Sharpe maximal"), t("À valeur totale inchangée, hors frais")))
+                ajustements = opti["poids"][["nom", "actuel", "sharpe_max", "ecart_euros_sharpe_max"]]
+                ajustements = ajustements.assign(actuel=ajustements["actuel"] * 100,
+                                                 sharpe_max=ajustements["sharpe_max"] * 100)
+                st.dataframe(
+                    ajustements.sort_values("ecart_euros_sharpe_max"), hide_index=True, width="stretch",
+                    column_config={
+                        "nom": st.column_config.TextColumn(t("Titre")),
+                        "actuel": st.column_config.NumberColumn(t("Actuel"), format=langues.pct_colonne("%.1f")),
+                        "sharpe_max": st.column_config.NumberColumn(t("Optimal"), format=langues.pct_colonne("%.1f")),
+                        "ecart_euros_sharpe_max": st.column_config.NumberColumn(
+                            t("Acheter / vendre"), format=langues.eur_colonne("%+.0f")),
+                    },
+                )
+                html(ui.note(t("Exercice académique, pas un conseil en investissement. Les rendements espérés "
+                               "sont estimés sur le passé : l'optimiseur surexploite les titres qui ont le mieux "
+                               "marché, sans garantie pour l'avenir."), attention=True))
 
 # ----------------------------------------------------------------------
 # 7. Projection (Monte-Carlo)

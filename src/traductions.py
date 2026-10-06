@@ -221,6 +221,9 @@ TEXTES = {
     "Sharpe maximal": "Maximum Sharpe",
     "Rendement {r} · Volatilité {v}": "Return {r} · Volatility {v}",
     "Frontière efficiente": "Efficient frontier",
+    "Frontière efficiente (approchée)": "Efficient frontier (approximate)",
+    "L'optimisation compare plusieurs répartitions entre titres : il faut au moins 2 titres dans le portefeuille.":
+        "Optimisation compares allocations across holdings: the portfolio needs at least 2 holdings.",
     "Chaque point bleu est un portefeuille tiré au hasard : aucun ne dépasse la frontière":
         "Each blue dot is a randomly drawn portfolio: none lies beyond the frontier",
     "Répartitions comparées": "Allocations compared",

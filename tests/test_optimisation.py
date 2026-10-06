@@ -85,3 +85,16 @@ def test_frontiere_efficiente():
                         (alea["rendement"] <= f["rendement"].max())]
     vol_frontiere = np.interp(dans_la_zone["rendement"], f["rendement"], f["volatilite"])
     assert (dans_la_zone["volatilite"].to_numpy() >= vol_frontiere - 1e-3).all()
+
+
+def test_frontiere_toujours_dessinable():
+    """Si l'optimiseur ne trouve aucun point (ici : un seul titre), la frontière est approchée
+    par le nuage aléatoire au lieu de faire planter le graphique (KeyError 'volatilite')."""
+    dates = pd.bdate_range("2024-01-01", periods=300)
+    prix = pd.DataFrame({"A": 100 * np.exp(np.linspace(0, 0.2, 300))}, index=dates)
+    positions = pd.DataFrame({"poids_pct": [100.0], "nom": ["A"], "valeur": [1000.0]}, index=["A"])
+    res = opt.optimiser_portefeuille(prix, positions, 0.02, poids_max=1.0)
+    assert {"rendement", "volatilite"} <= set(res["frontiere"].columns) and len(res["frontiere"]) >= 1
+    nuage = pd.DataFrame({"rendement": [0.05, 0.04, 0.08, 0.07], "volatilite": [0.10, 0.12, 0.15, 0.20],
+                          "sharpe": [0, 0, 0, 0]})
+    assert list(opt.enveloppe_efficiente(nuage)["rendement"]) == [0.05, 0.08]
