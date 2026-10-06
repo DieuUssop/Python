@@ -1147,6 +1147,13 @@ TEXTES.update({
         "banking, or as Excel / CSV, or enter the transaction manually.",
     "Aucune opération trouvée dans ce PDF (ni tableau d'opérations, ni avis d'opéré lisible).":
         "No transaction found in this PDF (no transaction table and no readable trade confirmation).",
+    "PDF image (scan, photo ou page imprimée avec « Imprimer en PDF ») : le texte a été lu par reconnaissance de caractères, mais aucune opération n'a été reconnue. Utilisez le bouton « Format PDF » de votre banque, un export Excel / CSV, ou la saisie manuelle.":
+        "Image PDF (scan, photo or page printed with \"Print to PDF\"): the text was read by character "
+        "recognition, but no transaction was recognised. Use your bank's \"PDF format\" button, an Excel / CSV "
+        "export, or manual entry.",
+    "PDF image lu par reconnaissance de caractères : vérifiez les opérations (onglet « Transactions »).":
+        "Image PDF read by character recognition: please check the transactions (\"Transactions\" tab).",
+    "Avis d'opéré PDF lu.": "PDF trade confirmation read.",
     "Pour lire un PDF, installer pdfplumber : python -m pip install pdfplumber":
         "To read a PDF, install pdfplumber: python -m pip install pdfplumber",
 })

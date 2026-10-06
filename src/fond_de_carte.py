@@ -23,6 +23,24 @@ SOURCES = [
     "https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson",
 ]
 EXCLUS = {"ATA"}                    # Antarctique : prend de la place, aucune bourse
+# Territoires d'outre-mer dessinés avec leur pays dans Natural Earth (la Guyane fait partie du
+# polygone « France ») : on ne garde que la partie métropolitaine, sinon une action française
+# colore aussi l'Amérique du Sud. Pays -> (longitude min, longitude max) de la partie gardée.
+METROPOLE = {"FRA": (-10, 20)}
+
+
+def _centre(polygone):
+    """Longitude moyenne du contour extérieur d'un polygone."""
+    points = polygone[0]
+    return sum(p[0] for p in points) / len(points)
+
+
+def _sans_outre_mer(code, geometrie):
+    if code not in METROPOLE or geometrie["type"] != "MultiPolygon":
+        return geometrie
+    mini, maxi = METROPOLE[code]
+    gardes = [p for p in geometrie["coordinates"] if mini <= _centre(p) <= maxi]
+    return {"type": "MultiPolygon", "coordinates": gardes} if gardes else geometrie
 
 
 def chemin():
@@ -44,8 +62,8 @@ def simplifier(geojson):
         if not code or code in EXCLUS or code == "-99":
             continue
         pays.append({"type": "Feature", "id": code, "properties": {"nom": prop.get("NAME") or prop.get("name", "")},
-                     "geometry": {"type": f["geometry"]["type"],
-                                  "coordinates": _arrondir(f["geometry"]["coordinates"])}})
+                     "geometry": _sans_outre_mer(code, {"type": f["geometry"]["type"],
+                                                         "coordinates": _arrondir(f["geometry"]["coordinates"])})})
     return {"type": "FeatureCollection", "features": pays}
 
 
@@ -81,5 +99,8 @@ def charger(telecharger_si_absent=True):
         return None
     cle = (str(fichier), fichier.stat().st_mtime)
     if _CACHE.get("cle") != cle:
-        _CACHE["cle"], _CACHE["donnees"] = cle, json.loads(fichier.read_text(encoding="utf-8"))
+        donnees = json.loads(fichier.read_text(encoding="utf-8"))
+        for f in donnees.get("features", []):          # fichiers téléchargés avant cette correction
+            f["geometry"] = _sans_outre_mer(f.get("id"), f["geometry"])
+        _CACHE["cle"], _CACHE["donnees"] = cle, donnees
     return _CACHE["donnees"]

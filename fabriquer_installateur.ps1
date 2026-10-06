@@ -125,6 +125,11 @@ if ($LASTEXITCODE -ne 0) { Echec "installation de pip impossible." }
 & $py -m pip install --no-warn-script-location --disable-pip-version-check -r (Join-Path $Racine "requirements.txt")
 if ($LASTEXITCODE -ne 0) { Echec "installation des bibliothèques impossible (voir le message ci-dessus)." }
 Ok "Bibliothèques installées"
+# Reconnaissance de caractères (PDF image) : facultative, la fabrication continue si elle échoue
+& $py -m pip install --no-warn-script-location --disable-pip-version-check -r (Join-Path $Racine "requirements-ocr.txt")
+if ($LASTEXITCODE -ne 0) { Write-Host "    Reconnaissance de caractères non installée : les PDF image seront refusés." -ForegroundColor Yellow }
+else { Ok "Reconnaissance de caractères (PDF image) installée" }
+$global:LASTEXITCODE = 0
 
 # ---------------------------------------------------------------- 6. Vérification
 Etape "6/7 Vérification"

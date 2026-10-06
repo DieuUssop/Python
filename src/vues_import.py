@@ -56,6 +56,11 @@ def texte_resume(resume):
     """Résumé de l'import automatique, affiché dans la barre latérale."""
     parties = [t("Fichier reconnu automatiquement : {n} opération(s), {titres} titre(s).",
                  n=resume.get("operations", 0), titres=resume.get("titres", 0))]
+    if resume.get("source_pdf") == "pdf_ocr":
+        parties.append(t("PDF image lu par reconnaissance de caractères : vérifiez les opérations "
+                         "(onglet « Transactions »)."))
+    elif resume.get("source_pdf") == "pdf_avis":
+        parties.append(t("Avis d'opéré PDF lu."))
     if resume.get("sans_entete"):
         parties.append(t("Colonnes identifiées d'après leur contenu (pas de ligne de titres)."))
     if resume.get("tickers_reconnus"):

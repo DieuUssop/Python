@@ -90,7 +90,16 @@ Quand la détection automatique a un doute, l'assistant s'ouvre, en 4 étapes (i
 
 - **Relevé avec un tableau** : les tableaux du PDF sont extraits (bibliothèque *pdfplumber*), puis lus comme un fichier Excel, avec la même détection automatique.
 - **Avis d'opéré** : le texte est lu ligne à ligne : date d'exécution, sens (achat / vente), code ISIN, quantité, cours et devise, courtage et taxes, montant net. Un PDF de plusieurs pages contenant un avis par page donne une opération par page.
-- **PDF scanné** : refusé (pas de texte à lire).
+- **PDF « image »** (scan, photo, ou page web imprimée avec « Microsoft Print to PDF ») : le fichier ne
+  contient aucun caractère, seulement une image de la page. L'outil lit alors le texte par
+  **reconnaissance de caractères** (OCR, bibliothèque RapidOCR, hors connexion) : il essaie les 4 sens
+  de la page (impression en paysage), corrige les codes ISIN mal lus (lettre O au lieu du chiffre 0)
+  en vérifiant leur clé de contrôle, puis lit l'avis comme un PDF texte. C'est plus lent (5 à 15 s)
+  et moins sûr : les opérations sont à vérifier. Si rien n'est reconnu, un message l'explique.
+- **Conseil** : sur le site de la banque, utiliser le bouton « Format PDF » ou « Télécharger » plutôt
+  que « Imprimer » : le PDF contient alors le vrai texte, lu instantanément et sans erreur possible.
+- Exemple testé : avis d'opéré Bourse Direct (« VENTE COMPTANT », « QUANTITE : -60 »,
+  « COURS : +41,295 », « COURTAGE : +3,80 », ISIN dans la colonne Désignation).
 
 ## Mettre à jour son portefeuille (sans tout renvoyer)
 

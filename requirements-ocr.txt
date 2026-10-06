@@ -1,0 +1,3 @@
+# Reconnaissance de caractères (OCR) : lire les PDF « image » (scan, page imprimée en PDF).
+# Facultatif : sans elle, ces PDF sont refusés avec un message clair.
+rapidocr_onnxruntime

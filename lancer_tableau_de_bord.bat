@@ -5,6 +5,7 @@ cd /d "%~dp0"
 if not exist .installe (
     echo Premiere utilisation : installation des bibliotheques - Internet necessaire...
     python -m pip install -r requirements.txt && echo ok> .installe
+    python -m pip install -r requirements-ocr.txt
 )
 python lanceur.py
 pause

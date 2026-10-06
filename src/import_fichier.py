@@ -315,8 +315,11 @@ class PdfIllisible(ValueError):
 
 MESSAGE_SCAN = ("PDF scanné (image) : impossible à lire automatiquement. Exportez le relevé en PDF depuis "
                 "votre espace bancaire, ou en Excel / CSV, ou saisissez l'opération à la main.")
-COLONNES_AVIS = ["Date", "Sens", "ISIN", "Libellé", "Quantité", "Cours", "Devise", "Frais", "Montant net"]
-_NOMBRE = r"(-?\d[\d \u00a0\u202f.,']*\d|-?\d)"
+MESSAGE_SCAN_OCR = ("PDF image (scan, photo ou page imprimée avec « Imprimer en PDF ») : le texte a été lu par "
+                    "reconnaissance de caractères, mais aucune opération n'a été reconnue. Utilisez le bouton "
+                    "« Format PDF » de votre banque, un export Excel / CSV, ou la saisie manuelle.")
+COLONNES_AVIS = ["Date", "Sens", "ISIN", "Libellé", "Quantité", "Cours", "Devise", "Frais", "Montant"]
+_NOMBRE = r"([+\-]?\d[\d \u00a0\u202f.,']*\d|[+\-]?\d)"
 _DEVISE = r"(EUR|USD|GBP|GBX|CHF|JPY|CAD|AUD|HKD|DKK|SEK|NOK|€|\$|£)"
 MOTIFS_AVIS = {
     "date": re.compile(r"(?:date\s*(?:d['’]\s*ex[ée]cution|d['’]\s*op[ée]ration|de\s*n[ée]gociation|"
@@ -335,14 +338,16 @@ MOTIFS_AVIS = {
                         + _DEVISE + r"?\s*" + _NOMBRE, re.IGNORECASE),
     "montant": re.compile(r"(?:montant\s*net|net\s*[àa]\s*(?:d[ée]biter|cr[ée]diter|payer|recevoir)|"
                           r"total\s*net|net\s*amount)\s*:?\s*" + _DEVISE + r"?\s*" + _NOMBRE, re.IGNORECASE),
-    "montant_simple": re.compile(r"(?:montant\s*total|montant\s*brut|montant)\s*:?\s*" + _DEVISE + r"?\s*"
+    "montant_simple": re.compile(r"(?:montant\s*total|montant\s*brut|montant|brut)\s*:?\s*" + _DEVISE + r"?\s*"
                                  + _NOMBRE, re.IGNORECASE),
     "libelle": re.compile(r"(?:valeur|libell[ée]|titre|d[ée]signation|instrument|security|produit)\s*:\s*([^\n]+)",
                           re.IGNORECASE),
 }
-MOTIF_ISIN_TEXTE = re.compile(r"\b([A-Z]{2}[A-Z0-9]{9}[0-9])\b")
-MOTIF_SENS = re.compile(r"\b(achat|vente|souscription|rachat|buy|sell|bought|sold|dividende|coupon|dividend)\b",
-                        re.IGNORECASE)
+# Pas de limite de mot à droite : la reconnaissance de caractères colle parfois les mots
+# (« VENTECOMPTANT », « FR0013380607AM.C.C.40 ») ; la clé de contrôle trie les vrais ISIN.
+MOTIF_ISIN_TEXTE = re.compile(r"(?<![A-Z0-9])(?=([A-Z]{2}[A-Z0-9]{9}[0-9]))")
+MOTIF_SENS = re.compile(r"(?<![a-zà-ÿ])(rachat|achat|vente|souscription|buy|sell|bought|sold|dividende|dividend|"
+                        r"coupon)", re.IGNORECASE)
 SYMBOLES = {"€": "EUR", "$": "USD", "£": "GBP"}
 
 
@@ -363,45 +368,145 @@ def _pages_pdf(brut):
                     tableaux = []
                 if tableaux:
                     break
-            pages.append({"texte": page.extract_text() or "", "tableaux": tableaux})
+            try:
+                bruts = [t for t in page.extract_tables() if t]
+            except Exception:
+                bruts = []
+            pages.append({"texte": page.extract_text() or "", "tableaux": tableaux, "tableaux_bruts": bruts})
     return pages
 
 
-def lire_avis_opere(texte):
-    """Lit un avis d'opéré (confirmation d'un ordre exécuté). Renvoie une ligne
-    (liste de textes, dans l'ordre de COLONNES_AVIS) ou None."""
+# Date proche d'un mot « exécution / négociation / opération » (ex. « Date/heure d'exécution :
+# 05/02/2025 09:01 », « Exécuté le 05/02/2025 ») ; les dates d'édition ou de règlement sont écartées.
+_UNE_DATE = r"(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}|\d{4}-\d{2}-\d{2})"
+MOTIF_DATE_EXECUTION = re.compile(r"(?:ex[ée]cut\w*|n[ée]goci\w*|op[ée]ration|trade|transaction)[^\n\d]{0,40}?"
+                                  + _UNE_DATE, re.IGNORECASE)
+# Ligne d'opération « 28/09/2026  VENTE COMPTANT  FR0013380607 … » (relevé en tableau)
+MOTIF_DATE_OPERATION = re.compile(_UNE_DATE + r"\s*(?:achat|vente|souscription|rachat|buy|sell|dividende|coupon)",
+                                  re.IGNORECASE)
+MOTIF_DATE_ECARTEE = re.compile(r"(?:[ée]dit\w*|[ée]mi[st]\w*|r[èe]glement|valeur|livraison|imprim\w*)[^\n\d]{0,25}$",
+                                re.IGNORECASE)
+
+
+def _champs_des_tableaux(tableaux):
+    """Avis d'opéré présentés en tableau : « intitulé | valeur » sur une ligne, ou
+    intitulés sur une ligne et valeurs sur la ligne du dessous. Renvoie {intitulé normalisé: valeur}."""
+    champs = {}
+    for t in tableaux or []:
+        lignes = [["" if c is None else " ".join(str(c).split()) for c in l] for l in t]
+        for i, ligne in enumerate(lignes):
+            remplies = [c for c in ligne if c]
+            if len(remplies) == 2 and not any(ch.isdigit() for ch in remplies[0]):
+                champs.setdefault(normaliser(remplies[0]).rstrip(" :"), remplies[1])
+            if i + 1 < len(lignes):
+                dessous = lignes[i + 1]
+                for etiquette, valeur in zip(ligne, dessous):
+                    if etiquette and valeur and not any(ch.isdigit() for ch in etiquette):
+                        champs.setdefault(normaliser(etiquette).rstrip(" :"), valeur)
+    return champs
+
+
+def _champ(champs, *mots, sauf=()):
+    for etiquette, valeur in champs.items():
+        if any(m in etiquette for m in mots) and not any(x in etiquette for x in sauf):
+            return valeur
+    return None
+
+
+def lire_avis_opere(texte, tableaux=()):
+    """Lit un avis d'opéré (confirmation d'un ordre exécuté) : texte « intitulé : valeur »,
+    ou intitulés et valeurs rangés dans un tableau. Renvoie une ligne (liste de textes,
+    dans l'ordre de COLONNES_AVIS) ou None."""
+    champs = _champs_des_tableaux(tableaux)
     isin = next((c for c in MOTIF_ISIN_TEXTE.findall(texte) if isin_valide(c)), None)
-    quantite = MOTIFS_AVIS["quantite"].search(texte)
-    date = MOTIFS_AVIS["date"].search(texte) or MOTIFS_AVIS["date_simple"].search(texte)
+    # Quantité
+    m = MOTIFS_AVIS["quantite"].search(texte)
+    quantite = m.group(1).strip() if m else _champ(champs, "quantite", "qte", "nombre de titres", "nominal")
+    # Date d'exécution (pas la date d'édition)
+    date = None
+    m = MOTIFS_AVIS["date"].search(texte) or MOTIF_DATE_EXECUTION.search(texte) or MOTIF_DATE_OPERATION.search(texte)
+    if m:
+        date = m.group(1)
+    else:
+        valeur = _champ(champs, "execution", "negociation", "operation", "date", sauf=("edition", "reglement",
+                                                                                        "valeur", "livraison"))
+        trouve = re.search(_UNE_DATE, valeur or "")
+        if trouve:
+            date = trouve.group(1)
+        else:
+            for t in re.finditer(_UNE_DATE, texte):               # première date qui n'est pas une date d'édition
+                if not MOTIF_DATE_ECARTEE.search(texte[max(0, t.start() - 40):t.start()]):
+                    date = t.group(1)
+                    break
     if not (isin and quantite and date):
         return None
     sens = MOTIF_SENS.search(texte)
-    cours = MOTIFS_AVIS["cours"].search(texte)
-    montant = MOTIFS_AVIS["montant"].search(texte) or MOTIFS_AVIS["montant_simple"].search(texte)
-    libelle = MOTIFS_AVIS["libelle"].search(texte)
-    devise = ""
-    if cours:
-        devise = cours.group(1) or cours.group(3) or ""
+    sens = sens.group(1) if sens else (_champ(champs, "sens", "operation", "nature") or "ACHAT")
+    m = MOTIFS_AVIS["cours"].search(texte)
+    cours, devise = (m.group(2).strip(), m.group(1) or m.group(3) or "") if m else \
+        (_champ(champs, "cours", "prix", sauf=("devise",)) or "", _champ(champs, "devise") or "")
     devise = SYMBOLES.get(devise, devise.upper())
-    frais = sum(v for v in convertir_nombres(pd.Series([m.group(2) for m in MOTIFS_AVIS["frais"].finditer(texte)]))
-                if v == v)
-    return [date.group(1), sens.group(1) if sens else "ACHAT", isin,
-            libelle.group(1).strip()[:60] if libelle else "", quantite.group(1).strip(),
-            cours.group(2).strip() if cours else "", devise, f"{frais:.2f}" if frais else "",
-            montant.group(2).strip() if montant else ""]
+    m = MOTIFS_AVIS["montant"].search(texte) or MOTIFS_AVIS["montant_simple"].search(texte)
+    montant = m.group(2).strip() if m else (_champ(champs, "montant net", "net a", "montant") or "")
+    m = MOTIFS_AVIS["libelle"].search(texte)
+    libelle = m.group(1).strip() if m else (_champ(champs, "libelle", "valeur", "titre", "designation",
+                                                   "instrument", sauf=("date", "code")) or "")
+    if not libelle:                      # « … FR0013380607  AM.C.C.40 UC.ETF C   2 473,90 » : le nom suit l'ISIN
+        m = re.search(isin + r"[ \t]+(.+?)(?:[ \t]{2,}[+\-]?\d[\d ,.]*$|$)", texte, re.MULTILINE)
+        libelle = re.sub(r"\s{2,}", " ", m.group(1)).strip() if m else ""
+        libelle = re.sub(r"\s+[+\-]?\d[\d ,.]*$", "", libelle)        # sans le montant en fin de ligne
+    textes_frais = [x.group(2) for x in MOTIFS_AVIS["frais"].finditer(texte)]
+    if not textes_frais:
+        textes_frais = [v for k, v in champs.items() if any(x in k for x in ("courtage", "commission", "frais",
+                                                                            "ttf", "taxe"))]
+    frais = sum(v for v in convertir_nombres(pd.Series(textes_frais, dtype=object)) if v == v)
+    return [date, sens, isin, libelle[:60], quantite, cours, devise, f"{frais:.2f}" if frais else "", montant]
+
+
+_GRILLES_PDF = {}
 
 
 def grille_pdf(brut):
     """Cellules d'un PDF : les tableaux qu'il contient (relevé d'opérations), sinon
-    un avis d'opéré par page. Lève PdfIllisible pour un PDF scanné."""
+    un avis d'opéré par page ; PDF image : reconnaissance de caractères.
+    Lève PdfIllisible si rien n'est lisible. Résultat gardé en mémoire (la lecture
+    d'un PDF image prend plusieurs secondes)."""
+    import hashlib
+    cle = hashlib.md5(brut).hexdigest()
+    if cle not in _GRILLES_PDF:
+        try:
+            _GRILLES_PDF[cle] = _grille_pdf(brut)
+        except Exception as erreur:
+            _GRILLES_PDF[cle] = erreur
+    resultat = _GRILLES_PDF[cle]
+    if isinstance(resultat, Exception):
+        raise resultat
+    return [list(l) for l in resultat[0]], resultat[1]
+
+
+def _grille_pdf(brut):
     pages = _pages_pdf(brut)
     texte_total = "".join(p["texte"] for p in pages)
     if len(texte_total.strip()) < 20:
-        raise PdfIllisible(MESSAGE_SCAN)
+        # PDF « image » : reconnaissance de caractères (src/ocr.py), si un moteur est installé
+        from . import ocr
+        if not ocr.disponible():
+            raise PdfIllisible(MESSAGE_SCAN)
+        textes = ocr.texte_pdf(brut)
+        lignes = [l for l in (lire_avis_opere(t) for t in textes) if l]
+        if not lignes:
+            raise PdfIllisible(MESSAGE_SCAN_OCR)
+        return [COLONNES_AVIS] + lignes, "pdf_ocr"
     # 1. Relevé : les tableaux (le plus large d'abord ; lignes de même largeur mises bout à bout)
     # (un vrai tableau d'opérations contient des dates sur plusieurs lignes)
     tableaux = [t for p in pages for t in p["tableaux"]
                 if sum(any(MOTIF_DATE.match(str(c or "").strip()) for c in ligne) for ligne in t) >= 2]
+    est_un_avis = re.search(r"avis\s*d['’]\s*op[ée]r|confirmation\s*d['’]\s*(?:ex[ée]cution|ordre)|"
+                            r"avis\s*d['’]\s*ex[ée]cution|trade\s*confirmation", texte_total, re.IGNORECASE)
+    if est_un_avis:
+        lignes = [l for l in (lire_avis_opere(p["texte"], p["tableaux_bruts"]) for p in pages) if l]
+        if lignes:
+            return [COLONNES_AVIS] + lignes, "pdf_avis"
     if tableaux:
         largeur = max((len(t[0]) for t in tableaux), key=lambda l: sum(len(t) for t in tableaux if len(t[0]) == l))
         grille = []
@@ -416,9 +521,9 @@ def grille_pdf(brut):
         if len(grille) >= 2:
             return grille, "pdf_tableau"
     # 2. Avis d'opéré : une opération par page (ou par fichier)
-    lignes = [l for l in (lire_avis_opere(p["texte"]) for p in pages) if l]
+    lignes = [l for l in (lire_avis_opere(p["texte"], p["tableaux_bruts"]) for p in pages) if l]
     if not lignes:
-        ligne = lire_avis_opere(texte_total)
+        ligne = lire_avis_opere(texte_total, [t for p in pages for t in p["tableaux_bruts"]])
         lignes = [ligne] if ligne else []
     if lignes:
         return [COLONNES_AVIS] + lignes, "pdf_avis"
@@ -1188,6 +1293,8 @@ def importer_automatiquement(brut, chercher=None, marche=donnees_de_marche):
     correspondance = proposer_correspondance(tableau)
     resume["correspondance"] = correspondance
     resume["sans_entete"] = ligne < 0
+    if nature_fichier(brut) == "pdf":
+        resume["source_pdf"] = grille_pdf(brut)[1]          # déjà lu : résultat gardé en mémoire
     if not confiance(tableau, correspondance):
         manquants = correspondance_complete(correspondance)
         raison = ("Colonne(s) non reconnue(s) : " + ", ".join(CHAMPS[m] for m in manquants)) if manquants \

@@ -41,6 +41,8 @@ PY="$RES/python/bin/python3"
 echo "==> 3/6 Bibliothèques"
 "$PY" -m pip install --upgrade pip --quiet
 "$PY" -m pip install --no-warn-script-location -r "$RACINE/requirements.txt"
+"$PY" -m pip install --no-warn-script-location -r "$RACINE/requirements-ocr.txt" \
+  || echo "    Reconnaissance de caractères non installée : les PDF image seront refusés."
 "$PY" -c "import streamlit, pandas, scipy, plotly, matplotlib, reportlab, openpyxl, cryptography, yfinance, pdfplumber; print('    bibliothèques OK')"
 
 echo "==> 4/6 Copie du projet"
