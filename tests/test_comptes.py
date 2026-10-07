@@ -110,3 +110,29 @@ def test_blocage_apres_trop_d_essais():
     with pytest.raises(comptes.ErreurCompte) as erreur:
         comptes.connecter("kevin", "motdepasse1")                 # même le bon mot de passe attend
     assert "réessayez" in str(erreur.value)
+
+
+def test_preferences_chiffrees_et_conservees():
+    """Le mode nuit choisi est gardé dans le compte, chiffré, et survit au changement de mot de passe."""
+    s = comptes.creer_compte("prefs", "motdepasse123")
+    assert s.preference("theme", "clair") == "clair"
+    s.definir_preference("theme", "nuit")
+    fichier = s.dossier / "preferences.enc"
+    assert fichier.exists() and b"nuit" not in fichier.read_bytes()        # illisible sans la clé
+    assert comptes.connecter("prefs", "motdepasse123").preference("theme") == "nuit"
+    s.changer_mot_de_passe("motdepasse123", "nouveau-mot-de-passe")
+    assert comptes.connecter("prefs", "nouveau-mot-de-passe").preference("theme") == "nuit"
+
+
+def test_theme_nuit_recolore_les_graphiques():
+    """En mode nuit, les couleurs sombres des courbes deviennent claires ; rien ne change en mode clair."""
+    import plotly.graph_objects as go
+    from src import graphiques_interactifs as gi, theme
+    fig = go.Figure(go.Scatter(x=[0, 1], y=[0, 1], line=dict(color="#1a1a19")))
+    theme.definir("clair")
+    assert gi.theme_figure(fig).data[0]["line"]["color"] == "#1a1a19"
+    theme.definir("nuit")
+    try:
+        assert gi.theme_figure(fig).data[0]["line"]["color"] == "#e6ebf2"
+    finally:
+        theme.definir("clair")

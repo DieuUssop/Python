@@ -22,3 +22,4 @@ installateur_windows/
 build_mac/
 installateur_mac/
 diagnostic_pdf.txt
+data/questions_sans_reponse.csv

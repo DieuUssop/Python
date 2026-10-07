@@ -227,6 +227,9 @@ def optimiser_portefeuille(prix_hist, positions, taux_sans_risque, poids_max=0.3
     # de Sharpe maximal, à valeur totale inchangée (hors frais).
     valeur_totale = positions["valeur"].sum()
     poids["ecart_euros_sharpe_max"] = (poids["sharpe_max"] - poids["actuel"]) * valeur_totale
+    poids["ecart_euros_variance_min"] = (poids["variance_min"] - poids["actuel"]) * valeur_totale
+    if "classe" in positions.columns:
+        poids["classe"] = positions["classe"].reindex(tickers).fillna("Actions").to_numpy()
 
     aleatoires = portefeuilles_aleatoires(mu, cov, taux_sans_risque)
     try:
@@ -252,4 +255,55 @@ def optimiser_portefeuille(prix_hist, positions, taux_sans_risque, poids_max=0.3
                                       "nom": positions["nom"]}),
         "taux_sans_risque": taux_sans_risque,
         "poids_max": poids_max,
+        "valeur_totale": float(valeur_totale),
+    }
+
+
+# ======================================================================
+# Lecture des résultats : que faudrait-il changer ?
+# ======================================================================
+SEUIL_INCHANGE = 0.0025      # écart de poids en dessous duquel une ligne est jugée inchangée (0,25 point)
+
+
+def comparer_repartitions(opti, cible="sharpe_max", seuil=SEUIL_INCHANGE):
+    """Tableau « de → à » : pour chaque titre, poids actuel, poids cible, écart, montant
+    à acheter (+) ou vendre (−) à valeur totale inchangée, et le sens du changement :
+    "renforcer", "alleger", "sortir" (le titre disparaît), "inchange".
+    Trié du plus gros changement au plus petit."""
+    poids = opti["poids"]
+    tableau = pd.DataFrame({
+        "nom": poids["nom"],
+        "classe": poids["classe"] if "classe" in poids.columns else "Actions",
+        "actuel": poids["actuel"],
+        "cible": poids[cible],
+    })
+    tableau["ecart"] = tableau["cible"] - tableau["actuel"]
+    tableau["euros"] = tableau["ecart"] * opti.get("valeur_totale", 0.0)
+
+    def sens(ligne):
+        if abs(ligne["ecart"]) < seuil:
+            return "inchange"
+        if ligne["cible"] < seuil:
+            return "sortir"
+        return "renforcer" if ligne["ecart"] > 0 else "alleger"
+
+    tableau["sens"] = tableau.apply(sens, axis=1)
+    return tableau.reindex(tableau["ecart"].abs().sort_values(ascending=False).index)
+
+
+def repartition_par_classe(tableau):
+    """Poids actuel et poids cible par classe d'actifs (Actions, Obligations, Or...)."""
+    return tableau.groupby("classe")[["actuel", "cible"]].sum().sort_values("actuel", ascending=False)
+
+
+def resume_changements(tableau, nb=3):
+    """Les principaux titres à renforcer / alléger, et le nombre de titres qui sortent."""
+    renforcer = tableau[tableau["sens"] == "renforcer"]
+    alleger = tableau[tableau["sens"].isin(["alleger", "sortir"])]
+    return {
+        "renforcer": list(renforcer["nom"].head(nb)),
+        "alleger": list(alleger["nom"].head(nb)),
+        "nb_sortent": int((tableau["sens"] == "sortir").sum()),
+        "nb_inchanges": int((tableau["sens"] == "inchange").sum()),
+        "rotation": float(tableau["ecart"].abs().sum() / 2),     # part du portefeuille à déplacer
     }

@@ -703,8 +703,8 @@ TEXTES = {
     "Fichier CSV ou Excel, de n'importe quel format": "CSV or Excel file, in any layout",
     "Fichier à enregistrer": "File to save",
     "{n} opération(s) reconnue(s).": "{n} transaction(s) recognised.",
-    "Ce fichier n'a pas pu être lu automatiquement. Envoyez-le depuis la barre latérale (« Ou envoyer un autre fichier ») : l'assistant d'import vous guidera, puis le bouton « Enregistrer dans mon espace » apparaîtra sous l'envoi.":
-        "This file could not be read automatically. Upload it from the sidebar (\"Or upload another file\"): the "
+    "Ce fichier n'a pas pu être lu automatiquement. Envoyez-le depuis la barre latérale (« Envoyer un fichier (CSV, Excel ou PDF) ») : l'assistant d'import vous guidera, puis le bouton « Enregistrer dans mon espace » apparaîtra sous l'envoi.":
+        "This file could not be read automatically. Upload it from the sidebar (\"Upload a file (CSV, Excel or PDF)\"): the "
         "import assistant will guide you, then the \"Save to my space\" button will appear below the upload.",
     "Nom": "Name",
     "{n} opération(s) · modifié le {date}": "{n} transaction(s) · updated on {date}",
@@ -842,6 +842,195 @@ MOTIFS = [
 # Ajouts : expositions, carte du monde, indices, PDF, nouvelles opérations
 # ======================================================================
 TEXTES.update({
+    # --- Manuel et aide ---
+    "Manuel et aide": "Manual and help",
+    "Mode d'emploi, formules, questions": "How-to, formulas, questions",
+    "Posez une question ou parcourez le manuel. Tout fonctionne hors connexion : les réponses viennent du manuel, rien n'est envoyé sur Internet.":
+        "Ask a question or browse the manual. Everything works offline: answers come from the manual, nothing is sent over the Internet.",
+    "Poser une question": "Ask a question",
+    "Par exemple : comment supprimer une opération ?": "For example: how do I delete a transaction?",
+    "Comment supprimer une opération ?": "How do I delete a transaction?",
+    "Que veut dire le ratio de Sharpe ?": "What does the Sharpe ratio mean?",
+    "D'où viennent les cours ?": "Where do prices come from?",
+    "Je n'ai pas trouvé de réponse sûre dans le manuel. Essayez d'autres mots, ou consultez les fiches les plus proches ci-dessous. Votre question est notée (sur cet ordinateur uniquement) pour compléter le manuel.":
+        "I could not find a reliable answer in the manual. Try other words, or see the closest entries below. Your question is recorded (on this computer only) to improve the manual.",
+    "Ce n'est pas la réponse que je cherchais": "This is not the answer I was looking for",
+    "Note la question (sur cet ordinateur) pour améliorer le manuel": "Records the question (on this computer) to improve the manual",
+    "Merci : la question est notée pour compléter le manuel.": "Thank you: the question is recorded to improve the manual.",
+    "Sommaire du manuel": "Manual contents",
+    "{c} chapitres · {f} fiches": "{c} chapters · {f} entries",
+    "Le manuel est introuvable (dossier docs/manuel).": "The manual cannot be found (docs/manuel folder).",
+    "Chapitre": "Chapter",
+    "Voir aussi": "See also",
+    "Fiches les plus proches": "Closest entries",
+    "Pour votre portefeuille : {valeurs}": "For your portfolio: {valeurs}",
+    "Aller à « {espace} »": "Go to \"{espace}\"",
+    ", onglet « {onglet} »": ", \"{onglet}\" tab",
+    "Ouvrez l'onglet « {onglet} ».": "Open the \"{onglet}\" tab.",
+    "Manuel complet ({format})": "Full manual ({format})",
+    "Questions restées sans réponse ({n})": "Unanswered questions ({n})",
+    "Notées sur cet ordinateur uniquement. Envoyez ce fichier au créateur du logiciel pour compléter le manuel : chaque question ajoutée améliore l'assistant.":
+        "Recorded on this computer only. Send this file to the software's author to improve the manual: each question added makes the assistant better.",
+    "Exporter les questions (CSV)": "Export the questions (CSV)",
+    "Max drawdown": "Max drawdown",
+    "Tracking error": "Tracking error",
+    "CVaR (Expected Shortfall)": "CVaR (Expected Shortfall)",
+    "Titres en portefeuille": "Holdings in the portfolio",
+    "Clair": "Light",
+    "Nuit": "Dark",
+    # --- Barre latérale épurée ---
+    "Envoyer un fichier (CSV, Excel ou PDF)": "Upload a file (CSV, Excel or PDF)",
+    "Espace personnel chiffré": "Encrypted personal space",
+    "Modèle de fichier": "File template",
+    "Performance, risque, optimisation": "Performance, risk, optimisation",
+    "Pour garder ce fichier, connectez-vous (« Se connecter », en haut de la barre latérale).":
+        "To keep this file, sign in (\"Sign in\", at the top of the sidebar).",
+    "Paramètres": "Settings",
+    "Rapport PDF": "PDF report",
+    "Télécharger le rapport PDF": "Download the PDF report",
+    "Prépare le rapport complet (rédigé en français), puis propose de le télécharger.":
+        "Prepares the full report (written in French), then offers it for download.",
+    "Télécharge à nouveau les cours (Internet nécessaire)": "Downloads prices again (Internet required)",
+    "Fermer": "Close",
+    # --- Modifier / supprimer des opérations (onglet Transactions) ---
+    "Terminer": "Done",
+    "Modifier les opérations": "Edit transactions",
+    "Supprimer ou corriger n'importe quelle opération du portefeuille": "Delete or correct any transaction in the portfolio",
+    "Les modifications seront enregistrées dans votre espace (chiffré). La version actuelle est conservée : vous pourrez revenir en arrière.":
+        "Changes will be saved in your (encrypted) space. The current version is kept: you can go back.",
+    "Portefeuille hors de votre espace : les modifications valent pour cette session. Le fichier corrigé pourra être téléchargé.":
+        "Portfolio outside your space: changes apply to this session. The corrected file can be downloaded.",
+    "Cochez « Supprimer » ou modifiez directement la date, la quantité, le prix ou les frais. Le prix est celui de la devise de cotation du titre.":
+        "Tick \"Delete\" or edit the date, quantity, price or fees directly. The price is in the holding's trading currency.",
+    "Prix (devise de cotation)": "Price (trading currency)",
+    "Aucune modification pour l'instant.": "No changes yet.",
+    "Récapitulatif": "Summary",
+    "{s} suppression(s) · {c} correction(s)": "{s} deletion(s) · {c} correction(s)",
+    "Supprimée": "Deleted",
+    "Corrigée": "Corrected",
+    "date": "date",
+    "quantité": "quantity",
+    "prix": "price",
+    "frais": "fees",
+    "{champ} : {avant} → {apres}": "{champ}: {avant} → {apres}",
+    "Opération": "Transaction",
+    "Si vous supprimez un achat, supprimez aussi la ou les ventes qui en dépendent (même titre, date postérieure).":
+        "If you delete a purchase, also delete the sale(s) that depend on it (same holding, later date).",
+    "Après cette modification, ces titres ne sont plus détenus : {titres}.": "After this change, these holdings are no longer held: {titres}.",
+    "Le portefeuille ne peut pas être vide : gardez au moins une opération.": "The portfolio cannot be empty: keep at least one transaction.",
+    "Je confirme ces modifications": "I confirm these changes",
+    "Enregistrer les modifications": "Save changes",
+    "Tout annuler": "Cancel all",
+    "Portefeuille « {nom} » modifié : {s} suppression(s), {c} correction(s). « Annuler la dernière modification » permet de revenir en arrière.":
+        "Portfolio \"{nom}\" updated: {s} deletion(s), {c} correction(s). \"Undo last change\" lets you go back.",
+    "Modifications appliquées pour cette session : {s} suppression(s), {c} correction(s). Téléchargez le fichier mis à jour pour le garder.":
+        "Changes applied for this session: {s} deletion(s), {c} correction(s). Download the updated file to keep it.",
+    # --- Distribution de la valeur finale (Monte-Carlo) ---
+    "Montant investi": "Amount invested",
+    "Moyenne": "Mean",
+    "Scénarios": "Scenarios",
+    "90 % des scénarios (P5 à P95)": "90% of scenarios (P5 to P95)",
+    "Valeur finale (échelle logarithmique)": "Final value (log scale)",
+    "Valeur du portefeuille dans {n} ans, pour chacun des {s} scénarios": "Portfolio value in {n} years, for each of the {s} scenarios",
+    "Échelle logarithmique": "Log scale",
+    "La valeur finale suit une loi log-normale (rendements composés) : en échelle logarithmique, elle redevient une cloche symétrique.":
+        "The final value follows a log-normal distribution (compounded returns): on a log scale it becomes a symmetrical bell curve again.",
+    "Dans 90 % des scénarios, la valeur dans {n} ans se situe entre {bas} et {haut}.":
+        "In 90% of scenarios, the value in {n} years lies between {bas} and {haut}.",
+    "Probabilité de finir sous le montant investi ({investi}) : {p}.": "Probability of ending below the amount invested ({investi}): {p}.",
+    "Probabilité de doubler le montant investi : {p}.": "Probability of doubling the amount invested: {p}.",
+    "La moyenne ({moyenne}) dépasse la médiane ({mediane}) : quelques scénarios très favorables tirent la moyenne vers le haut (distribution asymétrique, dite log-normale). La médiane est le repère le plus représentatif.":
+        "The mean ({moyenne}) is above the median ({mediane}): a few very favourable scenarios pull the mean up (skewed, so-called log-normal distribution). The median is the more representative benchmark.",
+    # --- Répartitions comparées (optimisation) ---
+    "Ce qu'il faudrait changer pour passer du portefeuille actuel au portefeuille choisi, à valeur totale inchangée et hors frais":
+        "What would need to change to move from the current portfolio to the chosen one, same total value, before fees",
+    "Comparer mon portefeuille à": "Compare my portfolio with",
+    "Poids actuel": "Current weight",
+    "À renforcer": "To increase",
+    "À alléger": "To reduce",
+    "À vendre entièrement": "To sell entirely",
+    "Actuel %{x:.1%} → conseillé %{customdata[0]:.1%}": "Current %{x:.1%} → suggested %{customdata[0]:.1%}",
+    "Conseillé %{x:.1%} (actuel %{customdata[0]:.1%})": "Suggested %{x:.1%} (current %{customdata[0]:.1%})",
+    "À acheter / vendre : {montant}": "To buy / sell: {montant}",
+    "Plafond {p} par titre": "Cap {p} per holding",
+    "Poids dans le portefeuille": "Weight in the portfolio",
+    " et ": " and ",
+    " ; ": "; ",
+    "renforcer {noms}": "increase {noms}",
+    "alléger {noms}": "reduce {noms}",
+    "Le portefeuille actuel est déjà très proche du portefeuille « {cible} ».":
+        "The current portfolio is already very close to the \"{cible}\" portfolio.",
+    "Pour atteindre le portefeuille « {cible} » : {actions}": "To reach the \"{cible}\" portfolio: {actions}",
+    "{n} titre(s) sortent entièrement du portefeuille.": "{n} holding(s) leave the portfolio entirely.",
+    "Au total, {part} du portefeuille change de place.": "In total, {part} of the portfolio is reallocated.",
+    "La part en {classe} passe de {avant} à {apres}.": "The {classe} share goes from {avant} to {apres}.",
+    "{n} titre(s) inchangé(s) (écart inférieur à 0,25 point) ne sont pas affichés.":
+        "{n} unchanged holding(s) (difference below 0.25 point) are not shown.",
+    "{n} autre(s) petit(s) ajustement(s) dans le détail ci-dessous.": "{n} other small adjustment(s) in the detail below.",
+    "Détail des ajustements (montants à acheter / vendre)": "Adjustment details (amounts to buy / sell)",
+    "Renforcer": "Increase",
+    "Alléger": "Reduce",
+    "Vendre entièrement": "Sell entirely",
+    "Inchangé": "Unchanged",
+    "Conseillé": "Suggested",
+    "Action": "Action",
+    "n.d.": "n/a",
+    "Cornish-Fisher n.d. : asymétrie ou kurtosis trop fortes, la correction n'est plus fiable.":
+        "Cornish-Fisher n/a: skewness or kurtosis too large, the adjustment is no longer reliable.",
+    # --- Distribution des rendements (loi normale, moments, VaR comparées) ---
+    "Jours observés": "Observed days",
+    "Loi normale (même moyenne et volatilité)": "Normal distribution (same mean and volatility)",
+    "Loi normale : %{y:.0f} jours attendus": "Normal distribution: %{y:.0f} expected days",
+    "VaR historique {niveau}": "Historical VaR {niveau}",
+    "VaR loi normale {niveau}": "Normal VaR {niveau}",
+    "VaR Cornish-Fisher {niveau}": "Cornish-Fisher VaR {niveau}",
+    "Jours observés comparés à la loi normale de même moyenne et même volatilité · {n} jours":
+        "Observed days compared with a normal distribution of the same mean and volatility · {n} days",
+    "Asymétrie": "Skewness",
+    "Kurtosis en excès": "Excess kurtosis",
+    "0 pour une loi normale": "0 for a normal distribution",
+    "Skewness. Négative : les fortes baisses sont plus fréquentes que les fortes hausses.":
+        "Negative: large falls are more frequent than large rises.",
+    "Positive : « queues épaisses », davantage de journées extrêmes que prévu.":
+        "Positive: \"fat tails\", more extreme days than expected.",
+    "Jours à plus de 3 écarts-types": "Days beyond 3 standard deviations",
+    "{theo} selon la loi normale": "{theo} under a normal distribution",
+    "Test de Jarque-Bera": "Jarque-Bera test",
+    "Normalité rejetée": "Normality rejected",
+    "Normalité non rejetée": "Normality not rejected",
+    "JB = n/6 × (S² + K²/4). Sous la loi normale, p-value = exp(−JB/2).":
+        "JB = n/6 × (S² + K²/4). Under normality, p-value = exp(−JB/2).",
+    "VaR historique": "Historical VaR",
+    "VaR loi normale": "Normal VaR",
+    "VaR Cornish-Fisher": "Cornish-Fisher VaR",
+    "Perte d'un mauvais jour ({niveau})": "Loss on a bad day ({niveau})",
+    "Cornish-Fisher : VaR de la loi normale corrigée de l'asymétrie et de la kurtosis. Corrélations et diversification : onglet « Expositions ».":
+        "Cornish-Fisher: normal VaR adjusted for skewness and kurtosis. Correlations and diversification: \"Exposures\" tab.",
+    "Asymétrie de {s} : les fortes baisses sont plus fréquentes ou plus violentes que les fortes hausses.":
+        "Skewness of {s}: large falls are more frequent or more severe than large rises.",
+    "Asymétrie de {s} : les fortes hausses l'emportent sur les fortes baisses.":
+        "Skewness of {s}: large rises outweigh large falls.",
+    "Asymétrie de {s} : la distribution est à peu près symétrique.":
+        "Skewness of {s}: the distribution is roughly symmetrical.",
+    "Kurtosis en excès de {k} : « queues épaisses ». Les journées à plus de 3 écarts-types représentent {obs} des jours, contre {theo} selon la loi normale (×{ratio}).":
+        "Excess kurtosis of {k}: \"fat tails\". Days beyond 3 standard deviations make up {obs} of days, versus {theo} under a normal distribution (×{ratio}).",
+    "Kurtosis en excès de {k} : queues légèrement plus épaisses que la loi normale.":
+        "Excess kurtosis of {k}: tails slightly fatter than a normal distribution.",
+    "Kurtosis en excès de {k} : pas plus de journées extrêmes que ne le prévoit la loi normale.":
+        "Excess kurtosis of {k}: no more extreme days than a normal distribution predicts.",
+    "Le test de Jarque-Bera rejette la loi normale (p-value {p}) : les VaR calculées avec la loi normale sont à prendre avec prudence.":
+        "The Jarque-Bera test rejects normality (p-value {p}): VaRs based on the normal distribution should be used with caution.",
+    "Le test de Jarque-Bera ne rejette pas la loi normale (p-value {p}).":
+        "The Jarque-Bera test does not reject normality (p-value {p}).",
+    "La VaR historique ({h}) dépasse la VaR de la loi normale ({n}) : la loi normale sous-estime ici la perte d'un mauvais jour.":
+        "Historical VaR ({h}) exceeds normal VaR ({n}): the normal distribution underestimates the loss on a bad day here.",
+    "La VaR historique ({h}) est inférieure à la VaR de la loi normale ({n}) à ce niveau de confiance : les pertes extrêmes se concentrent sur quelques jours, que la CVaR mesure mieux.":
+        "Historical VaR ({h}) is below normal VaR ({n}) at this confidence level: extreme losses are concentrated on a few days, which CVaR captures better.",
+    "VaR historique et VaR de la loi normale sont proches ({h} et {n}).":
+        "Historical and normal VaR are close ({h} and {n}).",
+    "Les seuils d'alerte (devises, concentration, secteurs...) sont plus stricts pour un profil prudent que pour un profil dynamique.":
+        "Alert thresholds (currencies, concentration, sectors...) are stricter for a cautious profile than for a dynamic one.",
+    "Fiscalité, stress tests": "Taxation, stress tests",
     # --- Diagnostic d'exposition (src/expositions.py) ---
     "{poids} du portefeuille est exposé à des devises étrangères, dont {devise} pour {poids_devise}.":
         "{poids} of the portfolio is exposed to foreign currencies, including {devise} for {poids_devise}.",
@@ -1107,7 +1296,7 @@ TEXTES.update({
     # --- Mon compte et nouvelles opérations ---
     "Fichier CSV, Excel ou PDF, de n'importe quel format": "CSV, Excel or PDF file, in any layout",
     "Ajouter des opérations": "Add transactions",
-    "Annuler le dernier ajout": "Undo last addition",
+    "Annuler la dernière modification": "Undo last change",
     "Revenir à la version du {date}": "Go back to the version of {date}",
     "Aucun ajout à annuler.": "Nothing to undo.",
     "Retour au tableau de bord": "Back to the dashboard",

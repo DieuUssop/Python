@@ -1,0 +1,168 @@
+question;fiches_acceptees
+ca sert a quoi ce programme;demarrage-presentation,faq-fiabilite
+il faut quel pc pour le faire tourner;demarrage-configuration
+ou je peux recuperer le logiciel;demarrage-telecharger,faq-mises-a-jour
+comment j'installe sur mon pc windows;demarrage-installer-windows
+windows me dit que l'appli est dangereuse;demarrage-avertissement-windows,erreur-avertissement-installation
+edge bloque le telechargement du exe;demarrage-avertissement-windows,erreur-avertissement-installation
+installation sur macbook;demarrage-installer-mac,faq-mac
+mon mac dit que le developpeur n'est pas identifie;demarrage-mac-bloque,erreur-avertissement-installation
+c'est normal la fenetre noire qui s'ouvre;demarrage-premier-lancement
+rien ne s'affiche quand je lance l'appli;demarrage-fenetre-ne-souvre-pas,erreur-ne-souvre-pas,erreur-page-blanche
+comment on quitte proprement;demarrage-fermer
+ca marche sans wifi;demarrage-hors-connexion,faq-hors-connexion
+pour quoi j'ai besoin d'internet;demarrage-internet-necessaire,compte-internet
+installer la nouvelle version sans perdre mes comptes;demarrage-mettre-a-jour,faq-mises-a-jour
+comment desinstaller completement;demarrage-desinstaller
+le site en ligne garde mes portefeuilles ?;demarrage-version-en-ligne,compte-version-en-ligne
+lancer avec python depuis vs code;demarrage-code-source
+mettre l'interface en anglais;ecran-langue,faq-anglais
+je veux un fond sombre;ecran-mode-nuit
+c'est quoi la difference entre conseil patrimonial et gestion d'actifs;ecran-espaces,conseil-presentation,gestion-presentation
+changer de portefeuille affiché;ecran-choisir-portefeuille
+ou on change le taux sans risque;ecran-parametres,ecran-taux-sans-risque
+quel benchmark choisir pour un portefeuille obligataire;ecran-indice-reference,sources-indices
+c'est quoi l'indice 60/40;ecran-indices-mixtes,sources-indices
+pourquoi 2,5 % de taux sans risque;ecran-taux-sans-risque,sources-taux-sans-risque
+var a 99 % au lieu de 95;ecran-niveau-var
+cours en cache ca veut dire quoi;ecran-bandeau,sources-cache
+exporter un rapport pdf pour le prof;ecran-rapport-pdf,faq-rapport-pdf
+qu'est ce qu'il y a dans le rapport;ecran-rapport-contenu,ecran-rapport-pdf
+forcer la mise a jour des prix;ecran-actualiser-cours,sources-cache,erreur-cours-pas-a-jour
+zoomer sur un graphique;ecran-graphiques
+comment marche l'aide;ecran-assistant,faq-assistant,faq-intelligence-artificielle
+est ce que je suis obligé de creer un compte;compte-pourquoi
+mot de passe trop court refusé;compte-creer,erreur-creation-compte
+je suis deconnecté tout seul;compte-connexion
+compte bloque apres plusieurs essais;compte-blocage,erreur-connexion
+sauvegarder mon portefeuille dans mon espace;compte-enregistrer,import-enregistrer-espace
+renommer un portefeuille;compte-page-mon-compte
+modifier mon mdp;compte-changer-mot-de-passe
+effacer mon compte definitivement;compte-supprimer-compte
+mes donnees sont elles cryptees;compte-protection-simple,compte-protection-technique,faq-confidentialite
+c'est quoi pbkdf2;compte-protection-technique,glossaire-p
+j'ai oublié mon mot de passe;compte-mot-de-passe-oublie
+ou sont stockés mes fichiers sur le disque;compte-emplacement,demarrage-ou-sont-donnees
+toi qui as fait le logiciel tu peux voir mes positions ?;compte-createur,faq-createur
+mon colocataire peut il voir mes portefeuilles sur le meme pc;compte-plusieurs-utilisateurs
+qu'est ce qui est envoyé a yahoo;compte-internet,demarrage-confidentialite
+est ce conforme au rgpd;compte-rgpd
+changer d'ordinateur et garder mes donnees;compte-sauvegarde
+quels formats de fichier sont acceptés;import-fichiers-acceptes
+les colonnes obligatoires du csv;import-format-projet
+dividende quel prix mettre;import-types-operations
+ou trouver le fichier modele;import-modele
+importer l'export de boursorama;import-export-courtier
+mon fichier a des colonnes en anglais;import-detection-colonnes,import-export-courtier
+date au format americain;import-dates-nombres
+mon releve a que le montant total pas le prix unitaire;import-montant-prix
+l'assistant d'import comment ca marche;import-assistant
+j'ai que les codes isin;import-identifier-titres,sources-identifiant-ticker
+code bloomberg MC FP Equity;import-codes-bloomberg,sources-identifiant-ticker
+ticker sans le .PA;import-ticker-sans-place
+etf reconnu sans internet;import-memoire-etf,sources-isin-etf,sources-memoire-titres
+titre introuvable a l'import;import-titre-introuvable,erreur-titre-introuvable,erreur-titre-introuvable-causes
+action americaine prix en dollar ou en euro;import-devises,analyse-titres-devises
+pourquoi les actions anglaises sont en pence;import-pence
+importer un releve pdf de ma banque;import-pdf-releve
+ajouter un avis d'opere bourse direct;import-avis-opere
+pdf imprimé mal lu;import-pdf-image,import-diagnostic-pdf
+mon scan est refusé;import-pdf-scan-refuse,erreur-pdf
+verifier que l'import est correct;import-verifier
+ajouter un nouvel achat a mon portefeuille;import-ajouter-operations,import-saisie-manuelle,compte-ajouter-annuler
+saisir un achat a la main;import-saisie-manuelle
+j'ai importe deux fois le meme fichier;import-doublons
+pourquoi je ne peux pas enregistrer mes operations;import-controles,erreur-controles-bloquants
+supprimer une operation;import-modifier-supprimer
+corriger une quantite fausse;import-modifier-supprimer
+revenir en arriere apres une modif;import-annuler,compte-ajouter-annuler
+je n'ai pas de compte comment garder le fichier modifie;import-sans-compte
+c'est quoi les portefeuilles d'exemple;import-exemples
+que montre la vue d'ensemble;analyse-vue-ensemble,analyse-onglets
+la carte du monde est fausse;analyse-carte-approximation,analyse-carte-monde
+ca veut dire quoi en transparence;analyse-transparence,sources-composition-etf
+c'est quoi le pru;analyse-valeur-pru,formule-pru,glossaire-p
+plus value latente definition;analyse-plus-values-latentes,formule-plus-values,glossaire-p
+pourquoi le gain total est different des plus values;analyse-gain-total,formule-plus-values
+les frais sont ils deduits;analyse-dividendes-frais,faq-frais
+mes chiffres different de ceux de mon courtier;analyse-ecart-courtier,faq-ecart-banque
+c'est quoi le twr;analyse-twr,formule-twr,glossaire-t-u
+comment est calcule le tri;analyse-tri,formule-tri
+twr et tri pas pareil pourquoi;analyse-twr-tri,faq-twr-tri
+comparer avec le cac 40;analyse-comparaison-indice,ecran-indice-reference
+perte maximale historique;analyse-drawdown,formule-max-drawdown
+c'est quoi le beta;analyse-beta,formule-beta,glossaire-b
+alpha de jensen negatif;analyse-alpha,formule-alpha
+tracking error definition;analyse-tracking-error,formule-tracking-error
+comment est calculee la volatilite;analyse-volatilite,formule-volatilite
+que veut dire le ratio de sharpe;analyse-sharpe,formule-sharpe,glossaire-s
+difference sharpe sortino;analyse-sortino,formule-sortino
+c'est quoi la value at risk;analyse-var-historique,formule-var-historique,glossaire-v-y,analyse-trois-var
+pourquoi trois var differentes;analyse-trois-var,faq-plusieurs-var
+cornish fisher ca sert a quoi;analyse-var-cornish-fisher,formule-var-cornish-fisher
+expected shortfall;analyse-cvar,formule-cvar
+la courbe noire sur l'histogramme des rendements;analyse-distribution,faq-loi-normale
+skewness negatif interpretation;analyse-asymetrie,formule-asymetrie
+queues epaisses kurtosis;analyse-kurtosis,formule-kurtosis
+jarque bera p value;analyse-jarque-bera,formule-jarque-bera
+le diagnostic me dit quoi acheter ?;analyse-diagnostic,faq-conseil
+profil prudent ou dynamique dans expositions;analyse-seuils-profil
+exposition au dollar;analyse-devises-exposition,faq-devises
+sensibilite aux taux des obligations;analyse-duration,conseil-hausse-taux,formule-duration
+regle 5 10 40;analyse-concentration
+lire la matrice de correlation;analyse-matrice-correlation
+ratio de diversification;analyse-ratio-diversification,formule-ratio-diversification,gestion-quatre-allocations
+markowitz explication;optim-principe-markowitz,formule-frontiere-efficiente,faq-markowitz
+la frontiere efficiente;optim-frontiere-efficiente,formule-frontiere-efficiente
+poids maximal 30 % par titre;optim-poids-maximal
+combien acheter pour avoir le portefeuille optimal;optim-detail-ajustements,optim-repartitions-comparees
+les fleches vertes et rouges dans optimisation;optim-repartitions-comparees
+l'optimisation est elle fiable;optim-limites,faq-markowitz
+monte carlo c'est quoi;optim-monte-carlo-principe,formule-monte-carlo
+bootstrap ou loi normale pour la projection;optim-methode-normale-historique
+pourquoi la moyenne est au dessus de la mediane;optim-distribution-finale
+probabilite de perdre de l'argent dans 10 ans;optim-probabilites
+la projection c'est une prevision ?;optim-pas-une-prevision,faq-projection
+flat tax 2026;conseil-taux-2026,conseil-cto
+fiscalite du pea apres 5 ans;conseil-pea
+assurance vie abattement;conseil-assurance-vie
+mes etf americains sont ils eligibles au pea;conseil-eligibilite-pea
+que perdrait mon portefeuille en 2008;conseil-stress-historiques
+choc de baisse des actions;conseil-chocs-hypothetiques
+brinson fachler;gestion-brinson-fachler,formule-brinson-fachler
+effet allocation et effet selection;gestion-brinson-fachler,formule-brinson-fachler
+quelle ligne apporte le plus de risque;gestion-contributions-risque,formule-contributions-risque
+risk parity;gestion-parite-risques
+faut il reequilibrer;gestion-backtest-reequilibrage
+investir progressivement chaque mois;gestion-dca
+les cours viennent d'ou;sources-vue-ensemble,sources-cours-yahoo,faq-pourquoi-yahoo
+comment vous assurez vous que les cours sont bons;sources-fiabilite,faq-verification-cours
+les cours sont ajustes des dividendes ?;sources-cours-yahoo,sources-dividendes-divisions
+split d'action gere ?;sources-dividendes-divisions,faq-divisions
+un prix me parait faux;sources-cours-faux
+jusqu'a quelle date les cours hors ligne;sources-hors-connexion-date
+pourquoi yahoo et pas bloomberg;faq-pourquoi-yahoo
+le logiciel est il fiable;faq-fiabilite,faq-calculs-testes
+est ce un conseil financier;faq-conseil,analyse-diagnostic
+connecter mon compte bancaire automatiquement;faq-connexion-bancaire
+or et monetaire pris en compte ?;faq-classes-actifs
+c'est de l'ia ?;faq-intelligence-artificielle
+utiliser pour ma declaration d'impot;faq-declaration-impots
+erreur impossible d'analyser le portefeuille;erreur-impossible-analyser
+vente impossible on n'en detient que;erreur-vente-impossible,import-controles
+aucun port libre;erreur-port-occupe
+graphique vide;erreur-graphique-vide
+n.d. a la place du chiffre;erreur-nd
+l'appli est tres lente;erreur-lenteur
+volatilté du portefeuille;analyse-volatilite,formule-volatilite
+comment suprimer une operaton;import-modifier-supprimer
+c koi le sharpe;analyse-sharpe,formule-sharpe
+instaler sur mac;demarrage-installer-mac,faq-mac
+dividande;faq-dividendes,analyse-dividendes-frais,import-types-operations
+mot de pase oublié;compte-mot-de-passe-oublie
+la var c quoi;analyse-var-historique,formule-var-historique,analyse-trois-var,faq-plusieurs-var
+importer un avis d'opere pdf bourse direct;import-avis-opere
+mode sombre;ecran-mode-nuit
+passer en english;ecran-langue,faq-anglais
+mettre a jour mes prix;ecran-actualiser-cours,erreur-cours-pas-a-jour,sources-cache
+frontiere eficiente;optim-frontiere-efficiente,formule-frontiere-efficiente

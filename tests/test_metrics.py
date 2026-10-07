@@ -170,3 +170,49 @@ def test_rendements_indice_jour_ferie():
     r = metrics.rendements_indice(prix, calendrier)
     assert r.iloc[1] == pytest.approx(0)
     assert r.iloc[2] == pytest.approx(0.10)
+
+
+def test_moments_loi_normale_et_queues_epaisses():
+    """Loi normale : asymétrie et kurtosis en excès proches de 0, normalité non rejetée.
+    Loi de Student à 4 degrés de liberté : kurtosis élevée, normalité rejetée, plus de
+    jours au-delà de 3 écarts-types que les 0,27 % de la loi normale."""
+    rng = np.random.default_rng(7)
+    normale = metrics.moments(pd.Series(rng.normal(0, 0.01, 5000)))
+    assert abs(normale["asymetrie"]) < 0.1 and abs(normale["kurtosis"]) < 0.25
+    assert normale["jours_extremes_normale"] == pytest.approx(0.0027, abs=1e-4)
+    epaisse = metrics.moments(pd.Series(rng.standard_t(4, 5000) * 0.01))
+    assert epaisse["kurtosis"] > 1 and epaisse["p_jarque_bera"] < 0.001
+    assert epaisse["jours_extremes"] > epaisse["jours_extremes_normale"]
+
+
+def test_jarque_bera_a_la_main():
+    """JB = n/6 × (S² + K²/4) et p-value = exp(−JB/2) (khi-deux à 2 degrés de liberté)."""
+    r = pd.Series([0.01, -0.02, 0.005, 0.03, -0.01, 0.0, 0.015, -0.04, 0.02, 0.01])
+    m = metrics.moments(r)
+    jb = len(r) / 6 * (r.skew() ** 2 + r.kurt() ** 2 / 4)
+    assert m["jarque_bera"] == pytest.approx(jb)
+    assert m["p_jarque_bera"] == pytest.approx(np.exp(-jb / 2))
+
+
+def test_var_cornish_fisher():
+    """Sans asymétrie ni kurtosis, Cornish-Fisher = VaR de la loi normale ; avec une
+    asymétrie négative, elle est plus élevée ; hors du domaine de validité : non calculée."""
+    rng = np.random.default_rng(3)
+    r = pd.Series(rng.normal(0, 0.01, 200_000))
+    assert metrics.var_cornish_fisher(r, 0.99) == pytest.approx(metrics.var_cvar(r, 0.99)["var_parametrique"],
+                                                               rel=0.02)
+    asymetrique = pd.Series(-rng.lognormal(0, 0.5, 20_000) * 0.01 + 0.012)
+    assert asymetrique.skew() < -1
+    assert metrics.var_cornish_fisher(asymetrique, 0.99) > metrics.var_cvar(asymetrique, 0.99)["var_parametrique"]
+    assert not metrics.cornish_fisher_valide(33, 1100)
+    assert metrics.cornish_fisher_valide(0, 0)
+
+
+def test_lecture_distribution():
+    """Les phrases de lecture suivent les chiffres (asymétrie, queues épaisses, test, VaR)."""
+    from src import lecture
+    av = {"asymetrie": -0.8, "kurtosis": 5.0, "jours_extremes": 0.011, "jours_extremes_normale": 0.0027,
+          "p_jarque_bera": 1e-9, "var_historique": 0.02, "var_parametrique": 0.015}
+    texte = " ".join(lecture.lecture_distribution(av))
+    assert "fortes baisses" in texte and "queues épaisses" in texte and "rejette" in texte
+    assert "sous-estime" in texte and "< 0,001" in texte

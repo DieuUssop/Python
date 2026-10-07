@@ -433,8 +433,8 @@ SEUILS = {
     "dynamique": {"devises": (0.70, 0.85), "emergents": (0.25, 0.40), "ligne": (0.10, 0.15),
                   "duration": (8.0, 12.0)},
 }
-FAMILLE_PROFIL = {"Sécuritaire": "prudent", "Prudent": "prudent", "Équilibré": "equilibre",
-                  "Dynamique": "dynamique", "Offensif": "dynamique"}
+PROFILS = ["Prudent", "Équilibré", "Dynamique"]       # choix proposés dans l'onglet « Expositions »
+FAMILLE_PROFIL = {"Prudent": "prudent", "Équilibré": "equilibre", "Dynamique": "dynamique"}
 DIMENSIONS = ["geographie", "secteurs", "devises", "concentration", "taux", "diversification"]
 NIVEAUX = ["ok", "attention", "alerte"]
 

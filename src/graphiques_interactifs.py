@@ -10,6 +10,7 @@ Chaque fonction reçoit des données et renvoie une "figure" Plotly, que
 app.py affiche avec st.plotly_chart().
 """
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
@@ -27,6 +28,7 @@ GRILLE = "#e1e0d9"
 ROUGE = "#d03b3b"       # pertes, baisses
 VERT = "#0ca30c"        # gains
 TEXTE = "#1a1a19"
+VIOLET = "#7a4fb5"     # VaR Cornish-Fisher
 
 
 # ======================================================================
@@ -74,6 +76,84 @@ def _axe_dates(fig):
         fig.update_xaxes(tickformat="%b %Y", hoverformat="%d %b %Y")
     else:
         fig.update_xaxes(tickformat="%m/%Y", hoverformat="%d/%m/%Y")
+    return fig
+
+
+def _lire(objet, cle):
+    """Attribut d'un objet Plotly (ou clé d'un dictionnaire), ou None."""
+    try:
+        return objet[cle]
+    except Exception:
+        return getattr(objet, cle, None)
+
+
+def _ecrire(objet, cle, valeur):
+    try:
+        objet[cle] = valeur
+    except Exception:
+        setattr(objet, cle, valeur)
+
+
+def _couleur_nuit(couleur):
+    from .theme import REMPLACEMENTS_NUIT
+    if isinstance(couleur, str):
+        return REMPLACEMENTS_NUIT.get(couleur.lower(), couleur)
+    if isinstance(couleur, (list, tuple)):
+        return [_couleur_nuit(c) for c in couleur]
+    return couleur
+
+
+def theme_figure(fig):
+    """Adapte un graphique au mode nuit (texte, grilles, bulles, couleurs sombres des courbes).
+    Sans effet en mode clair. Appelé juste avant l'affichage (st.plotly_chart)."""
+    from . import theme
+    if not theme.nuit():
+        return fig
+    c = theme.NUIT
+    fig.update_layout(font=dict(color=c["texte_2"]), legend=dict(font=dict(color=c["texte_2"])),
+                      hoverlabel=dict(bgcolor=c["carte"], bordercolor=c["bordure"], font=dict(color=c["texte"])),
+                      paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+    fig.update_xaxes(gridcolor=c["grille"], linecolor=c["bordure"], zerolinecolor=c["bordure"],
+                     tickfont=dict(color=c["texte_3"]), title_font=dict(color=c["texte_3"]))
+    fig.update_yaxes(gridcolor=c["grille"], linecolor=c["bordure"], zerolinecolor=c["bordure"],
+                     tickfont=dict(color=c["texte_3"]), title_font=dict(color=c["texte_3"]))
+    for trace in fig.data:
+        echelle = _lire(trace, "colorscale")
+        if echelle is not None and not isinstance(echelle, str):
+            try:
+                _ecrire(trace, "colorscale", [[pos, _couleur_nuit(coul)] for pos, coul in echelle])
+            except Exception:
+                pass
+        for partie in ("line", "marker", "textfont", "insidetextfont", "outsidetextfont"):
+            element = _lire(trace, partie)
+            if element is None:
+                continue
+            couleur = _lire(element, "color")
+            if couleur is not None:
+                _ecrire(element, "color", _couleur_nuit(couleur))
+            echelle = _lire(element, "colorscale") if partie == "marker" else None
+            if echelle is not None and not isinstance(echelle, str):
+                try:
+                    _ecrire(element, "colorscale", [[pos, _couleur_nuit(coul)] for pos, coul in echelle])
+                except Exception:
+                    pass
+            contour = _lire(element, "line")
+            if contour is not None and _lire(contour, "color") is not None:
+                _ecrire(contour, "color", _couleur_nuit(_lire(contour, "color")))
+    if hasattr(fig, "layout"):
+        try:
+            for annotation in fig.layout.annotations or ():
+                if annotation.font and annotation.font.color:
+                    annotation.font.color = _couleur_nuit(annotation.font.color)
+                elif annotation.font is not None:
+                    annotation.font.color = c["texte_2"]
+            for forme in fig.layout.shapes or ():
+                if forme.line and forme.line.color:
+                    forme.line.color = _couleur_nuit(forme.line.color)
+            if any(type(trace).__name__ in ("Choropleth", "Scattergeo") for trace in fig.data):   # carte du monde
+                fig.update_geos(bgcolor="rgba(0,0,0,0)", landcolor="#1d2e47", showframe=False)
+        except Exception:
+            pass
     return fig
 
 
@@ -353,23 +433,54 @@ def fig_rendements_annuels(indicateurs, avances, nom_indice):
 # Onglet "Risque"
 # ======================================================================
 def fig_distribution_rendements(indicateurs, avances, niveau_var):
-    """Histogramme des rendements quotidiens, avec la VaR et la CVaR."""
-    r = indicateurs["rendements"]
+    """Histogramme des rendements quotidiens comparé à la loi normale de même moyenne et
+    même écart-type, avec les trois VaR (historique, normale, Cornish-Fisher) et la CVaR.
+    Toutes les lignes ont leur entrée de légende (plus d'étiquettes posées sur les barres)."""
+    from statistics import NormalDist
+    r = indicateurs["rendements"].dropna()
+    n = len(r)
+    moyenne, ecart = float(r.mean()), float(r.std())
+    # Classes de largeur fixe : nécessaire pour mettre la courbe normale à la même échelle
+    bas, haut = float(r.min()), float(r.max())
+    nb_classes = int(min(80, max(20, np.sqrt(n) * 1.2)))
+    largeur = (haut - bas) / nb_classes if haut > bas else 0.001
     fig = go.Figure(go.Histogram(
-        x=r, nbinsx=70, marker=dict(color=BLEU, line=dict(color="white", width=1)),
-        hovertemplate=t("Rendement %{x:.2%}<br>%{y} jours") + "<extra></extra>",
-        name=t("Jours"),
+        x=r, xbins=dict(start=bas, end=haut + largeur, size=largeur), name=_t("Jours observés"),
+        marker=dict(color=BLEU, opacity=0.75, line=dict(color="white", width=0.6)),
+        hovertemplate=_t("Rendement %{x:.2%}<br>%{y} jours") + "<extra></extra>",
     ))
-    niveau = f"{niveau_var:.0%}"
-    fig.add_vline(x=-avances["var_historique"], line=dict(color=ORANGE, width=2, dash="dash"),
-                  annotation_text=f"VaR {niveau}", annotation_position="top left",
-                  annotation_font_color=ORANGE)
-    fig.add_vline(x=-avances["cvar"], line=dict(color=ROUGE, width=2, dash="dot"),
-                  annotation_text="CVaR", annotation_position="bottom left",
-                  annotation_font_color=ROUGE)
-    _style(fig, hauteur=380, legende=False)
-    fig.update_xaxes(tickformat=".1%", title_text=t("Rendement quotidien"))
-    fig.update_yaxes(title_text=t("Nombre de jours"))
+    # Loi normale : densité × nombre de jours × largeur de classe = nombre de jours attendu par classe
+    if ecart > 0:
+        loi = NormalDist(moyenne, ecart)
+        xs = np.linspace(bas - largeur, haut + largeur, 300)
+        fig.add_trace(go.Scatter(
+            x=xs, y=[loi.pdf(x) * n * largeur for x in xs], mode="lines", name=_t("Loi normale (même moyenne et volatilité)"),
+            line=dict(color=TEXTE, width=2), hovertemplate=_t("Loi normale : %{y:.0f} jours attendus") + "<extra></extra>",
+        ))
+    # Lignes verticales (tracées comme des courbes pour figurer dans la légende)
+    comptes, _ = np.histogram(r, bins=np.arange(bas, haut + 2 * largeur, largeur))
+    sommet = max(comptes.max() if len(comptes) else 1, (NormalDist(moyenne, ecart).pdf(moyenne) * n * largeur) if ecart else 1)
+    niveau = f"{niveau_var * 100:.0f}{espace_pct()}%"
+    lignes = [("var_historique", _t("VaR historique {niveau}", niveau=niveau), ORANGE, "dash"),
+              ("var_parametrique", _t("VaR loi normale {niveau}", niveau=niveau), GRIS_FONCE, "dot"),
+              ("var_cornish_fisher", _t("VaR Cornish-Fisher {niveau}", niveau=niveau), VIOLET, "dashdot"),
+              ("cvar", "CVaR (Expected Shortfall)", ROUGE, "solid")]
+    for cle, nom, couleur, trait in lignes:
+        valeur = avances.get(cle)
+        if valeur is None or valeur != valeur:
+            continue
+        fig.add_trace(go.Scatter(
+            x=[-valeur, -valeur], y=[0, sommet * 1.08], mode="lines", name=nom,
+            line=dict(color=couleur, width=2, dash=trait),
+            hovertemplate=f"{nom} : %{{x:.2%}}<extra></extra>",
+        ))
+    _style(fig, hauteur=420)
+    fig.update_layout(bargap=0.04, legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0))
+    marge = (haut - bas) * 0.04
+    gauche = min(bas, *[-avances[c] for c, *_ in lignes if avances.get(c) == avances.get(c) and avances.get(c) is not None])
+    fig.update_xaxes(tickformat=".1%", title_text=_t("Rendement quotidien"), range=[gauche - marge, haut + marge],
+                     showgrid=True, gridcolor=GRILLE)
+    fig.update_yaxes(title_text=_t("Nombre de jours"), rangemode="tozero")
     return fig
 
 
@@ -488,28 +599,102 @@ def fig_frontiere(opti):
     return fig
 
 
-def fig_poids(opti):
-    """Poids actuels, de variance minimale et de Sharpe maximal, titre par titre."""
-    poids = opti["poids"]
-    if len(poids) > 25:   # beaucoup de titres : on garde les 25 lignes les plus importantes
-        importance = poids[["actuel", "variance_min", "sharpe_max"]].max(axis=1)
-        poids = poids.loc[importance.sort_values(ascending=False).index[:25]]
-    poids = poids.sort_values("actuel")
+COULEURS_SENS = {"renforcer": "#0b7a33", "alleger": "#c0392b", "sortir": "#c0392b", "inchange": "#a3a39e"}
+COULEURS_CLASSES = {"Actions": "#2a78d6", "Obligations": "#1baf7a", "Or": "#d4a017", "Monétaire": "#8fb6e6"}
+
+
+def _poids_txt(x):
+    """Poids en % sans décimale inutile : 0.3 -> '30 %', 0.025 -> '2,5 %'."""
+    v = x * 100
+    texte = f"{v:.0f}" if abs(v - round(v)) < 0.05 or v >= 10 else f"{v:.1f}"
+    return (texte if anglais() else texte.replace(".", ",")) + espace_pct() + "%"
+
+
+def fig_poids(tableau, poids_max=1.0, max_lignes=20):
+    """Graphique « de → à » : pour chaque titre, un point au poids actuel et une flèche
+    jusqu'au poids conseillé (vert : renforcer, rouge : alléger ou sortir).
+    tableau : optimisation.comparer_repartitions(...) (déjà trié par ampleur du changement).
+    Les lignes inchangées sont regroupées ; au-delà de max_lignes, seules les plus grosses
+    variations sont montrées."""
+    bouge = tableau[tableau["sens"] != "inchange"]
+    bouge = bouge.head(max_lignes).iloc[::-1]          # le plus gros changement en haut
+    noms = [n if len(n) <= 34 else n[:33] + "…" for n in bouge["nom"]]
     fig = go.Figure()
-    for colonne, nom, couleur in [("actuel", t("Mon portefeuille"), ORANGE),
-                                  ("variance_min", t("Variance minimale"), AQUA),
-                                  ("sharpe_max", t("Sharpe maximal"), VERT_FONCE)]:
-        fig.add_trace(go.Bar(
-            x=poids[colonne], y=poids["nom"], orientation="h", name=nom,
-            marker=dict(color=couleur, cornerradius=3),
-            hovertemplate="%{y} : %{x:.1%}<extra>" + nom + "</extra>",
+    # Segments (une seule courbe, séparée par des None) colorés par sens
+    for sens in ["renforcer", "alleger", "sortir"]:
+        partie = [(nom, l) for nom, (_, l) in zip(noms, bouge.iterrows()) if l["sens"] == sens]
+        if not partie:
+            continue
+        xs, ys = [], []
+        for nom, l in partie:
+            xs += [l["actuel"], l["cible"], None]
+            ys += [nom, nom, None]
+        fig.add_trace(go.Scatter(x=xs, y=ys, mode="lines", line=dict(color=COULEURS_SENS[sens], width=3),
+                                 hoverinfo="skip", showlegend=False))
+    # Point de départ (poids actuel)
+    fig.add_trace(go.Scatter(
+        x=bouge["actuel"], y=noms, mode="markers", name=_t("Poids actuel"),
+        marker=dict(color="white", size=11, line=dict(color=GRIS_FONCE, width=2)),
+        customdata=list(zip(bouge["cible"], bouge["euros"])),
+        hovertemplate="%{y}<br>" + _t("Actuel %{x:.1%} → conseillé %{customdata[0]:.1%}") + "<br>"
+                      + _t("À acheter / vendre : {montant}", montant=eur("%{customdata[1]:+,.0f}")) + "<extra></extra>",
+    ))
+    # Pointe de flèche au poids conseillé
+    for sens, nom_legende in [("renforcer", _t("À renforcer")), ("alleger", _t("À alléger")),
+                              ("sortir", _t("À vendre entièrement"))]:
+        partie = bouge[bouge["sens"] == sens]
+        if partie.empty:
+            continue
+        ys = [n for n, s_ in zip(noms, bouge["sens"]) if s_ == sens]
+        fig.add_trace(go.Scatter(
+            x=partie["cible"], y=ys, mode="markers", name=nom_legende,
+            marker=dict(color=COULEURS_SENS[sens], size=13,
+                        symbol="triangle-right" if sens == "renforcer" else "triangle-left"),
+            customdata=list(zip(partie["actuel"], partie["euros"])),
+            hovertemplate="%{y}<br>" + _t("Conseillé %{x:.1%} (actuel %{customdata[0]:.1%})") + "<br>"
+                          + _t("À acheter / vendre : {montant}", montant=eur("%{customdata[1]:+,.0f}")) + "<extra></extra>",
         ))
-    _style(fig, hauteur=max(360, 48 * len(poids) + 80))
-    fig.update_layout(barmode="group", bargap=0.25, bargroupgap=0.05)
-    fig.update_xaxes(tickformat=".0%", showgrid=True, gridcolor=GRILLE)
-    fig.update_yaxes(showgrid=False)
+    # Étiquettes « 5 % → 30 % » au bout de chaque ligne
+    xmax = float(max(bouge[["actuel", "cible"]].max().max() if len(bouge) else 0.1, poids_max if poids_max < 1 else 0))
+    fig.add_trace(go.Scatter(
+        x=[max(a, c) for a, c in zip(bouge["actuel"], bouge["cible"])], y=noms, mode="text",
+        text=[f"   {_poids_txt(a)} → {_poids_txt(c)}" for a, c in zip(bouge["actuel"], bouge["cible"])],
+        textposition="middle right", textfont=dict(size=11, color=GRIS_FONCE), hoverinfo="skip", showlegend=False,
+    ))
+    if poids_max < 1:
+        fig.add_vline(x=poids_max, line=dict(color=GRIS, width=1.5, dash="dash"),
+                      annotation_text=_t("Plafond {p} par titre", p=_poids_txt(poids_max)), annotation_position="top",
+                      annotation_font=dict(size=11, color=GRIS))
+    hauteur = max(260, 38 * len(bouge) + 110)
+    _style(fig, hauteur=hauteur)
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+                      margin=dict(l=4, r=8, t=60, b=4))
+    fig.update_xaxes(tickformat=".0%", range=[0, xmax * 1.28 + 0.01], showgrid=True, gridcolor=GRILLE,
+                     title_text=_t("Poids dans le portefeuille"))
+    fig.update_yaxes(showgrid=False, categoryorder="array", categoryarray=noms)
     return fig
 
+
+def fig_classes_comparees(par_classe, nom_cible):
+    """Deux barres empilées à 100 % : répartition par classe d'actifs, actuelle et conseillée."""
+    fig = go.Figure()
+    lignes = [_t("Actuel"), nom_cible]
+    for classe, ligne in par_classe.iterrows():
+        valeurs = [ligne["actuel"], ligne["cible"]]
+        fig.add_trace(go.Bar(
+            y=lignes, x=valeurs, orientation="h", name=td(classe),
+            marker=dict(color=COULEURS_CLASSES.get(classe, GRIS), line=dict(color="white", width=1.5)),
+            text=[_poids_txt(v) if v >= 0.06 else "" for v in valeurs], textposition="inside", insidetextanchor="middle",
+            textfont=dict(color="white", size=12),
+            hovertemplate="%{y} · " + td(classe) + " : %{x:.1%}<extra></extra>",
+        ))
+    _style(fig, hauteur=170)
+    fig.update_layout(barmode="stack", bargap=0.35, legend=dict(orientation="h", yanchor="bottom", y=1.04,
+                                                                    xanchor="left", x=0),
+                      margin=dict(l=4, r=8, t=36, b=4))
+    fig.update_xaxes(tickformat=".0%", range=[0, 1], showgrid=False, showticklabels=False)
+    fig.update_yaxes(autorange="reversed", showgrid=False)
+    return fig
 
 # ======================================================================
 # Onglet "Projection" (étape 8)
@@ -552,23 +737,82 @@ def fig_projection(sim):
     return fig
 
 
-def fig_distribution_finale(sim):
-    """Histogramme de la valeur finale des scénarios."""
-    finales = sim["valeurs_finales"]
+def fig_distribution_finale(sim, echelle_log=False):
+    """Histogramme de la valeur finale des scénarios : zone « 90 % des scénarios » (P5 à P95),
+    médiane, moyenne et montant investi, tous dans la légende.
+    echelle_log : histogramme du logarithme de la valeur. La valeur finale suit (à peu près) une
+    loi log-normale : en échelle logarithmique, elle redevient une cloche symétrique."""
+    finales = np.asarray(sim["valeurs_finales"], dtype=float)
+    finales = finales[np.isfinite(finales) & (finales > 0)]
+    bas, haut = np.percentile(finales, [0.5, 99.5])
+    reperes = [("total_apporte", _t("Montant investi"), ORANGE, "dash"),
+               ("mediane", _t("Médiane"), TEXTE, "solid"),
+               ("moyenne", _t("Moyenne"), GRIS_FONCE, "dot")]
+    bas = min(bas, sim["total_apporte"] * 0.97)
+    haut = max(haut, sim["total_apporte"] * 1.03)
+    if echelle_log:
+        f = np.log10
+        x = f(finales[(finales >= bas) & (finales <= haut)])
+    else:
+        f = (lambda v: v)
+        x = finales[(finales >= bas) & (finales <= haut)]
+    debut, fin = float(f(bas)), float(f(haut))
+    largeur = (fin - debut) / 60 if fin > debut else 1.0
     fig = go.Figure(go.Histogram(
-        x=finales, nbinsx=60, marker=dict(color=BLEU, line=dict(color="white", width=1)),
-        hovertemplate=eur("%{x:,.0f}") + "<br>" + t("%{y} scénarios") + "<extra></extra>",
+        x=x, xbins=dict(start=debut, end=fin + largeur, size=largeur), name=_t("Scénarios"), marker=dict(color=BLEU, opacity=0.8, line=dict(color="white", width=0.6)),
+        customdata=None,
+        hovertemplate=(_t("%{y} scénarios") + "<extra></extra>") if echelle_log
+        else (eur("%{x:,.0f}") + "<br>" + _t("%{y} scénarios") + "<extra></extra>"),
+        showlegend=False,
     ))
-    fig.add_vline(x=sim["total_apporte"], line=dict(color=ORANGE, width=2, dash="dash"),
-                  annotation_text=t("Investi"), annotation_position="top right",
-                  annotation_font_color=ORANGE)
-    fig.add_vline(x=sim["mediane"], line=dict(color=TEXTE, width=2),
-                  annotation_text=t("Médiane"), annotation_position="top left",
-                  annotation_font_color=TEXTE)
-    _style(fig, hauteur=320, legende=False)
-    fig.update_xaxes(tickformat=",.0f", title_text=t("Valeur finale"), **_axe_euros("x"))
-    fig.update_yaxes(title_text=t("Nombre de scénarios"))
+    # Zone des 90 % de scénarios (entrée de légende factice : un carré de la même couleur)
+    fig.add_vrect(x0=f(sim["p5"]), x1=f(sim["p95"]), fillcolor="rgba(42, 120, 214, 0.10)", line_width=0, layer="below")
+    fig.add_trace(go.Scatter(x=[None], y=[None], mode="markers", name=_t("90 % des scénarios (P5 à P95)"),
+                             marker=dict(symbol="square", size=12, color="rgba(42, 120, 214, 0.25)")))
+    comptes, _ = np.histogram(x, bins=np.arange(debut, fin + 2 * largeur, largeur))
+    sommet = float(comptes.max()) * 1.08 if len(comptes) else 1
+    for cle, nom, couleur, trait in reperes:
+        v = sim[cle]
+        fig.add_trace(go.Scatter(x=[f(v), f(v)], y=[0, sommet], mode="lines", name=nom,
+                                 line=dict(color=couleur, width=2, dash=trait),
+                                 hovertemplate=f"{nom} : " + eur(f"{v:,.0f}".replace(",", " " if not anglais() else ","))
+                                 + "<extra></extra>"))
+    _style(fig, hauteur=380)
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+                      margin=dict(l=4, r=8, t=56, b=4), bargap=0.04)
+    if echelle_log:
+        graduations = _graduations_log(bas, haut)
+        fig.update_xaxes(range=[f(bas), f(haut)], tickvals=[f(v) for v in graduations],
+                         ticktext=[_euros_court(v) for v in graduations],
+                         title_text=_t("Valeur finale (échelle logarithmique)"))
+    else:
+        fig.update_xaxes(range=[bas, haut], tickformat=",.0f", title_text=_t("Valeur finale"), **_axe_euros("x"))
+    fig.update_yaxes(title_text=_t("Nombre de scénarios"), rangemode="tozero")
     return fig
+
+
+def _graduations_log(bas, haut):
+    """Graduations « rondes » (1, 2, 5 × 10^k) entre bas et haut, pour un axe logarithmique."""
+    valeurs = []
+    k = int(np.floor(np.log10(bas)))
+    while 10 ** k <= haut * 10:
+        for m in (1, 2, 5):
+            v = m * 10 ** k
+            if bas <= v <= haut:
+                valeurs.append(v)
+        k += 1
+    return valeurs or [bas, haut]
+
+
+def _euros_court(v):
+    """1 500 000 -> '1,5 M€' ; 250 000 -> '250 k€' (ou '€1.5M', '€250k' en anglais)."""
+    if v >= 1e6:
+        texte, unite = f"{v / 1e6:g}", "M"
+    elif v >= 1e3:
+        texte, unite = f"{v / 1e3:g}", "k"
+    else:
+        texte, unite = f"{v:g}", ""
+    return f"€{texte}{unite}" if anglais() else f"{texte.replace('.', ',')} {unite}€"
 
 
 # Couleurs des tranches de probabilité : rouge (défavorable) -> gris -> bleu (favorable)

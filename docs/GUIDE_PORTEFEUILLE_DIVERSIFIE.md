@@ -23,7 +23,7 @@ Il est géré **depuis le 16 janvier 2017**, soit près de 10 ans. Les étapes d
    python generer_portefeuille_diversifie.py
    ```
    Le fichier `data/transactions_diversifie.csv` est créé. Environ 900 opérations sont attendues : achats, ventes de rééquilibrage, dividendes et coupons.
-3. Lance les tests avec `python -m pytest`. Résultat attendu : **142 passed**.
+3. Lance les tests avec `python -m pytest`. Résultat attendu : **156 passed**.
 4. Choisis **« Portefeuille diversifié (multi-actifs) »** dans la barre latérale du tableau de bord, ou lance :
    ```
    python main.py data/transactions_diversifie.csv
@@ -32,7 +32,7 @@ Il est géré **depuis le 16 janvier 2017**, soit près de 10 ans. Les étapes d
 
 ## B. Pourquoi des obligations ? (à savoir expliquer à l'oral)
 
-1. **Adéquation au client.** Le profil « Équilibré » accepte au plus 60 % d'actions et 12 % de volatilité. Un portefeuille 100 % actions ne convient donc qu'aux profils Dynamique et Offensif. Avec des obligations, l'outil peut enfin montrer un portefeuille **adapté** à un client prudent ou équilibré.
+1. **Un risque adapté à plus d'épargnants.** Un portefeuille 100 % actions est trop volatil pour un épargnant prudent. Avec des obligations, la volatilité et la pire baisse diminuent nettement.
 2. **Diversification.** Les emprunts d'État montent souvent quand les actions chutent : en 2008 ou en 2020, ils ont amorti les pertes. Attention : **en 2022, actions et obligations ont baissé ensemble** à cause de la hausse des taux. C'est un exemple parfait pour discuter des limites de la diversification.
 3. **Le risque de taux.** Une obligation perd de la valeur quand les taux montent. La **duration** mesure cette sensibilité : un fonds de duration 7 ans perd environ 7 % si les taux montent d'un point. L'outil ajoute ce choc aux stress tests.
 4. **L'or** sert de valeur refuge : il est peu corrélé aux actions et aux obligations.
@@ -42,7 +42,6 @@ Il est géré **depuis le 16 janvier 2017**, soit près de 10 ans. Les étapes d
 | Écran | Changement |
 |---|---|
 | Vue d'ensemble | Nouveau graphique **« Par classe d'actifs »** ; colonne « Classe » dans les positions |
-| Profil client | La **part d'actions** est calculée (avant, elle valait 100 % par hypothèse) |
 | Fiscalité | Les fonds obligataires et l'or ne sont **pas éligibles au PEA**, réservé aux actions. Les coupons sont traités comme des dividendes. |
 | Stress tests | Nouveau choc **« Hausse des taux de 1 point »**. Une obligation sans historique en 2008 est approchée par un **fonds obligataire** de même catégorie, et non par un indice actions. |
 | Attribution | Calculée sur la **poche actions** seulement, puisque l'indice de référence est un indice actions |
@@ -52,11 +51,10 @@ Tout repose sur deux nouvelles colonnes de `data/referentiel.csv` : `classe` (Ac
 
 ## D. Exercices
 
-1. Dans l'onglet Profil client, avec le profil Équilibré, le portefeuille diversifié est-il adapté ? Et le fonds actions monde ? Quel critère fait la différence ?
-2. Compare la volatilité et la pire baisse du portefeuille diversifié avec celles du fonds actions monde.
-3. Dans les stress tests, quelle crise pèse le plus sur le portefeuille diversifié ? Pourquoi 2022 est-elle particulière ?
-4. Dans le budget de risque, quelle part du **risque** viennent des obligations, comparée à leur part de la **valeur** (35 %) ?
-5. Le portefeuille dépasse 8 ans : dans l'onglet Fiscalité, compare le gain net en compte-titres, en PEA et en assurance-vie. Pourquoi le PEA serait-il difficile à utiliser ici ?
+1. Compare la volatilité et la pire baisse du portefeuille diversifié avec celles du fonds actions monde.
+2. Dans les stress tests, quelle crise pèse le plus sur le portefeuille diversifié ? Pourquoi 2022 est-elle particulière ?
+3. Dans le budget de risque, quelle part du **risque** viennent des obligations, comparée à leur part de la **valeur** (35 %) ?
+4. Le portefeuille dépasse 8 ans : dans l'onglet Fiscalité, compare le gain net en compte-titres, en PEA et en assurance-vie. Pourquoi le PEA serait-il difficile à utiliser ici ?
 
 ## E. Si ça ne marche pas
 

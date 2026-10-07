@@ -18,7 +18,6 @@ from . import graphiques_interactifs as gi
 from . import interface as ui
 from .interface import nombre, pct
 from .langues import t, td
-from .profil import NOMS_PROFILS
 
 DIMENSIONS = {"geographie": "Géographie", "secteurs": "Secteurs", "devises": "Devises",
               "concentration": "Concentration", "taux": "Taux", "diversification": "Diversification réelle"}
@@ -29,7 +28,7 @@ def html(morceau):
 
 
 def graphique(figure):
-    st.plotly_chart(figure, width="stretch", config=gi.CONFIG_PLOTLY)
+    st.plotly_chart(gi.theme_figure(figure), width="stretch", config=gi.CONFIG_PLOTLY)
 
 
 @st.cache_data(show_spinner=False)
@@ -71,11 +70,10 @@ def afficher(res, cle, code_indice):
         html(ui.titre_section(t("Expositions et diversification"),
                               t("Analyse en transparence : chaque ETF est réparti selon la composition de son "
                                 "indice (approximation au {date})", date=composition_etf.DATE_SOURCE)))
-    profil_defaut = st.session_state.get("profil_client", "Équilibré")
-    profil = droite.selectbox(t("Seuils adaptés au profil"), NOMS_PROFILS, format_func=td,
-                              index=NOMS_PROFILS.index(profil_defaut) if profil_defaut in NOMS_PROFILS else 2,
-                              help=t("Profil défini dans l'espace « Conseil patrimonial » (questionnaire), "
-                                     "ou choisi ici."), key="profil_expositions")
+    profil = droite.selectbox(t("Seuils adaptés au profil"), ex.PROFILS, format_func=td, index=1,
+                              help=t("Les seuils d'alerte (devises, concentration, secteurs...) sont plus stricts "
+                                     "pour un profil prudent que pour un profil dynamique."),
+                              key="profil_expositions")
     constats = ex.diagnostic(positions, transp, div, profil=profil, f_pct=_p0, f_nom=td, doublons=doublons)
     niveaux = ex.synthese(constats)
 

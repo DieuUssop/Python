@@ -63,8 +63,4 @@ METHODE_SIMULATION = "normale"   # "normale" ou "historique" (bootstrap)
 # ----------------------------------------------------------------------
 # Conseil patrimonial (étape 10)
 # ----------------------------------------------------------------------
-# Profil utilisé par main.py et le rapport PDF (dans le tableau de bord,
-# le profil est calculé à partir du questionnaire).
-# Choix : "Sécuritaire", "Prudent", "Équilibré", "Dynamique", "Offensif"
-PROFIL_CLIENT = "Équilibré"
 SITUATION_FAMILIALE = "célibataire"      # ou "couple" (abattement de l'assurance-vie)

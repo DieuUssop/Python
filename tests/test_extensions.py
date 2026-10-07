@@ -1,5 +1,5 @@
 """
-Tests des extensions (étape 10) : profil client, fiscalité, stress tests,
+Tests des extensions (étape 10) : fiscalité, stress tests,
 attribution de performance, budget de risque, backtest.
 Chaque test utilise un cas dont le résultat se calcule à la main.
 """
@@ -8,44 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src import attribution, backtest, budget_risque, fiscalite, profil, stress
-
-
-# ----------------------------------------------------------------------
-# Profil client
-# ----------------------------------------------------------------------
-def test_profil_selon_score():
-    # Réponses maximales partout -> score maximal -> Offensif
-    maxi = [len(options) - 1 for _, options in profil.QUESTIONNAIRE]
-    res = profil.profil_depuis_reponses(maxi)
-    assert res["score"] == res["score_max"] == 28
-    assert res["profil"].nom == "Offensif"
-
-
-def test_tolerance_aux_pertes_plafonne_le_profil():
-    # Score élevé mais perte acceptable de 0 à 5 % -> plafonné à "Sécuritaire"
-    reponses = [len(options) - 1 for _, options in profil.QUESTIONNAIRE]
-    reponses[profil.INDEX_QUESTION_PERTE] = 0
-    res = profil.profil_depuis_reponses(reponses)
-    assert res["profil"].nom == "Sécuritaire"
-    assert res["plafonne_par_tolerance"]
-
-
-def test_indicateur_sri():
-    assert profil.indicateur_sri(0.003) == 1
-    assert profil.indicateur_sri(0.08) == 3
-    assert profil.indicateur_sri(0.15) == 4
-    assert profil.indicateur_sri(0.25) == 5
-    assert profil.indicateur_sri(0.90) == 7
-
-
-def test_adequation_et_part_sans_risque():
-    # Profil Équilibré : volatilité max 12 %. Portefeuille à 16 % de volatilité
-    # -> garder 12 / 16 = 75 % en actions, 25 % sans risque.
-    res = profil.adequation(profil.profil_par_nom("Équilibré"), volatilite=0.16,
-                            max_drawdown=-0.15, part_actions=0.5)
-    assert not res["adapte"]
-    assert res["part_risquee_conseillee"] == pytest.approx(0.75)
+from src import attribution, backtest, budget_risque, fiscalite, stress
 
 
 # ----------------------------------------------------------------------
@@ -211,14 +174,6 @@ def test_carino_la_somme_des_effets_egale_l_ecart_compose():
 # ----------------------------------------------------------------------
 # Portefeuille diversifié : classes d'actifs (actions, obligations, or)
 # ----------------------------------------------------------------------
-def test_part_actions():
-    positions = pd.DataFrame({"valeur": [600.0, 350.0, 50.0], "classe": ["Actions", "Obligations", "Or"]},
-                             index=["A", "OBL", "OR"])
-    assert profil.part_actions(positions) == pytest.approx(0.6)
-    # Sans colonne "classe", tout est considéré comme actions (hypothèse prudente)
-    assert profil.part_actions(positions.drop(columns="classe")) == 1.0
-
-
 def test_pea_exclut_les_obligations():
     # Un fonds obligataire domicilié en Irlande n'est pas éligible au PEA, même si l'Irlande est dans l'UE
     positions = pd.DataFrame({"valeur": [600, 400], "pays": ["France", "Irlande"],

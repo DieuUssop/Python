@@ -1,0 +1,33 @@
+question;fiches_acceptees
+how do i install it on windows;demarrage-installer-windows
+mac says the app can't be opened;demarrage-mac-bloque,erreur-avertissement-installation
+does it work offline;demarrage-hors-connexion,faq-hors-connexion
+switch to dark mode;ecran-mode-nuit
+change the language to french;ecran-langue,faq-anglais
+which benchmark should i pick;ecran-indice-reference,sources-indices
+how do i get the pdf report;ecran-rapport-pdf,faq-rapport-pdf
+forgot my password;compte-mot-de-passe-oublie
+is my data encrypted;compte-protection-simple,compte-protection-technique,faq-confidentialite
+can the developer see my portfolio;compte-createur,faq-createur
+what file formats can i import;import-fichiers-acceptes
+import my broker export;import-export-courtier
+i only have isin codes;import-identifier-titres,sources-identifiant-ticker
+delete a transaction;import-modifier-supprimer
+undo my last change;import-annuler,compte-ajouter-annuler
+add a trade confirmation pdf;import-avis-opere,import-ajouter-operations
+my scanned pdf is rejected;import-pdf-scan-refuse,erreur-pdf
+what is the sharpe ratio;analyse-sharpe,formule-sharpe
+difference between twr and irr;analyse-twr-tri,faq-twr-tri
+what is value at risk;analyse-var-historique,formule-var-historique,analyse-trois-var,faq-plusieurs-var
+fat tails kurtosis;analyse-kurtosis,formule-kurtosis
+how to read the correlation matrix;analyse-matrice-correlation
+what is the efficient frontier;optim-frontiere-efficiente,formule-frontiere-efficiente
+is the monte carlo projection a forecast;optim-pas-une-prevision,faq-projection
+pea tax after 5 years;conseil-pea
+what would my portfolio lose in 2008;conseil-stress-historiques
+risk parity;gestion-parite-risques
+where do prices come from;sources-vue-ensemble,sources-cours-yahoo,faq-pourquoi-yahoo
+how do you make sure prices are correct;sources-fiabilite,faq-verification-cours
+the app is very slow;erreur-lenteur
+port already in use;erreur-port-occupe
+is this investment advice;faq-conseil,analyse-diagnostic

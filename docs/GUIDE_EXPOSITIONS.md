@@ -28,8 +28,7 @@ l'onglet **Expositions**, et la page « Expositions et diversification » du rap
 
 **Diagnostic** : des règles simples aux seuils documentés (`SEUILS` dans `src/expositions.py`)
 classent chaque dimension en vert (bon), orange (à surveiller) ou rouge (à corriger). Les seuils
-dépendent du **profil** (prudent, équilibré, dynamique), repris du questionnaire de l'espace
-« Conseil patrimonial » ou choisi dans l'onglet. Chaque constat donne le chiffre observé, le
+dépendent du **profil** (prudent, équilibré, dynamique), choisi en haut de l'onglet. Chaque constat donne le chiffre observé, le
 risque associé et des pistes. Ce n'est pas un conseil en investissement.
 
 ### Les corrélations, lisibles même avec 50 titres

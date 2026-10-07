@@ -29,6 +29,7 @@ from reportlab.platypus import (Image, KeepTogether, PageBreak, Paragraph, Simpl
 
 from . import expositions as ex
 from . import graphiques as g
+from . import langues, lecture
 
 # Couleurs (les mêmes que le tableau de bord)
 MARINE = colors.HexColor("#0f2a4a")
@@ -152,6 +153,12 @@ def _tableau(entetes, lignes, largeurs=None, alignement_droite_a_partir_de=1):
             style.append(("BACKGROUND", (0, i), (-1, i), GRIS_CLAIR))
     tableau.setStyle(TableStyle(style))
     return tableau
+
+
+def _lecture_fr(fonction, *arguments):
+    """Phrases de lecture (src/lecture.py) en français, sans espace fine insécable."""
+    with langues.en_francais():
+        return " ".join(fonction(*arguments)).replace("\u202f", " ")
 
 
 def _image_graphique(fonction, *arguments, largeur=LARGEUR_UTILE, **options):
@@ -357,7 +364,10 @@ def generer_rapport(res, destination, nom_indice, taux_sans_risque, niveau_var,
         ["Max drawdown", pct(ind["max_drawdown"]), "-"],
         [f"VaR historique {niveau_var:.0%} (1 jour)",
          f"{pct(av['var_historique'], signe=False)} soit {euros(av['var_euros'])}", "-"],
-        [f"VaR paramétrique {niveau_var:.0%} (1 jour)", pct(av["var_parametrique"], signe=False), "-"],
+        [f"VaR loi normale {niveau_var:.0%} (1 jour)", pct(av["var_parametrique"], signe=False), "-"],
+        [f"VaR Cornish-Fisher {niveau_var:.0%} (1 jour)",
+         pct(av["var_cornish_fisher"], signe=False) if av["var_cornish_fisher"] == av["var_cornish_fisher"]
+         else "n.d.", "-"],
         ["CVaR (Expected Shortfall)", f"{pct(av['cvar'], signe=False)} soit {euros(av['cvar_euros'])}", "-"],
     ], largeurs=[6.5 * cm, 5.5 * cm, LARGEUR_UTILE - 12 * cm]))
     story.append(Spacer(1, 4))
@@ -366,6 +376,21 @@ def generer_rapport(res, destination, nom_indice, taux_sans_risque, niveau_var,
         f"{ind['date_creux']:%d/%m/%Y}"
         + (", plus haut non retrouvé à ce jour." if recup is None else f", plus haut retrouvé le {recup:%d/%m/%Y}.")
         + f" Taux sans risque retenu : {pct(taux_sans_risque, signe=False)} par an.", st["note"]))
+    story.append(Spacer(1, 6))
+    story.append(KeepTogether([
+        _image_graphique(g.graphique_distribution, ind, av, niveau_var),
+        Spacer(1, 3),
+        _tableau(["Forme de la distribution", "Portefeuille", "Loi normale"], [
+            ["Asymétrie (skewness)", nombre(av["asymetrie"]), "0"],
+            ["Kurtosis en excès", nombre(av["kurtosis"]), "0"],
+            ["Jours à plus de 3 écarts-types", pct(av["jours_extremes"], signe=False),
+             pct(av["jours_extremes_normale"], signe=False)],
+            ["Test de Jarque-Bera (p-value)", "< 0,001" if av["p_jarque_bera"] < 0.001 else nombre(av["p_jarque_bera"], 3),
+             "rejet si < 0,05"],
+        ], largeurs=[6.5 * cm, 5.5 * cm, LARGEUR_UTILE - 12 * cm]),
+        Spacer(1, 3),
+        Paragraph(escape(_lecture_fr(lecture.lecture_distribution, av)), st["note"]),
+    ]))
 
     # ---------------- Page 5 : optimisation ----------------
     if opti is not None:
@@ -379,6 +404,22 @@ def generer_rapport(res, destination, nom_indice, taux_sans_risque, niveau_var,
              nombre(opti[cle]["sharpe"])]
             for cle, nom in [("actuel", "Portefeuille actuel"), ("variance_min", "Variance minimale"),
                              ("sharpe_max", "Sharpe maximal")]
+        ]))
+        from .optimisation import comparer_repartitions, repartition_par_classe, resume_changements
+        comparaison = comparer_repartitions(opti, "sharpe_max")
+        par_classe = repartition_par_classe(comparaison)
+        story.append(Spacer(1, 6))
+        story.append(KeepTogether([
+            Paragraph("Répartitions comparées", st["h2"]),
+            Paragraph(escape(_lecture_fr(lambda *a: [lecture.synthese_optimisation(*a)],
+                                         resume_changements(comparaison), par_classe, "Sharpe maximal")),
+                      st["texte"]),
+            Spacer(1, 4),
+            _tableau(["Classe d'actifs", "Actuel", "Sharpe maximal"],
+                     [[classe, pct(l["actuel"], signe=False, decimales=1), pct(l["cible"], signe=False, decimales=1)]
+                      for classe, l in par_classe.iterrows()]),
+            Spacer(1, 4),
+            _image_graphique(g.graphique_poids, opti),
         ]))
         story.append(Spacer(1, 4))
         story.append(Paragraph(
@@ -406,6 +447,12 @@ def generer_rapport(res, destination, nom_indice, taux_sans_risque, niveau_var,
         else:
             cartes.append(("Versement mensuel", euros(prm["versement_mensuel"])))
         story.append(_cartes(cartes))
+        story.append(Spacer(1, 6))
+        story.append(KeepTogether([
+            _image_graphique(g.graphique_distribution_finale, sim, largeur=LARGEUR_UTILE * 0.86),
+            Spacer(1, 3),
+            Paragraph(escape(_lecture_fr(lecture.lecture_valeur_finale, sim)), st["note"]),
+        ]))
         story.append(Spacer(1, 4))
         methode = "loi normale (mouvement brownien géométrique)" if prm["methode"] == "normale" \
             else "rééchantillonnage des rendements historiques (bootstrap)"
@@ -421,23 +468,6 @@ def generer_rapport(res, destination, nom_indice, taux_sans_risque, niveau_var,
         ext = extensions
         story.append(PageBreak())
         story.append(Paragraph("Conseil patrimonial", st["h1"]))
-        adeq = ext["adequation"]
-        story.append(_cartes([
-            ("Profil retenu", ext["profil"].nom),
-            ("Indicateur de risque (SRI)", f"{adeq['sri']} / 7"),
-            ("Adéquation", "Adapté" if adeq["adapte"] else "Trop risqué", VERT if adeq["adapte"] else ROUGE),
-        ]))
-        story.append(Spacer(1, 6))
-        fmt = lambda nom, v: f"{v:.0f}" if "SRI" in nom else pct(v, signe=False, decimales=1)
-        story.append(_tableau(["Critère", "Portefeuille", "Limite du profil", "Statut"],
-                              [[nom, fmt(nom, v), fmt(nom, lim), "Conforme" if ok else "Dépassé"]
-                               for nom, v, lim, ok in adeq["criteres"]]))
-        if not adeq["adapte"]:
-            story.append(Spacer(1, 4))
-            story.append(Paragraph(escape(
-                f"Pour respecter le profil : conserver environ {pct(adeq['part_risquee_conseillee'], signe=False, decimales=0)} "
-                f"du capital sur ce portefeuille et placer le reste sur un support sans risque."), st["note"]))
-
         story.append(KeepTogether([
             Paragraph(f"Fiscalité d'une vente totale aujourd'hui (ancienneté {nombre(ext['anciennete'], 1)} ans, taux 2026)",
                       st["h2"]),
@@ -516,10 +546,9 @@ def generer_rapport(res, destination, nom_indice, taux_sans_risque, niveau_var,
         "<b>Sharpe / Sortino</b> : rendement excédentaire annualisé divisé par la volatilité "
         "(Sharpe) ou par la semi-déviation (Sortino).",
         "<b>Bêta / alpha</b> : modèle de marché (MEDAF) estimé sur les rendements quotidiens.",
-        "<b>VaR / CVaR</b> : méthode historique (percentile) et paramétrique (loi normale), horizon 1 jour.",
+        "<b>VaR / CVaR</b> : méthode historique (percentile), paramétrique (loi normale) et Cornish-Fisher (loi normale corrigée de l'asymétrie et de la kurtosis), horizon 1 jour. Normalité testée par Jarque-Bera.",
         "<b>Markowitz</b> : optimisation sous contraintes (SLSQP), sans vente à découvert, poids plafonnés.",
         "<b>Monte-Carlo</b> : trajectoires mensuelles simulées ; percentiles de la valeur finale.",
-        "<b>Profil client</b> : questionnaire inspiré de MiFID II ; SRI estimé à partir de la volatilité (classes PRIIPs).",
         "<b>Fiscalité</b> : taux 2026 (flat tax 31,4 %, PEA après 5 ans, assurance-vie après 8 ans).",
         "<b>Stress tests</b> : crises passées rejouées (indice régional si le titre n'était pas coté) et chocs hypothétiques.",
         "<b>Attribution</b> : Brinson-Fachler mensuel par région, lissage de Cariño, référence MSCI ACWI IMI.",

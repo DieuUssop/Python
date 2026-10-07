@@ -23,19 +23,21 @@ Comment fonctionne Streamlit ?
 """
 
 import hashlib
+from html import escape
 import io
 from pathlib import Path
 
 import streamlit as st
 
-from src import config, langues
+from src import config, langues, lecture, theme
 from src import graphiques_interactifs as gi
 from src import interface as ui
-from src import (expositions, fond_de_carte, import_fichier, indices, vues_compte, vues_conseil,
-                 vues_expositions, vues_gestion, vues_import, vues_mouvements)
+from src import (expositions, fond_de_carte, import_fichier, indices, vues_compte, vues_conseil, vues_transactions,
+                 vues_expositions, vues_gestion, vues_import, vues_manuel, vues_mouvements)
 from src.analyse import analyse_complete
 from src.interface import euros, nombre, pct, tendance
 from src.langues import t, td
+from src import optimisation as opt
 from src.optimisation import optimiser_portefeuille
 from src.simulation import parametres_historiques, simuler
 
@@ -59,6 +61,11 @@ MODELE_CSV = ("date,type,ticker,nom,quantite,prix,frais\n"
               "2024-05-22,DIVIDENDE,MC.PA,LVMH,0,39.00,0.00\n"
               "2024-09-18,VENTE,MC.PA,LVMH,1,700.00,2.00\n")
 
+# Icône de l'onglet du navigateur : monogramme « PT » (assets/favicon.png)
+ICONE_PAGE = str(Path(__file__).resolve().parent / "assets" / "favicon.png")
+if not Path(ICONE_PAGE).exists():
+    ICONE_PAGE = None
+
 # Indices de référence proposés dans le menu (actions, obligations, monétaire, mixtes) : src/indices.py
 INDICES = {code: i.nom for code, i in indices.INDICES.items()}
 NOMS_COURTS = {code: i.court for code, i in indices.INDICES.items()}
@@ -69,14 +76,24 @@ NOMS_COURTS = {code: i.court for code, i in indices.INDICES.items()}
 # ----------------------------------------------------------------------
 langues.definir(st.session_state.get("langue", "fr"))
 
+# Mode clair / nuit : préférence retrouvée à la connexion (appliquée avant la création du sélecteur)
+if "theme_a_appliquer" in st.session_state:
+    st.session_state["theme"] = st.session_state.pop("theme_a_appliquer")
+theme.definir(st.session_state.get("theme", "clair"))
+
 # ----------------------------------------------------------------------
 # Configuration de la page (doit être la première commande Streamlit)
 # ----------------------------------------------------------------------
-st.set_page_config(page_title=t("Suivi de portefeuille") + " · Master G2C", page_icon="📈", layout="wide")
+st.set_page_config(page_title=t("Suivi de portefeuille") + " · Master G2C", page_icon=ICONE_PAGE, layout="wide")
+
+PIED_DE_PAGE = t("Données de marché : Yahoo Finance · Taux sans risque : BCE · "
+                 "Outil pédagogique réalisé dans le cadre du Master G2C — ne constitue pas un conseil en investissement.")
 
 # On charge la feuille de style (si elle est présente).
 if FEUILLE_DE_STYLE.exists():
     st.markdown(f"<style>{FEUILLE_DE_STYLE.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
+if theme.nuit():
+    st.markdown(theme.CSS_NUIT, unsafe_allow_html=True)
 
 
 def html(morceau):
@@ -86,7 +103,7 @@ def html(morceau):
 
 def graphique(figure):
     """Affiche un graphique Plotly sur toute la largeur disponible."""
-    st.plotly_chart(figure, width="stretch", config=gi.CONFIG_PLOTLY)
+    st.plotly_chart(gi.theme_figure(figure), width="stretch", config=gi.CONFIG_PLOTLY)
 
 
 # ----------------------------------------------------------------------
@@ -137,7 +154,7 @@ def produire_rapport(contenu_csv, indice, taux_sans_risque, niveau_var, nom_indi
                   versement_mensuel=config.VERSEMENT_MENSUEL, nb_simulations=config.NB_SIMULATIONS,
                   methode=config.METHODE_SIMULATION, rendements_historiques=rendements,
                   date_depart=res["historique"].index[-1])
-    from src.extensions import calculer_extensions   # profil et fiscalité : réglages de src/config.py
+    from src.extensions import calculer_extensions   # fiscalité, stress tests... : réglages de src/config.py
     extensions = calculer_extensions(res, taux_sans_risque)
     tampon = io.BytesIO()
     generer_rapport(res, tampon, nom_indice, taux_sans_risque, niveau_var, opti=opti, sim=sim,
@@ -148,24 +165,69 @@ def produire_rapport(contenu_csv, indice, taux_sans_risque, niveau_var, nom_indi
 # ======================================================================
 # BARRE LATÉRALE : les réglages
 # ======================================================================
-with st.sidebar:
-    html(ui.marque("Portfolio Tracker", "Master G2C · " + t("Outil de suivi de portefeuille")))
+ESPACES = ["Analyse du portefeuille", "Conseil patrimonial", "Gestion d'actifs", "Manuel et aide"]
 
-    # Sélecteur de langue : un clic relance la page dans l'autre langue.
-    st.segmented_control("Langue / Language", list(langues.LANGUES), format_func=langues.LANGUES.get,
-                         default="fr", key="langue", label_visibility="collapsed")
+
+def _choix_langue():
+    """Un clic sur la langue déjà choisie la désélectionnerait : on la garde."""
+    if st.session_state.get("langue") is None:
+        st.session_state["langue"] = st.session_state.get("langue_active", "fr")
+    st.session_state["langue_active"] = st.session_state["langue"]
+
+
+def _choix_theme():
+    """Même garde-fou que pour la langue ; la préférence est gardée dans le compte."""
+    if st.session_state.get("theme") is None:
+        st.session_state["theme"] = st.session_state.get("theme_actif", "clair")
+    st.session_state["theme_actif"] = st.session_state["theme"]
+    session = st.session_state.get("session_compte")
+    if session is not None:
+        try:
+            session.definir_preference("theme", st.session_state["theme"])
+        except Exception:
+            pass                                        # préférence non enregistrée : sans gravité
+
+
+def _choix_espace():
+    """Un clic sur un espace de travail ferme les pages « Mon compte » et « Ajouter des opérations »."""
+    choix = st.session_state.get("espace_menu")
+    if choix is not None:
+        st.session_state["espace_actif"] = choix
+    st.session_state.pop("page_compte", None)
+    st.session_state.pop("ajout_operations", None)
+
+
+with st.sidebar:
+    # En-tête : monogramme, nom, et langue en petit à droite
+    tete, reglages_affichage = st.columns([5, 2], vertical_alignment="center")
+    with tete:
+        html(ui.marque("Portfolio Tracker", "Master G2C"))
+    with reglages_affichage:
+        st.segmented_control("Langue / Language", list(langues.LANGUES), format_func=langues.LANGUES.get,
+                             default="fr", key="langue", label_visibility="collapsed", on_change=_choix_langue)
+        st.segmented_control(t("Affichage"), list(theme.THEMES), format_func=lambda c: t(theme.THEMES[c]),
+                             default="clair", key="theme", label_visibility="collapsed", on_change=_choix_theme)
+    html(ui.separateur())
 
     # Espace personnel (comptes chiffrés) : src/vues_compte.py
     session_compte = vues_compte.barre_laterale()
+    html(ui.separateur())
 
+    # Navigation entre les trois espaces. Quand une page « Mon compte » ou « Ajouter des
+    # opérations » est ouverte, aucun espace n'est coché : un clic sur n'importe lequel
+    # (même celui en cours) ferme la page et affiche l'espace.
     html(ui.bloc_titre(t("Espace de travail")))
-    espace = st.radio(
-        "Espace de travail", ["Analyse du portefeuille", "Conseil patrimonial", "Gestion d'actifs"],
-        format_func=t, label_visibility="collapsed",
-        captions=[t("Performance, risque, optimisation, projection"),
-                  t("Profil client, fiscalité, stress tests"),
-                  t("Attribution, budget de risque, backtest")],
+    page_ouverte = bool(st.session_state.get("ajout_operations")
+                        or (session_compte is not None and st.session_state.get("page_compte")))
+    st.session_state["espace_menu"] = None if page_ouverte else st.session_state.get("espace_actif", ESPACES[0])
+    st.radio(
+        "Espace de travail", ESPACES, format_func=t, label_visibility="collapsed", key="espace_menu",
+        on_change=_choix_espace,
+        captions=[t("Performance, risque, optimisation"), t("Fiscalité, stress tests"),
+                  t("Attribution, budget de risque, backtest"), t("Mode d'emploi, formules, questions")],
     )
+    espace = st.session_state.get("espace_actif", ESPACES[0])
+    html(ui.separateur())
 
     html(ui.bloc_titre(t("Données")))
     fichier_choisi = None
@@ -174,55 +236,58 @@ with st.sidebar:
     choix = personnels + FICHIERS_DISPONIBLES
     if choix:
         fichier_choisi = st.selectbox(
-            t("Portefeuille"), choix,
+            t("Portefeuille"), choix, label_visibility="collapsed",
             format_func=lambda f: t("Mon espace · {nom}", nom=f[2]) if isinstance(f, tuple) else
             (t(NOMS_PORTEFEUILLES[f.name]) if f.name in NOMS_PORTEFEUILLES else f.name),
             help=t("Vos portefeuilles enregistrés, puis les portefeuilles d'exemple du projet"),
         )
     fichier_envoye = st.file_uploader(
-        t("Ou envoyer un autre fichier (CSV, Excel ou PDF)"), type=["csv", "xlsx", "pdf"],
+        t("Envoyer un fichier (CSV, Excel ou PDF)"), type=["csv", "xlsx", "pdf"],
         help=t("Colonnes : date, type (ACHAT, VENTE, DIVIDENDE), ticker (code Yahoo Finance), nom, "
                "quantite, prix, frais. CSV à virgules ou à points-virgules, fichier Excel, ou PDF "
                "(relevé d'opérations, avis d'opéré). "
                "Prioritaire sur le portefeuille choisi ci-dessus."),
     )
-    st.download_button(t("Télécharger un modèle de fichier"), data=MODELE_CSV.encode("utf-8-sig"),
-                       file_name="modele_transactions.csv", mime="text/csv",
-                       icon=":material/description:", width="stretch", type="tertiary")
     # Emplacement réservé juste sous l'envoi : le bouton « Enregistrer dans mon espace »
     # y est affiché une fois le fichier lu (plus bas dans le script).
     zone_enregistrement = st.container()
-    zone_operations = st.container()            # « Ajouter des opérations » (affiché une fois le portefeuille lu)
     if fichier_envoye is not None and session_compte is None:
-        zone_enregistrement.caption(t("Pour garder ce fichier, connectez-vous ou créez un compte "
-                                      "(« Mon espace », en haut de la barre latérale)."))
-    if fichier_envoye is not None and st.button(t("Ouvrir l'assistant d'import"), icon=":material/tune:",
-                                                width="stretch", type="tertiary",
+        zone_enregistrement.caption(t("Pour garder ce fichier, connectez-vous (« Se connecter », en haut de la "
+                                      "barre latérale)."))
+    lien_a, lien_b = st.columns(2)
+    zone_operations = lien_a.container()        # « Ajouter des opérations » (affiché une fois le portefeuille lu)
+    lien_b.download_button(t("Modèle de fichier"), data=MODELE_CSV.encode("utf-8-sig"),
+                           file_name="modele_transactions.csv", mime="text/csv", type="tertiary",
+                           key="modele_fichier")
+    if fichier_envoye is not None and st.button(t("Ouvrir l'assistant d'import"), type="tertiary",
                                                 help=t("Pour indiquer vous-même comment lire le fichier envoyé"),
                                                 key="assistant_barre"):
         st.session_state["assistant_force"] = hashlib.md5(fichier_envoye.getvalue()).hexdigest()[:12]
+    html(ui.separateur())
 
-    html(ui.bloc_titre(t("Paramètres d'analyse")))
-    code_indice = st.selectbox(
-        t("Indice de référence"), options=list(INDICES),
-        index=list(INDICES).index(config.INDICE_REFERENCE) if config.INDICE_REFERENCE in INDICES else 0,
-        format_func=lambda code: f"{t(indices.indice(code).famille)} · {t(INDICES[code])}",
-        help=t("Actions, obligations, monétaire, ou indice mixte actions / obligations recalculé chaque mois"),
-    )
-    taux_sans_risque = st.number_input(
-        t("Taux sans risque (% par an)"), min_value=0.0, max_value=10.0,
-        value=config.TAUX_SANS_RISQUE * 100, step=0.25, format="%.2f",
-        help=t("Taux de la facilité de dépôt de la BCE : 2,50 % depuis le 16/09/2026"),
-    ) / 100
-    niveau_var = st.select_slider(
-        t("Niveau de confiance de la VaR"), options=[0.90, 0.95, 0.99],
-        value=config.NIVEAU_CONFIANCE_VAR, format_func=lambda v: pct(v, signe=False, decimales=0),
-    )
-
-    st.write("")
-    if st.button(t("Actualiser les cours"), icon=":material/refresh:", width="stretch"):
-        st.cache_data.clear()   # on oublie les résultats en mémoire...
-        st.rerun()              # ... et on relance la page
+    # Paramètres d'analyse : repliés, avec un résumé d'une ligne
+    indice_choisi = st.session_state.get("indice_reference", config.INDICE_REFERENCE)
+    resume_parametres = " · ".join([
+        t(NOMS_COURTS.get(indice_choisi, "")) or t(INDICES.get(indice_choisi, "")),
+        pct(st.session_state.get("taux_sans_risque_pct", config.TAUX_SANS_RISQUE * 100) / 100, signe=False),
+        "VaR " + pct(st.session_state.get("niveau_var", config.NIVEAU_CONFIANCE_VAR), signe=False, decimales=0),
+    ])
+    with st.expander(t("Paramètres") + "  ·  " + resume_parametres, expanded=False):
+        code_indice = st.selectbox(
+            t("Indice de référence"), options=list(INDICES), key="indice_reference",
+            index=list(INDICES).index(config.INDICE_REFERENCE) if config.INDICE_REFERENCE in INDICES else 0,
+            format_func=lambda code: f"{t(indices.indice(code).famille)} · {t(INDICES[code])}",
+            help=t("Actions, obligations, monétaire, ou indice mixte actions / obligations recalculé chaque mois"),
+        )
+        taux_sans_risque = st.number_input(
+            t("Taux sans risque (% par an)"), min_value=0.0, max_value=10.0, key="taux_sans_risque_pct",
+            value=config.TAUX_SANS_RISQUE * 100, step=0.25, format="%.2f",
+            help=t("Taux de la facilité de dépôt de la BCE : 2,50 % depuis le 16/09/2026"),
+        ) / 100
+        niveau_var = st.select_slider(
+            t("Niveau de confiance de la VaR"), options=[0.90, 0.95, 0.99], key="niveau_var",
+            value=config.NIVEAU_CONFIANCE_VAR, format_func=lambda v: pct(v, signe=False, decimales=0),
+        )
 
 # Page « Ajouter des opérations » (nouveaux mouvements d'un portefeuille) : src/vues_mouvements.py
 if st.session_state.get("ajout_operations"):
@@ -232,6 +297,12 @@ if st.session_state.get("ajout_operations"):
 # Page « Mon compte » (gestion des portefeuilles, mot de passe, suppression)
 if session_compte is not None and st.session_state.get("page_compte"):
     vues_compte.page_compte(session_compte, importer_auto)
+    st.stop()
+
+# Espace « Manuel et aide » : accessible même si aucun portefeuille n'est chargé (src/vues_manuel.py)
+if espace == "Manuel et aide":
+    vues_manuel.afficher()
+    html(ui.pied_de_page(PIED_DE_PAGE))
     st.stop()
 
 # ======================================================================
@@ -279,23 +350,29 @@ else:
 origine = hashlib.md5(contenu).hexdigest()[:12]
 fusion_session = st.session_state.get("fusion_session")
 mis_a_jour = bool(fusion_session and fusion_session["origine"] == origine)
+nom_base = Path(str(nom_fichier)).stem          # nom du fichier d'origine (sans « (mis à jour) »)
 if mis_a_jour:
     contenu = fusion_session["contenu"]
     nom_fichier = t("{nom} (mis à jour)", nom=Path(nom_fichier).stem)
+# Portefeuille modifiable : espace personnel (enregistré, chiffré) ou session (fichier envoyé, exemple)
+if isinstance(fichier_choisi, tuple) and fichier_envoye is None and session_compte is not None:
+    cible_portefeuille = {"type": "perso", "id": fichier_choisi[1], "nom": fichier_choisi[2]}
+else:
+    cible_portefeuille = {"type": "session", "origine": origine, "nom": nom_base}
 with zone_operations:
-    if st.button(t("Ajouter des opérations"), icon=":material/playlist_add:", width="stretch",
+    if st.button(t("Ajouter des opérations"), type="tertiary",
                  help=t("Mettre à jour ce portefeuille avec de nouveaux mouvements : avis d'opéré PDF, export "
                         "Excel / CSV ou saisie manuelle"), key="bouton_ajout_operations"):
         if isinstance(fichier_choisi, tuple) and fichier_envoye is None and session_compte is not None:
             cible = {"type": "perso", "id": fichier_choisi[1], "nom": fichier_choisi[2], "contenu": contenu}
         else:
-            cible = {"type": "session", "origine": origine, "nom": Path(str(nom_fichier)).stem, "contenu": contenu}
+            cible = {"type": "session", "origine": origine, "nom": nom_base, "contenu": contenu}
         vues_mouvements.ouvrir(cible)
         st.rerun()
     if mis_a_jour:
-        st.download_button(t("Télécharger le fichier mis à jour"), data=contenu, icon=":material/download:",
+        st.download_button(t("Télécharger le fichier mis à jour"), data=contenu, type="tertiary",
                            file_name=f"{Path(str(fusion_session['nom'])).stem}_mis_a_jour.csv", mime="text/csv",
-                           width="stretch", key="telecharger_fusion")
+                           key="telecharger_fusion")
 
 try:
     with st.spinner(t("Récupération des cours et calcul des indicateurs...")):
@@ -323,41 +400,37 @@ date_debut, date_fin = langues.date(histo.index[0]), langues.date(histo.index[-1
 en_direct = "direct" in res["source_cours"].lower()
 
 with st.sidebar:
-    html(ui.bloc_titre(t("Informations")))
+    html(ui.separateur())
     html(ui.infos([
         (t("Fichier"), nom_fichier),
-        (t("Opérations"), str(len(res["transactions"]))),
         (t("Période"), f"{date_debut} → {date_fin}"),
+        (t("Opérations"), str(len(res["transactions"]))),
         (t("Cours"), res["source_cours"] if not langues.anglais()
          else ("Yahoo Finance (live)" if en_direct else "Local cache (Yahoo Finance unavailable)")),
     ] + [(t("1 € en {devise}", devise=devise), nombre(taux, 4)) for devise, taux in res["taux_actuels"].items()]))
 
-    html(ui.bloc_titre(t("Rapport")))
     cle_rapport = (hash(contenu), code_indice, taux_sans_risque, niveau_var)
-    if st.button(t("Préparer le rapport PDF"), icon=":material/picture_as_pdf:", width="stretch",
-                 help=t("Le rapport PDF est rédigé en français.")):
+    rapport_pret = st.session_state.get("rapport", (None,))[0] == cle_rapport
+    if rapport_pret:
+        # On ne propose le téléchargement que si le rapport correspond aux réglages actuels.
+        st.download_button(
+            t("Télécharger le rapport PDF"), data=st.session_state["rapport"][1],
+            file_name=f"rapport_portefeuille_{histo.index[-1]:%Y%m%d}.pdf", mime="application/pdf",
+            width="stretch", type="primary", key="telecharger_rapport",
+        )
+    elif st.button(t("Rapport PDF"), type="primary", width="stretch", key="preparer_rapport",
+                   help=t("Prépare le rapport complet (rédigé en français), puis propose de le télécharger.")):
         try:
             with st.spinner(t("Génération du rapport...")):
                 st.session_state["rapport"] = (cle_rapport, produire_rapport(
                     contenu, code_indice, taux_sans_risque, niveau_var, INDICES[code_indice]))
+            st.rerun()
         except ImportError:
             st.error(t("Installer reportlab : python -m pip install reportlab"))
-    # On ne propose le téléchargement que si le rapport correspond aux réglages actuels.
-    if st.session_state.get("rapport", (None,))[0] == cle_rapport:
-        st.download_button(
-            t("Télécharger le rapport"), data=st.session_state["rapport"][1],
-            file_name=f"rapport_portefeuille_{histo.index[-1]:%Y%m%d}.pdf", mime="application/pdf",
-            icon=":material/download:", width="stretch", type="primary",
-        )
-    with st.expander(t("Méthodologie")):
-        st.markdown(t(
-            "- **TWR** : rendement pondéré par le temps, neutre vis-à-vis des apports.\n"
-            "- **TRI** : taux de rendement interne des flux de l'investisseur.\n"
-            "- **Volatilité** : écart-type quotidien × √252.\n"
-            "- **VaR / CVaR** : méthode historique, horizon 1 jour.\n"
-            "- **Markowitz** : optimisation SLSQP, sans vente à découvert.\n\n"
-            "Détails dans le fichier README.md du projet."
-        ))
+    if st.button(t("Actualiser les cours"), type="tertiary", key="actualiser_cours",
+                 help=t("Télécharge à nouveau les cours (Internet nécessaire)")):
+        st.cache_data.clear()   # on oublie les résultats en mémoire...
+        st.rerun()              # ... et on relance la page
 
 # ======================================================================
 # EN-TÊTE ET CHIFFRES CLÉS
@@ -396,11 +469,11 @@ html(ui.grille([
 # ======================================================================
 # ONGLETS
 # ======================================================================
-PIED_DE_PAGE = t("Données de marché : Yahoo Finance · Taux sans risque : BCE · "
-                 "Outil pédagogique réalisé dans le cadre du Master G2C — ne constitue pas un conseil en investissement.")
 cle_calculs = (hash(contenu), code_indice, taux_sans_risque, niveau_var)
 
 # Les deux espaces supplémentaires (étape 10) ont leur propre fichier.
+vues_manuel.memoriser_chiffres(res)          # chiffres du portefeuille repris dans les fiches du manuel
+
 if espace == "Conseil patrimonial":
     vues_conseil.afficher(res, cle_calculs)
     html(ui.pied_de_page(PIED_DE_PAGE))
@@ -576,12 +649,42 @@ with onglets[3]:
 
     with st.container(border=True):
         html(ui.titre_section(t("Distribution des rendements quotidiens"),
-                              t("VaR paramétrique (loi normale) : {valeur}",
-                                valeur=pct(av["var_parametrique"], signe=False))))
-        graphique(gi.fig_distribution_rendements(ind, av, niveau_var))
-        html(ui.note(t("Si la VaR historique dépasse la VaR paramétrique, les pertes extrêmes sont plus "
-                       "fréquentes que ne le prévoit la loi normale (« queues épaisses »). Corrélations et "
-                       "diversification : onglet « Expositions ».")))
+                              t("Jours observés comparés à la loi normale de même moyenne et même volatilité "
+                                "· {n} jours", n=f"{av['nb_jours']:,}".replace(",", " " if not langues.anglais()
+                                                                             else ","))))
+        gauche, droite = st.columns([3, 2], gap="medium")
+        with gauche:
+            graphique(gi.fig_distribution_rendements(ind, av, niveau_var))
+        with droite:
+            html(ui.grille([
+                ui.carte(t("Asymétrie"), nombre(av["asymetrie"]), detail=t("0 pour une loi normale"),
+                         aide=t("Skewness. Négative : les fortes baisses sont plus fréquentes que les fortes hausses.")),
+                ui.carte(t("Kurtosis en excès"), nombre(av["kurtosis"]), detail=t("0 pour une loi normale"),
+                         aide=t("Positive : « queues épaisses », davantage de journées extrêmes que prévu.")),
+            ]))
+            html(ui.grille([
+                ui.carte(t("Jours à plus de 3 écarts-types"), pct(av["jours_extremes"], signe=False),
+                         detail=t("{theo} selon la loi normale", theo=pct(av["jours_extremes_normale"], signe=False))),
+                ui.carte(t("Test de Jarque-Bera"), f"p = {lecture._p_value(av['p_jarque_bera'])}",
+                         detail=ui.pastille(t("Normalité rejetée"), "negative") if av["p_jarque_bera"] < 0.05
+                         else ui.pastille(t("Normalité non rejetée"), "positive"),
+                         aide=t("JB = n/6 × (S² + K²/4). Sous la loi normale, p-value = exp(−JB/2).")),
+            ]))
+            valeur = res["resume"]["valeur_actuelle"]
+            lignes_var = [(t("VaR historique"), av["var_historique"]),
+                          (t("VaR loi normale"), av["var_parametrique"]),
+                          (t("VaR Cornish-Fisher"), av["var_cornish_fisher"]),
+                          ("CVaR (Expected Shortfall)", av["cvar"])]
+            html(lecture.tableau_html(
+                [t("Perte d'un mauvais jour ({niveau})", niveau=niveau), "%", "€"],
+                [[escape(nom), pct(v, signe=False), euros(v * valeur)] if v == v else
+                 [escape(nom), t("n.d."), "—"] for nom, v in lignes_var]))
+            if av["var_cornish_fisher"] != av["var_cornish_fisher"]:
+                st.caption(t("Cornish-Fisher n.d. : asymétrie ou kurtosis trop fortes, la correction n'est plus "
+                             "fiable."))
+        html(ui.note(" ".join(lecture.lecture_distribution(av))))
+        html(ui.note(t("Cornish-Fisher : VaR de la loi normale corrigée de l'asymétrie et de la kurtosis. "
+                       "Corrélations et diversification : onglet « Expositions ».")))
 
 # ----------------------------------------------------------------------
 # 5. Expositions et diversification réelle : src/vues_expositions.py
@@ -630,25 +733,48 @@ with onglets[5]:
                                       t("Chaque point bleu est un portefeuille tiré au hasard : aucun ne dépasse la frontière")))
                 graphique(gi.fig_frontiere(opti))
 
-            gauche, droite = st.columns([3, 2], gap="medium")
-            with gauche, st.container(border=True):
-                html(ui.titre_section(t("Répartitions comparées"), t("Poids actuels et poids optimaux")))
-                graphique(gi.fig_poids(opti))
-            with droite, st.container(border=True):
-                html(ui.titre_section(t("Ajustements vers le Sharpe maximal"), t("À valeur totale inchangée, hors frais")))
-                ajustements = opti["poids"][["nom", "actuel", "sharpe_max", "ecart_euros_sharpe_max"]]
-                ajustements = ajustements.assign(actuel=ajustements["actuel"] * 100,
-                                                 sharpe_max=ajustements["sharpe_max"] * 100)
-                st.dataframe(
-                    ajustements.sort_values("ecart_euros_sharpe_max"), hide_index=True, width="stretch",
-                    column_config={
-                        "nom": st.column_config.TextColumn(t("Titre")),
-                        "actuel": st.column_config.NumberColumn(t("Actuel"), format=langues.pct_colonne("%.1f")),
-                        "sharpe_max": st.column_config.NumberColumn(t("Optimal"), format=langues.pct_colonne("%.1f")),
-                        "ecart_euros_sharpe_max": st.column_config.NumberColumn(
-                            t("Acheter / vendre"), format=langues.eur_colonne("%+.0f")),
-                    },
-                )
+            with st.container(border=True):
+                html(ui.titre_section(t("Répartitions comparées"),
+                                      t("Ce qu'il faudrait changer pour passer du portefeuille actuel au portefeuille "
+                                        "choisi, à valeur totale inchangée et hors frais")))
+                cibles = {"sharpe_max": t("Sharpe maximal"), "variance_min": t("Variance minimale")}
+                cible = st.segmented_control(t("Comparer mon portefeuille à"), list(cibles), format_func=cibles.get,
+                                             default="sharpe_max", key="cible_optimisation") or "sharpe_max"
+                comparaison = opt.comparer_repartitions(opti, cible)
+                par_classe = opt.repartition_par_classe(comparaison)
+                changements = opt.resume_changements(comparaison)
+                html(ui.note(lecture.synthese_optimisation(changements, par_classe, cibles[cible])))
+                if len(par_classe) > 1 or par_classe.index[0] != "Actions":
+                    graphique(gi.fig_classes_comparees(par_classe, cibles[cible]))
+                graphique(gi.fig_poids(comparaison, opti["poids_max"]))
+                masquees = int((comparaison["sens"] != "inchange").sum()) - 20
+                notes = []
+                if changements["nb_inchanges"]:
+                    notes.append(t("{n} titre(s) inchangé(s) (écart inférieur à 0,25 point) ne sont pas affichés.",
+                                   n=changements["nb_inchanges"]))
+                if masquees > 0:
+                    notes.append(t("{n} autre(s) petit(s) ajustement(s) dans le détail ci-dessous.", n=masquees))
+                if notes:
+                    st.caption(" ".join(notes))
+                with st.expander(t("Détail des ajustements (montants à acheter / vendre)")):
+                    detail = comparaison.assign(actuel=comparaison["actuel"] * 100, cible=comparaison["cible"] * 100,
+                                                sens=comparaison["sens"].map({
+                                                    "renforcer": t("Renforcer"), "alleger": t("Alléger"),
+                                                    "sortir": t("Vendre entièrement"), "inchange": t("Inchangé")}),
+                                                classe=comparaison["classe"].map(td))
+                    st.dataframe(
+                        detail[["nom", "classe", "actuel", "cible", "euros", "sens"]], hide_index=True,
+                        width="stretch",
+                        column_config={
+                            "nom": st.column_config.TextColumn(t("Titre")),
+                            "classe": st.column_config.TextColumn(t("Classe")),
+                            "actuel": st.column_config.NumberColumn(t("Actuel"), format=langues.pct_colonne("%.1f")),
+                            "cible": st.column_config.NumberColumn(t("Conseillé"), format=langues.pct_colonne("%.1f")),
+                            "euros": st.column_config.NumberColumn(t("Acheter / vendre"),
+                                                                   format=langues.eur_colonne("%+.0f")),
+                            "sens": st.column_config.TextColumn(t("Action")),
+                        },
+                    )
                 html(ui.note(t("Exercice académique, pas un conseil en investissement. Les rendements espérés "
                                "sont estimés sur le passé : l'optimiseur surexploite les titres qui ont le mieux "
                                "marché, sans garantie pour l'avenir."), attention=True))
@@ -720,8 +846,14 @@ with onglets[6]:
 
     gauche, droite = st.columns([3, 2], gap="medium")
     with gauche, st.container(border=True):
-        html(ui.titre_section(t("Distribution de la valeur finale")))
-        graphique(gi.fig_distribution_finale(sim))
+        html(ui.titre_section(t("Distribution de la valeur finale"),
+                              t("Valeur du portefeuille dans {n} ans, pour chacun des {s} scénarios", n=annees,
+                                s=f"{config.NB_SIMULATIONS:,}".replace(",", " " if not langues.anglais() else ","))))
+        echelle_log = st.toggle(t("Échelle logarithmique"), key="echelle_log_finale",
+                                help=t("La valeur finale suit une loi log-normale (rendements composés) : en échelle "
+                                       "logarithmique, elle redevient une cloche symétrique."))
+        graphique(gi.fig_distribution_finale(sim, echelle_log))
+        html(ui.note(" ".join(lecture.lecture_valeur_finale(sim))))
     with droite, st.container(border=True):
         html(ui.titre_section(t("Comment lire cette projection ?")))
         st.markdown(t(
@@ -740,43 +872,7 @@ with onglets[6]:
 # 8. Transactions
 # ----------------------------------------------------------------------
 with onglets[7]:
-    transactions = res["transactions"]
-    with st.container(border=True):
-        html(ui.titre_section(t("Historique des opérations")))
-        gauche, droite = st.columns(2)
-        choix_types = gauche.multiselect(t("Type"), ["ACHAT", "VENTE", "DIVIDENDE"],
-                                         default=["ACHAT", "VENTE", "DIVIDENDE"], format_func=td)
-        choix_titres = droite.multiselect(t("Titres"), sorted(transactions["nom"].unique()),
-                                          placeholder=t("Tous les titres"))
-
-        filtre = transactions["type"].isin(choix_types)
-        if choix_titres:
-            filtre &= transactions["nom"].isin(choix_titres)
-        selection = transactions[filtre].sort_values("date", ascending=False)
-
-        st.caption(t("{n} opération(s) affichée(s) sur {total}", n=len(selection), total=len(transactions)))
-        st.dataframe(
-            selection.assign(type=selection["type"].map(td)), hide_index=True, width="stretch",
-            column_config={
-                "date": st.column_config.DateColumn("Date", format="DD MMM YYYY" if langues.anglais()
-                                                    else "DD/MM/YYYY"),
-                "type": st.column_config.TextColumn(t("Type")),
-                "ticker": st.column_config.TextColumn("Ticker"),
-                "nom": st.column_config.TextColumn(t("Titre")),
-                "quantite": st.column_config.NumberColumn(t("Quantité"), format="%d"),
-                "prix": st.column_config.NumberColumn(t("Prix / montant (€)"), format=langues.eur_colonne("%.2f")),
-                "frais": st.column_config.NumberColumn(t("Frais"), format=langues.eur_colonne("%.2f")),
-                "devise": st.column_config.TextColumn(t("Devise")),
-                "prix_devise": st.column_config.NumberColumn(t("Prix en devise"), format="%.2f",
-                                                             help=t("Prix saisi, avant conversion en euros")),
-            },
-        )
-        # Le fichier téléchargé garde le format d'origine (types ACHAT / VENTE / DIVIDENDE)
-        st.download_button(
-            t("Télécharger la sélection (CSV)"), icon=":material/download:",
-            data=selection.to_csv(index=False).encode("utf-8"),
-            file_name="transactions_selection.csv", mime="text/csv",
-        )
+    vues_transactions.afficher(res, contenu, cible_portefeuille, session_compte)
 
 # ======================================================================
 # PIED DE PAGE

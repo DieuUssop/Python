@@ -2,7 +2,7 @@
 
 ## Ce que ça permet
 
-N'importe qui peut envoyer **son** fichier depuis la barre latérale du tableau de bord (« Ou envoyer un autre fichier »), sans respecter le format du projet :
+N'importe qui peut envoyer **son** fichier depuis la barre latérale du tableau de bord (« Envoyer un fichier (CSV, Excel ou PDF) »), sans respecter le format du projet :
 
 - un **export de banque ou de courtier** (relevé d'opérations en CSV, Excel ou **PDF**) ;
 - un **avis d'opéré en PDF** (la confirmation envoyée par la banque après chaque ordre) ;
@@ -107,6 +107,17 @@ Bouton **« Ajouter des opérations »** (barre latérale, ou « Mon compte » p
 
 1. envoyer seulement les nouveaux mouvements : un ou plusieurs avis d'opéré PDF, un export des dernières opérations (Excel, CSV, PDF), ou **saisir un ordre à la main** (date, type, titre par son ticker, son ISIN, son nom ou son code Bloomberg, quantité, prix, frais) ;
 2. **vérifier** : le tableau est modifiable ; les opérations **déjà présentes** (même date, titre, type, quantité, prix à 0,5 % près — cas d'un relevé qui chevauche l'ancien) sont décochées ; une **vente de titres non détenus** ou une **date future** bloque l'enregistrement ;
-3. **enregistrer** : les opérations sont fusionnées et triées par date. Dans « Mon espace », le portefeuille est rechiffré et le bouton **« Annuler le dernier ajout »** permet de revenir en arrière. Sans compte, le fichier mis à jour est proposé au téléchargement.
+3. **enregistrer** : les opérations sont fusionnées et triées par date. Dans « Mon espace », le portefeuille est rechiffré et le bouton **« Annuler la dernière modification »** permet de revenir en arrière. Sans compte, le fichier mis à jour est proposé au téléchargement.
 
 Ajouter deux fois le même fichier ne change rien. Tests : `tests/test_mouvements.py`.
+
+## Supprimer ou corriger une opération
+
+Onglet **Transactions** → bouton **« Modifier les opérations »** :
+
+1. le tableau devient modifiable : une case **« Supprimer »** par ligne, et la date, la quantité, le prix (dans la devise de cotation du titre) et les frais se corrigent directement ; les filtres Type et Titres aident à retrouver une ligne ;
+2. un **récapitulatif** liste les suppressions et les corrections ;
+3. **contrôles** : supprimer un achat dont dépend une vente ultérieure (vente de titres non détenus), une date future ou une quantité nulle bloquent l'enregistrement ; le logiciel prévient si un titre disparaît du portefeuille ;
+4. cocher **« Je confirme ces modifications »**, puis **« Enregistrer les modifications »**.
+
+Dans « Mon espace », la version précédente est gardée : **« Annuler la dernière modification »** (onglet Transactions ou « Mon compte ») revient en arrière. Pour un fichier envoyé sans compte ou un portefeuille d'exemple, la modification vaut pour la session et le fichier corrigé est proposé au téléchargement. Tests : `tests/test_mouvements.py`.

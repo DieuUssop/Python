@@ -270,31 +270,48 @@ def graphique_frontiere(res, chemin_png):
     plt.close(fig)
 
 
-def graphique_poids(res, chemin_png):
-    """Poids actuels et poids optimaux (Sharpe maximal), titre par titre."""
-    poids = res["poids"]
-    if len(poids) > 25:   # beaucoup de titres : on garde les 25 lignes les plus importantes
-        importance = poids[["actuel", "variance_min", "sharpe_max"]].max(axis=1)
-        poids = poids.loc[importance.sort_values(ascending=False).index[:25]]
-    poids = poids.sort_values("actuel")
-    n = len(poids)
-    fig, ax = plt.subplots(figsize=(10, max(4, 0.45 * n + 1.5)), dpi=120)
-    y = np.arange(n)
-    hauteur = 0.38
-    ax.barh(y + hauteur / 2, poids["actuel"] * 100, height=hauteur, color=ORANGE,
-            label="Mon portefeuille")
-    ax.barh(y - hauteur / 2, poids["sharpe_max"] * 100, height=hauteur, color=VERT,
-            label="Sharpe maximal")
-    ax.set_yticks(y, poids["nom"])
+def graphique_poids(res, chemin_png, cible="sharpe_max", max_lignes=18):
+    """Graphique « de → à » : poids actuel (rond blanc) et poids conseillé (triangle),
+    vert si on renforce, rouge si on allège ; plafond par titre en pointillés."""
+    from .optimisation import comparer_repartitions
+    tableau = comparer_repartitions(res, cible)
+    bouge = tableau[tableau["sens"] != "inchange"].head(max_lignes).iloc[::-1]
+    n = max(len(bouge), 1)
+    fig, ax = plt.subplots(figsize=(10, max(3.2, 0.42 * n + 1.6)), dpi=120)
+    couleurs = {"renforcer": "#0b7a33", "alleger": "#c0392b", "sortir": "#c0392b"}
+    y = np.arange(len(bouge))
+    for i, (_, l) in enumerate(bouge.iterrows()):
+        c = couleurs[l["sens"]]
+        ax.plot([l["actuel"] * 100, l["cible"] * 100], [i, i], color=c, linewidth=2.6, solid_capstyle="round")
+        ax.plot(l["cible"] * 100, i, marker=">" if l["sens"] == "renforcer" else "<", color=c, markersize=10)
+        ax.plot(l["actuel"] * 100, i, "o", markerfacecolor="white", markeredgecolor="#5f5e5a", markersize=8,
+                markeredgewidth=1.6)
+        texte = f"{l['actuel'] * 100:.1f} % → {l['cible'] * 100:.1f} %".replace(".", ",")
+        ax.annotate(texte, (max(l["actuel"], l["cible"]) * 100, i), xytext=(8, 0), textcoords="offset points",
+                    va="center", fontsize=8.5, color="#5f5e5a")
+    if res.get("poids_max", 1) < 1:
+        ax.axvline(res["poids_max"] * 100, color=GRIS, linestyle="--", linewidth=1.2)
+        ax.annotate(f"Plafond {res['poids_max'] * 100:.0f} %", (res["poids_max"] * 100, len(bouge) - 0.4),
+                    xytext=(4, 0), textcoords="offset points", fontsize=8.5, color=GRIS)
+    ax.set_yticks(y, bouge["nom"])
+    xmax = max(bouge[["actuel", "cible"]].max().max() * 100 if len(bouge) else 10, res.get("poids_max", 0) * 100
+               if res.get("poids_max", 1) < 1 else 0)
+    ax.set_xlim(0, xmax * 1.3 + 1)
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v:g} %"))
-    ax.set_title("Poids actuels et poids optimaux", loc="left", fontsize=12,
-                 fontweight="bold", color="#1a1a19")
+    ax.set_title("Du portefeuille actuel au portefeuille de Sharpe maximal" if cible == "sharpe_max"
+                 else "Du portefeuille actuel au portefeuille de variance minimale",
+                 loc="left", fontsize=12, fontweight="bold", color="#1a1a19")
     ax.grid(axis="x", color=GRILLE, linewidth=0.8)
     ax.set_axisbelow(True)
     for cote in ["top", "right", "left"]:
         ax.spines[cote].set_visible(False)
     ax.tick_params(colors="#333333", labelsize=9, length=0)
-    ax.legend(loc="lower right", frameon=False, fontsize=9)
+    from matplotlib.lines import Line2D
+    ax.legend(handles=[Line2D([], [], marker="o", color="none", markerfacecolor="white", markeredgecolor="#5f5e5a",
+                              label="Poids actuel"),
+                       Line2D([], [], marker=">", color="#0b7a33", label="À renforcer"),
+                       Line2D([], [], marker="<", color="#c0392b", label="À alléger ou vendre")],
+              loc="upper center", bbox_to_anchor=(0.5, -0.08), ncol=3, frameon=False, fontsize=8.5)
     fig.tight_layout()
     fig.savefig(chemin_png)
     plt.close(fig)
@@ -357,6 +374,80 @@ def graphique_projection_nuage(sim, chemin_png):
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v:,.0f}".replace(",", " ")))
     ax.set_ylabel("Euros", color=GRIS)
     ax.legend(loc="upper left", frameon=False, fontsize=8, ncol=2, markerscale=2)
+    fig.tight_layout()
+    fig.savefig(chemin_png)
+    plt.close(fig)
+
+
+# ======================================================================
+# Distribution des rendements quotidiens (rapport PDF, onglet Risque)
+# ======================================================================
+def graphique_distribution(ind, av, niveau_var, chemin_png):
+    """Histogramme des rendements quotidiens, loi normale de même moyenne et même
+    écart-type, VaR historique / normale / Cornish-Fisher et CVaR (légende en haut)."""
+    from statistics import NormalDist
+    r = ind["rendements"].dropna() * 100
+    n = len(r)
+    bas, haut = float(r.min()), float(r.max())
+    nb_classes = int(min(80, max(20, np.sqrt(n) * 1.2)))
+    largeur = (haut - bas) / nb_classes if haut > bas else 0.1
+    fig, ax = plt.subplots(figsize=(11, 5), dpi=120)
+    ax.hist(r, bins=np.arange(bas, haut + 2 * largeur, largeur), color=BLEU, alpha=0.7,
+            edgecolor="white", linewidth=0.5, label="Jours observés")
+    if r.std() > 0:
+        loi = NormalDist(float(r.mean()), float(r.std()))
+        xs = np.linspace(bas - largeur, haut + largeur, 300)
+        ax.plot(xs, [loi.pdf(x) * n * largeur for x in xs], color="#1a1a19", linewidth=1.8,
+                label="Loi normale (même moyenne et volatilité)")
+    niveau = f"{niveau_var * 100:.0f} %"
+    for cle, nom, couleur, trait in [("var_historique", f"VaR historique {niveau}", ORANGE, "--"),
+                                     ("var_parametrique", f"VaR loi normale {niveau}", "#5f5e5a", ":"),
+                                     ("var_cornish_fisher", f"VaR Cornish-Fisher {niveau}", "#7a4fb5", "-."),
+                                     ("cvar", "CVaR (Expected Shortfall)", ROUGE, "-")]:
+        v = av.get(cle)
+        if v is not None and v == v:
+            ax.axvline(-v * 100, color=couleur, linestyle=trait, linewidth=1.8, label=nom)
+    ax.set_title("Distribution des rendements quotidiens", loc="left", fontsize=12, fontweight="bold",
+                 color="#1a1a19")
+    ax.grid(axis="y", color=GRILLE, linewidth=0.8)
+    ax.set_axisbelow(True)
+    for cote in ["top", "right", "left"]:
+        ax.spines[cote].set_visible(False)
+    ax.spines["bottom"].set_color(GRIS)
+    ax.tick_params(colors=GRIS, labelsize=9)
+    ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v:.1f} %".replace(".", ",")))
+    ax.set_xlabel("Rendement quotidien", color=GRIS, fontsize=9)
+    ax.set_ylabel("Nombre de jours", color=GRIS, fontsize=9)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=3, fontsize=8, frameon=False)
+    fig.tight_layout()
+    fig.savefig(chemin_png)
+    plt.close(fig)
+
+
+def graphique_distribution_finale(sim, chemin_png):
+    """Distribution de la valeur finale (Monte-Carlo) : zone des 90 % de scénarios,
+    médiane, moyenne et montant investi."""
+    finales = np.asarray(sim["valeurs_finales"], dtype=float)
+    finales = finales[np.isfinite(finales) & (finales > 0)]
+    bas, haut = np.percentile(finales, [0.5, 99.5])
+    bas, haut = min(bas, sim["total_apporte"] * 0.97), max(haut, sim["total_apporte"] * 1.03)
+    x = finales[(finales >= bas) & (finales <= haut)]
+    fig, ax = plt.subplots(figsize=(11, 4.2), dpi=120)
+    ax.axvspan(sim["p5"], sim["p95"], color=BLEU, alpha=0.10, label="90 % des scénarios (P5 à P95)")
+    ax.hist(x, bins=60, color=BLEU, alpha=0.8, edgecolor="white", linewidth=0.5)
+    for cle, nom, couleur, trait in [("total_apporte", "Montant investi", ORANGE, "--"),
+                                     ("mediane", "Médiane", "#1a1a19", "-"), ("moyenne", "Moyenne", "#5f5e5a", ":")]:
+        ax.axvline(sim[cle], color=couleur, linestyle=trait, linewidth=1.8, label=nom)
+    ax.set_xlim(bas, haut)
+    ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v:,.0f} €".replace(",", " ")))
+    ax.set_title("Distribution de la valeur finale", loc="left", fontsize=12, fontweight="bold", color="#1a1a19")
+    ax.grid(axis="y", color=GRILLE, linewidth=0.8)
+    ax.set_axisbelow(True)
+    for cote in ["top", "right", "left"]:
+        ax.spines[cote].set_visible(False)
+    ax.tick_params(colors=GRIS, labelsize=9)
+    ax.set_ylabel("Nombre de scénarios", color=GRIS, fontsize=9)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=4, frameon=False, fontsize=8.5)
     fig.tight_layout()
     fig.savefig(chemin_png)
     plt.close(fig)

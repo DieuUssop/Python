@@ -117,10 +117,31 @@ def note(texte, attention=False):
     return f'<div class="{classe}">{escape(texte)}</div>'
 
 
-def marque(nom, sous_titre):
-    """Nom de l'application en haut de la barre latérale."""
-    return (f'<div class="marque"><div class="marque-nom">{escape(nom)}</div>'
-            f'<div class="marque-sous-titre">{escape(sous_titre)}</div></div>')
+def marque(nom, sous_titre, monogramme="PT"):
+    """En-tête de la barre latérale : monogramme dans un carré arrondi, nom et sous-titre."""
+    return (f'<div class="marque"><div class="marque-mono">{escape(monogramme)}</div>'
+            f'<div><div class="marque-nom">{escape(nom)}</div>'
+            f'<div class="marque-sous-titre">{escape(sous_titre)}</div></div></div>')
+
+
+def initiales(identifiant):
+    """'kevin.brule' -> 'KB' ; 'kevin' -> 'KE'."""
+    import re
+    morceaux = [m for m in re.split(r"[._\-\s]+", str(identifiant)) if m]
+    if len(morceaux) >= 2:
+        return (morceaux[0][0] + morceaux[1][0]).upper()
+    return str(identifiant)[:2].upper() or "?"
+
+
+def compte_connecte(identifiant):
+    """Pastille aux initiales et identifiant de l'utilisateur connecté."""
+    return (f'<div class="compte"><div class="compte-avatar">{escape(initiales(identifiant))}</div>'
+            f'<div class="compte-ident">{escape(identifiant)}</div></div>')
+
+
+def separateur():
+    """Fine ligne de séparation (barre latérale)."""
+    return '<div class="separateur"></div>'
 
 
 def bloc_titre(texte):
@@ -136,34 +157,6 @@ def infos(lignes):
 
 def pied_de_page(texte):
     return f'<div class="pied">{escape(texte)}</div>'
-
-
-def echelle_sri(classe):
-    """Échelle de risque 1 à 7, la classe du portefeuille mise en évidence
-    (comme sur les documents d'information des produits financiers)."""
-    cases = "".join(
-        f'<div class="sri-case{" sri-active" if i == classe else ""}">{i}</div>' for i in range(1, 8)
-    )
-    return (f'<div class="sri"><div class="sri-legende"><span>{t("Risque plus faible")}</span>'
-            f'<span>{t("Risque plus élevé")}</span></div><div class="sri-cases">{cases}</div></div>')
-
-
-def tableau_criteres(criteres, formats):
-    """Tableau HTML des critères d'adéquation : critère, portefeuille, limite, statut."""
-    lignes = ""
-    for (nom, valeur, limite, ok), fmt in zip(criteres, formats):
-        statut = pastille(t("Conforme"), "positive") if ok else pastille(t("Dépassé"), "negative")
-        lignes += (f"<tr><td>{escape(td(nom))}</td><td class='num'>{escape(fmt(valeur))}</td>"
-                   f"<td class='num'>{escape(fmt(limite))}</td><td>{statut}</td></tr>")
-    return (f'<table class="criteres"><thead><tr><th>{t("Critère")}</th><th class="num">{t("Portefeuille")}</th>'
-            f'<th class="num">{t("Limite du profil")}</th><th>{t("Statut")}</th></tr></thead>'
-            f'<tbody>{lignes}</tbody></table>')
-
-
-def verdict(ok, titre, texte):
-    """Encadré vert (adapté) ou rouge (non adapté)."""
-    return (f'<div class="verdict {"ok" if ok else "ko"}"><div class="verdict-titre">{escape(titre)}</div>'
-            f'<div class="verdict-texte">{escape(texte)}</div></div>')
 
 
 NIVEAUX = {"ok": ("Bon", "positive"), "attention": ("À surveiller", "attention"), "alerte": ("À corriger", "negative")}

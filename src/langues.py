@@ -43,6 +43,17 @@ def anglais():
     return langue() == "en"
 
 
+class en_francais:
+    """Bloc « with » qui force le français le temps d'un calcul (le rapport PDF reste en
+    français, quelle que soit la langue choisie dans le tableau de bord)."""
+    def __enter__(self):
+        self.avant = langue()
+        definir("fr")
+
+    def __exit__(self, *erreur):
+        definir(self.avant)
+
+
 def t(texte, **valeurs):
     """Traduit un texte écrit en français ; les {noms} sont remplacés par les valeurs."""
     if anglais():

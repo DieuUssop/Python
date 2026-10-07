@@ -22,7 +22,7 @@ def html(morceau):
 
 
 def graphique(figure):
-    st.plotly_chart(figure, width="stretch", config=gi.CONFIG_PLOTLY)
+    st.plotly_chart(gi.theme_figure(figure), width="stretch", config=gi.CONFIG_PLOTLY)
 
 
 # ----------------------------------------------------------------------

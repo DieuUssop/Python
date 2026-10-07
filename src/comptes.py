@@ -166,6 +166,26 @@ class Session:
     def _sauver_index(self, index):
         _ecrire(self.dossier / "index.enc", coffre.chiffrer(self._cle, json.dumps(index, ensure_ascii=False)))
 
+    # -- préférences d'affichage (mode nuit...) : chiffrées comme le reste --
+    def preferences(self):
+        chemin = self.dossier / "preferences.enc"
+        if not chemin.exists():
+            return {}
+        try:
+            return json.loads(coffre.dechiffrer(self._cle, chemin.read_bytes()).decode("utf-8"))
+        except Exception:
+            return {}
+
+    def preference(self, cle, defaut=None):
+        return self.preferences().get(cle, defaut)
+
+    def definir_preference(self, cle, valeur):
+        prefs = self.preferences()
+        if prefs.get(cle) == valeur:
+            return
+        prefs[cle] = valeur
+        _ecrire(self.dossier / "preferences.enc", coffre.chiffrer(self._cle, json.dumps(prefs, ensure_ascii=False)))
+
     # -- portefeuilles --
     def lister(self):
         """Portefeuilles de l'utilisateur : liste de dictionnaires (id, nom, cree, maj, operations)."""
@@ -175,12 +195,14 @@ class Session:
         """Enregistre (ou remplace) un portefeuille ; contenu = fichier CSV au format du projet (octets).
 
         garder_precedente : conserver la version remplacée (chiffrée) pour pouvoir
-        « Annuler le dernier ajout »."""
+        « Annuler la dernière modification »."""
         nom = str(nom).strip() or "Portefeuille"
         index = self._index()
         if identifiant is None:
             existant = next((p for p in index if p["nom"].lower() == nom.lower()), None)
             identifiant = existant["id"] if existant else uuid.uuid4().hex
+            if existant:                     # même nom : on remplace, mais l'ancienne version reste récupérable
+                garder_precedente = True
         maintenant = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M")
         operations = max(0, contenu.count(b"\n") - 1) if isinstance(contenu, bytes) else 0
         fichier = self.dossier / f"{identifiant}.enc"
@@ -218,6 +240,8 @@ class Session:
         fiche.pop("precedente")
         self._sauver_index(index)
 
+    annuler_derniere_modification = annuler_dernier_ajout      # ajout, suppression ou correction d'opérations
+
     def renommer(self, identifiant, nom):
         index = self._index()
         for p in index:
@@ -250,12 +274,15 @@ class Session:
         nouvelle_cle = coffre.cle_de_chiffrement(nouveau, fiche["sel_cle"], fiche["iterations"])
         precedentes = {p["id"]: coffre.dechiffrer(self._cle, (self.dossier / f"{p['id']}.prec.enc").read_bytes())
                        for p in index if (self.dossier / f"{p['id']}.prec.enc").exists()}
+        prefs = self.preferences()
         for identifiant, contenu in contenus.items():                  # ... puis rechiffré
             _ecrire(self.dossier / f"{identifiant}.enc", coffre.chiffrer(nouvelle_cle, contenu))
         for identifiant, contenu in precedentes.items():
             _ecrire(self.dossier / f"{identifiant}.prec.enc", coffre.chiffrer(nouvelle_cle, contenu))
         self._cle = nouvelle_cle
         self._sauver_index(index)
+        if prefs:
+            _ecrire(self.dossier / "preferences.enc", coffre.chiffrer(self._cle, json.dumps(prefs, ensure_ascii=False)))
         _ecrire_registre(registre)
 
     def supprimer_compte(self, mot_de_passe):

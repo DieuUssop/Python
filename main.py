@@ -150,8 +150,12 @@ print(f"  Ratio d'information     : {av['ratio_information']:.2f}")
 print()
 print(f"Risque de perte sur 1 jour (niveau de confiance {niveau})")
 print(f"  VaR historique          : {av['var_historique']:.2%}  soit {av['var_euros']:,.0f} €")
-print(f"  VaR paramétrique        : {av['var_parametrique']:.2%}")
+print(f"  VaR loi normale         : {av['var_parametrique']:.2%}")
+print("  VaR Cornish-Fisher      : " + (f"{av['var_cornish_fisher']:.2%}" if av['var_cornish_fisher'] == av['var_cornish_fisher']
+                                        else "n.d. (asymétrie ou kurtosis trop fortes)"))
 print(f"  CVaR (Expected Shortfall): {av['cvar']:.2%}  soit {av['cvar_euros']:,.0f} €")
+print(f"  Asymétrie {av['asymetrie']:+.2f} · kurtosis en excès {av['kurtosis']:+.2f} · "
+      f"Jarque-Bera p = {av['p_jarque_bera']:.3f}")
 print()
 correlations = res["correlations"]
 if len(correlations) <= 15:
@@ -219,19 +223,7 @@ print()
 print("Calcul des analyses complémentaires (stress tests, attribution...)")
 ext = calculer_extensions(res)
 
-titre(f"CONSEIL PATRIMONIAL — profil {ext['profil'].nom} (réglable dans src/config.py)")
-adeq = ext["adequation"]
-print(f"Indicateur de risque SRI : {adeq['sri']} / 7")
-for nom, valeur, limite, ok in adeq["criteres"]:
-    format_valeur = (lambda v: f"{v:.0f}") if "SRI" in nom else (lambda v: f"{v:.1%}")
-    print(f"  {nom:<28} {format_valeur(valeur):>8}   limite {format_valeur(limite):>6}   "
-          f"{'conforme' if ok else 'DÉPASSÉ'}")
-if adeq["adapte"]:
-    print("-> Portefeuille adapté au profil.")
-else:
-    print(f"-> Trop risqué : garder {adeq['part_risquee_conseillee']:.0%} sur ce portefeuille et placer "
-          f"{adeq['part_sans_risque_conseillee']:.0%} sans risque.")
-
+titre("CONSEIL PATRIMONIAL")
 print()
 print(f"Fiscalité d'une vente totale aujourd'hui (ancienneté {ext['anciennete']:.1f} ans, taux 2026) :")
 for l in ext["fiscalite"]:

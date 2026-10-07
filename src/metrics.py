@@ -385,7 +385,70 @@ def var_cvar(rendements, niveau=0.95):
     z = NormalDist().inv_cdf(seuil)                     # −1,645 à 95 %
     var_param = -(rendements.mean() + z * rendements.std())
     cvar = -rendements[rendements <= -var_hist].mean()
-    return {"var_historique": var_hist, "var_parametrique": var_param, "cvar": cvar}
+    return {"var_historique": var_hist, "var_parametrique": var_param, "cvar": cvar,
+            "var_cornish_fisher": var_cornish_fisher(rendements, niveau)}
+
+
+def moments(rendements):
+    """Forme de la distribution des rendements quotidiens, comparée à la loi normale.
+
+    - ASYMÉTRIE (skewness) : 0 pour une loi normale. Négative : les grosses
+      baisses sont plus fréquentes (ou plus fortes) que les grosses hausses.
+    - KURTOSIS EN EXCÈS : 0 pour une loi normale. Positive : « queues épaisses »,
+      les journées extrêmes (dans les deux sens) sont plus fréquentes que prévu.
+      (pandas calcule directement l'excès, corrigé du biais d'échantillon.)
+    - TEST DE JARQUE-BERA : JB = n/6 × (S² + K²/4). Sous l'hypothèse de
+      normalité, JB suit une loi du khi-deux à 2 degrés de liberté, dont la
+      probabilité de dépassement vaut exactement exp(−JB/2) : c'est la p-value.
+      Une p-value < 5 % fait rejeter la normalité.
+    - JOURS EXTRÊMES : part des jours à plus de 3 écarts-types de la moyenne,
+      contre 0,27 % selon la loi normale.
+    """
+    r = pd.Series(rendements).dropna()
+    n = len(r)
+    if n < 4 or r.std() == 0:
+        return {"asymetrie": 0.0, "kurtosis": 0.0, "jarque_bera": 0.0, "p_jarque_bera": 1.0,
+                "jours_extremes": 0.0, "jours_extremes_normale": 0.0027, "nb_jours": n}
+    asym, kurt = float(r.skew()), float(r.kurt())
+    jb = n / 6 * (asym ** 2 + kurt ** 2 / 4)
+    extremes = float(((r - r.mean()).abs() > 3 * r.std()).mean())
+    return {"asymetrie": asym, "kurtosis": kurt, "jarque_bera": jb, "p_jarque_bera": float(np.exp(-jb / 2)),
+            "jours_extremes": extremes, "jours_extremes_normale": 2 * (1 - NormalDist().cdf(3)), "nb_jours": n}
+
+
+def var_cornish_fisher(rendements, niveau=0.95):
+    """VaR « corrigée » : on garde la formule paramétrique, mais le quantile z de
+    la loi normale est ajusté avec l'asymétrie S et la kurtosis en excès K
+    (développement de Cornish-Fisher) :
+        z_cf = z + (z² − 1)·S/6 + (z³ − 3z)·K/24 − (2z³ − 5z)·S²/36
+        VaR = −(moyenne + z_cf × écart-type)
+    Une asymétrie négative (S < 0) rend toujours la VaR plus prudente. L'effet des
+    queues épaisses (K > 0) dépend du niveau : à 99 %, la VaR augmente ; à 95 %,
+    elle peut au contraire baisser un peu, car une distribution à queues épaisses
+    a aussi un centre plus « pointu » (plus de jours calmes).
+    C'est la méthode retenue pour l'indicateur de risque réglementaire (PRIIPs)."""
+    r = pd.Series(rendements).dropna()
+    if len(r) < 4 or r.std() == 0:
+        return float("nan")
+    z = NormalDist().inv_cdf(1 - niveau)
+    s, k = float(r.skew()), float(r.kurt())
+    if not cornish_fisher_valide(s, k):
+        return float("nan")
+    z_cf = z + (z ** 2 - 1) * s / 6 + (z ** 3 - 3 * z) * k / 24 - (2 * z ** 3 - 5 * z) * s ** 2 / 36
+    return -(r.mean() + z_cf * r.std())
+
+
+def cornish_fisher_valide(s, k):
+    """La correction n'a de sens que si elle conserve l'ordre des quantiles (plus z est
+    petit, plus z_cf est petit). Avec une asymétrie ou une kurtosis très fortes, ce
+    n'est plus le cas : la VaR corrigée n'est alors pas calculée (affichée « n.d. »).
+    On vérifie que la dérivée de z_cf reste positive entre −4 et +4."""
+    for i in range(-40, 41):
+        z = i / 10
+        derivee = 1 + z * s / 3 + (3 * z ** 2 - 3) * k / 24 - (6 * z ** 2 - 5) * s ** 2 / 36
+        if derivee <= 0:
+            return False
+    return True
 
 
 # ======================================================================
@@ -434,6 +497,7 @@ def calculer_indicateurs_avances(histo, rendements, prix_indice, taux_sans_risqu
         "sharpe_indice": ratio_sharpe(rb, taux_sans_risque),
         "volatilite_indice": volatilite_annualisee(rb),
         **risques,
+        **moments(rendements),
         # Conversion de la VaR en euros, sur la valeur actuelle du portefeuille
         "var_euros": risques["var_historique"] * valeur_actuelle,
         "cvar_euros": risques["cvar"] * valeur_actuelle,

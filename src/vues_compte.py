@@ -61,21 +61,29 @@ def barre_laterale():
     if s is not None:
         s.derniere_activite = time.time()
 
-    html(ui.bloc_titre(t("Mon espace")))
     if st.session_state.get("message_compte"):
         st.info(st.session_state.pop("message_compte"))
     if s is not None:
-        st.caption(t("Connecté : {identifiant}", identifiant=s.identifiant))
-        a, b = st.columns(2)
-        if a.button(t("Mon compte"), icon=":material/person:", width="stretch", key="bouton_compte"):
+        html(ui.compte_connecte(s.identifiant))
+        a, b, _ = st.columns([4, 4, 1])
+        if a.button(t("Mon compte"), type="tertiary", key="bouton_compte"):
             st.session_state["page_compte"] = not st.session_state.get("page_compte", False)
+            st.session_state.pop("ajout_operations", None)
             st.rerun()
-        if b.button(t("Déconnexion"), icon=":material/logout:", width="stretch", key="bouton_deconnexion"):
+        if b.button(t("Déconnexion"), type="tertiary", key="bouton_deconnexion"):
             deconnecter()
             st.rerun()
         return s
 
-    with st.expander(t("Se connecter ou créer un compte")):
+    gauche, droite = st.columns([3, 2], vertical_alignment="center")
+    gauche.markdown(f'<div class="compte-invite">{t("Espace personnel chiffré")}</div>', unsafe_allow_html=True)
+    ouvert = st.session_state.get("formulaire_connexion", False)
+    if droite.button(t("Fermer") if ouvert else t("Se connecter"), type="tertiary", key="lien_connexion"):
+        st.session_state["formulaire_connexion"] = not ouvert
+        st.rerun()
+    if not ouvert:
+        return None
+    with st.container(border=True, key="formulaire_connexion_bloc"):
         if en_ligne():
             html(ui.note(t("Version en ligne de démonstration : les comptes et portefeuilles enregistrés ici "
                            "peuvent être effacés au redémarrage du site. Pour les conserver, utilisez "
@@ -101,6 +109,13 @@ def barre_laterale():
                     else:
                         st.session_state["session_compte"] = comptes.creer_compte(identifiant, mot_de_passe,
                                                                                   confirmation)
+                st.session_state.pop("formulaire_connexion", None)
+                try:                                     # mode clair / nuit choisi lors d'une visite précédente
+                    preference = st.session_state["session_compte"].preference("theme")
+                    if preference:
+                        st.session_state["theme_a_appliquer"] = preference
+                except Exception:
+                    pass
                 st.rerun()
             except comptes.ErreurCompte as erreur:
                 st.error(message(erreur))
@@ -116,13 +131,11 @@ def bouton_enregistrer(s, contenu, nom_propose):
     deja = st.session_state.setdefault("deja_enregistres", {})
     with st.container(border=True):
         if empreinte in deja:
-            st.success(t("« {nom} » est enregistré dans votre espace (chiffré).", nom=deja[empreinte]),
-                       icon=":material/lock:")
+            st.success(t("« {nom} » est enregistré dans votre espace (chiffré).", nom=deja[empreinte]))
             return
         st.markdown(f"**{t('Enregistrer dans mon espace')}**")
         nom = st.text_input(t("Nom du portefeuille"), value=nom_propose, key="nom_a_enregistrer")
-        if st.button(t("Enregistrer"), type="primary", icon=":material/lock:", width="stretch",
-                     key="bouton_enregistrer"):
+        if st.button(t("Enregistrer"), type="primary", width="stretch", key="bouton_enregistrer"):
             s.enregistrer(nom, contenu)
             deja[empreinte] = nom.strip() or nom_propose
             st.rerun()
@@ -160,7 +173,7 @@ def page_compte(s, importer=None):
                         st.rerun()
                 else:
                     st.warning(t("Ce fichier n'a pas pu être lu automatiquement. Envoyez-le depuis la barre "
-                                 "latérale (« Ou envoyer un autre fichier ») : l'assistant d'import vous guidera, "
+                                 "latérale (« Envoyer un fichier (CSV, Excel ou PDF) ») : l'assistant d'import vous guidera, "
                                  "puis le bouton « Enregistrer dans mon espace » apparaîtra sous l'envoi."))
 
     # 1. Mes portefeuilles
@@ -189,7 +202,7 @@ def page_compte(s, importer=None):
                 from . import vues_mouvements
                 vues_mouvements.ouvrir({"type": "perso", "id": p["id"], "nom": p["nom"], "contenu": s.lire(p["id"])})
                 st.rerun()
-            if p.get("precedente") and f.button(t("Annuler le dernier ajout"), icon=":material/undo:",
+            if p.get("precedente") and f.button(t("Annuler la dernière modification"), icon=":material/undo:",
                                                 key=f"annuler_{p['id']}", width="stretch",
                                                 help=t("Revenir à la version du {date}",
                                                        date=p["precedente"].get("maj", ""))):

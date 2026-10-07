@@ -1,6 +1,6 @@
 """
 vues_conseil.py — Espace "Conseil patrimonial" du tableau de bord :
-profil de risque du client, fiscalité des enveloppes, stress tests.
+fiscalité des enveloppes et stress tests.
 
 Appelé par app.py : vues_conseil.afficher(res, cle).
 Les textes affichés passent par t() (traduction) ; les données issues des
@@ -13,7 +13,6 @@ import streamlit as st
 from . import fiscalite, langues, stress
 from . import graphiques_interactifs as gi
 from . import interface as ui
-from . import profil as pf
 from .interface import euros, nombre, pct
 from .langues import t, td
 
@@ -23,7 +22,7 @@ def html(morceau):
 
 
 def graphique(figure):
-    st.plotly_chart(figure, width="stretch", config=gi.CONFIG_PLOTLY)
+    st.plotly_chart(gi.theme_figure(figure), width="stretch", config=gi.CONFIG_PLOTLY)
 
 
 # ----------------------------------------------------------------------
@@ -44,73 +43,15 @@ def _calcul_stress(cle, _res):
 # Point d'entrée
 # ----------------------------------------------------------------------
 def afficher(res, cle):
-    onglets = st.tabs([t("Profil client"), t("Fiscalité"), t("Stress tests")])
+    onglets = st.tabs([t("Fiscalité"), t("Stress tests")])
     with onglets[0]:
-        _profil(res)
-    with onglets[1]:
         _fiscalite(res)
-    with onglets[2]:
+    with onglets[1]:
         _stress(res, cle)
 
 
 # ----------------------------------------------------------------------
-# 1. Profil de risque et adéquation
-# ----------------------------------------------------------------------
-def _profil(res):
-    ind = res["indicateurs"]
-    gauche, droite = st.columns([3, 2], gap="medium")
-
-    with gauche, st.container(border=True):
-        html(ui.titre_section(t("Questionnaire client"), t("Inspiré du test d'adéquation MiFID II · 7 questions")))
-        reponses = []
-        for i, (question, options) in enumerate(pf.QUESTIONNAIRE):
-            choix = st.radio(f"{i + 1}. {td(question)}", range(len(options)), index=len(options) // 2,
-                             format_func=lambda k, o=options: td(o[k][0]), key=f"question_{i}")
-            reponses.append(choix)
-
-    resultat = pf.profil_depuis_reponses(reponses)
-    profil = resultat["profil"]
-    st.session_state["profil_client"] = profil.nom          # repris par l'onglet « Expositions »
-    part_actions = pf.part_actions(res["positions"])
-    test = pf.adequation(profil, ind["volatilite"], ind["max_drawdown"], part_actions=part_actions)
-
-    with droite:
-        html(ui.grille([
-            ui.carte(t("Profil du client"), td(profil.nom),
-                     detail=f"Score {resultat['score']} / {resultat['score_max']}"),
-            ui.carte(t("Risque du portefeuille"), f"SRI {test['sri']} / 7",
-                     detail=t("Volatilité {valeur}", valeur=pct(ind["volatilite"], signe=False))),
-        ]))
-        if resultat["plafonne_par_tolerance"]:
-            html(ui.note(t("Le score correspond au profil « {profil} », mais la perte maximale acceptée "
-                           "plafonne le profil : le critère le plus prudent l'emporte.",
-                           profil=td(resultat["profil_selon_score"].nom)), attention=True))
-        html(ui.verdict(
-            test["adapte"],
-            t("Portefeuille adapté au profil") if test["adapte"] else t("Portefeuille trop risqué pour ce profil"),
-            td(profil.description) if test["adapte"] else
-            t("Pour respecter le profil, conserver environ {part} du capital sur ce portefeuille et placer "
-              "{reste} sur un support sans risque (fonds en euros, monétaire).",
-              part=pct(test["part_risquee_conseillee"], signe=False, decimales=0),
-              reste=pct(test["part_sans_risque_conseillee"], signe=False, decimales=0)),
-        ))
-        with st.container(border=True):
-            html(ui.titre_section(t("Indicateur de risque (SRI)"),
-                                  t("Échelle PRIIPs de 1 à 7, estimée à partir de la volatilité")))
-            html(ui.echelle_sri(test["sri"]))
-            html(ui.titre_section(t("Test d'adéquation")))
-            html(ui.tableau_criteres(test["criteres"], [
-                lambda v: pct(v, signe=False, decimales=1), lambda v: pct(v, signe=False, decimales=1),
-                lambda v: pct(v, signe=False, decimales=0), lambda v: f"{v:.0f}",
-            ]))
-            reste = t(" (le reste : obligations, or)") if part_actions < 0.995 else ""
-            html(ui.note(t("Part investie en actions (ETF actions compris) : {part}{reste}. Le SRI réglementaire "
-                           "se calcule à partir de la VaR (Cornish-Fisher) : la volatilité en donne ici une "
-                           "approximation.", part=pct(part_actions, signe=False, decimales=0), reste=reste)))
-
-
-# ----------------------------------------------------------------------
-# 2. Fiscalité des enveloppes
+# 1. Fiscalité des enveloppes
 # ----------------------------------------------------------------------
 def _fiscalite(res):
     resume = res["resume"]
@@ -190,7 +131,7 @@ def _fiscalite(res):
 
 
 # ----------------------------------------------------------------------
-# 3. Stress tests
+# 2. Stress tests
 # ----------------------------------------------------------------------
 def _stress(res, cle):
     try:

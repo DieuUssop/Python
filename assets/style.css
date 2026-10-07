@@ -21,6 +21,12 @@
     --negatif-fond: #fdecec;
     --neutre-fond: #eef1f5;
     --attention: #b86e00;
+    --fond-barre: #f6f7f9;
+    --fond-actif: #e9f0f9;
+    --fond-survol: rgba(28, 92, 171, 0.05);
+    --mono-fond: #0f2a4a;
+    --entete-debut: #0f2a4a;
+    --entete-fin: #1c5cab;
 }
 
 /* ---- Police et largeur de page ---- */
@@ -42,7 +48,7 @@ header[data-testid="stHeader"] { background: transparent; }
 .entete {
     display: flex; justify-content: space-between; align-items: flex-end;
     flex-wrap: wrap; gap: 1rem;
-    background: linear-gradient(120deg, var(--primaire-fonce) 0%, var(--primaire) 100%);
+    background: linear-gradient(120deg, var(--entete-debut) 0%, var(--entete-fin) 100%);
     color: #ffffff; border-radius: 14px; padding: 1.4rem 1.75rem; margin-bottom: 1.25rem;
 }
 .entete-surtitre {
@@ -126,46 +132,107 @@ header[data-testid="stHeader"] { background: transparent; }
 }
 .note.attention { border-left-color: var(--attention); }
 
-/* ---- Barre latérale ---- */
-.marque { padding: 0.25rem 0 0.9rem; border-bottom: 1px solid var(--bordure); margin-bottom: 0.9rem; }
-.marque-nom { font-size: 1.1rem; font-weight: 700; color: var(--primaire-fonce); }
-.marque-sous-titre { font-size: 0.78rem; color: var(--texte-3); }
-.bloc-titre {
-    font-size: 0.7rem; font-weight: 700; color: var(--texte-3);
-    text-transform: uppercase; letter-spacing: 0.1em; margin: 0.9rem 0 0.35rem;
+/* ---- Barre latérale (épurée : aucun pictogramme, une seule couleur d'accent) ---- */
+section[data-testid="stSidebar"] { background: var(--fond-barre); border-right: 1px solid var(--bordure); }
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] { padding-top: 1.1rem; }
+section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 0.55rem; }
+
+/* En-tête : monogramme, nom, sous-titre */
+.marque { display: flex; align-items: center; gap: 0.65rem; }
+.marque-mono {
+    width: 34px; height: 34px; flex: none; border-radius: 9px; background: var(--mono-fond);
+    color: #ffffff; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.03em;
+    display: flex; align-items: center; justify-content: center;
 }
-.infos { font-size: 0.78rem; color: var(--texte-2); line-height: 1.7; }
-.infos b { color: var(--texte); font-weight: 600; }
+.marque-nom { font-size: 0.98rem; font-weight: 700; color: var(--primaire-fonce); line-height: 1.15; }
+.marque-sous-titre { font-size: 0.72rem; color: var(--texte-3); }
+
+/* Sélecteurs FR | EN et Clair | Nuit : simple texte, l'option active en gras */
+section[data-testid="stSidebar"] .st-key-langue [data-testid="stButtonGroup"],
+section[data-testid="stSidebar"] .st-key-theme [data-testid="stButtonGroup"] { justify-content: flex-end; }
+section[data-testid="stSidebar"] .st-key-langue button,
+section[data-testid="stSidebar"] .st-key-theme button {
+    background: transparent !important; border: none !important; box-shadow: none !important;
+    min-height: 1.5rem; padding: 0 0.3rem; color: var(--texte-3);
+}
+section[data-testid="stSidebar"] .st-key-langue button p,
+section[data-testid="stSidebar"] .st-key-theme button p { font-size: 0.72rem; font-weight: 500; }
+section[data-testid="stSidebar"] .st-key-langue button[data-testid="stBaseButton-segmented_controlActive"] p,
+section[data-testid="stSidebar"] .st-key-theme button[data-testid="stBaseButton-segmented_controlActive"] p {
+    color: var(--texte); font-weight: 700;
+}
+
+/* Séparateurs et titres de section */
+.separateur { height: 1px; background: var(--bordure); margin: 0.35rem 0; }
+.bloc-titre {
+    font-size: 0.66rem; font-weight: 600; color: var(--texte-3);
+    text-transform: uppercase; letter-spacing: 0.11em; margin: 0.2rem 0 0;
+}
+
+/* Compte : ligne d'invitation, pastille aux initiales */
+.compte-invite { font-size: 0.82rem; color: var(--texte-2); }
+.compte { display: flex; align-items: center; gap: 0.6rem; }
+.compte-avatar {
+    width: 30px; height: 30px; border-radius: 50%; background: var(--fond-actif); color: var(--primaire);
+    font-weight: 600; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; flex: none;
+}
+.compte-ident { font-size: 0.86rem; font-weight: 600; color: var(--texte); }
+
+/* Boutons « lien » (tertiaires) : petits, bleus, alignés à gauche */
+section[data-testid="stSidebar"] button[data-testid="stBaseButton-tertiary"] {
+    padding: 0.05rem 0; min-height: 0; justify-content: flex-start; color: var(--primaire);
+}
+section[data-testid="stSidebar"] button[data-testid="stBaseButton-tertiary"] p { font-size: 0.78rem; font-weight: 500; }
+section[data-testid="stSidebar"] button[data-testid="stBaseButton-tertiary"]:hover p { text-decoration: underline; }
+
+/* Navigation : les espaces de travail comme un menu (pas de cercles de bouton radio) */
+section[data-testid="stSidebar"] .st-key-espace_menu div[role="radiogroup"] { gap: 2px; width: 100%; }
+section[data-testid="stSidebar"] .st-key-espace_menu label[data-baseweb="radio"] {
+    width: 100%; margin: 0; padding: 0.5rem 0.7rem; border-radius: 8px; border-left: 3px solid transparent;
+    cursor: pointer; transition: background 0.15s;
+}
+/* Le cercle du bouton radio : le seul enfant qui ne contient aucun texte (double garde-fou :
+   ni bloc Markdown, ni paragraphe), pour ne jamais masquer l'intitulé. */
+section[data-testid="stSidebar"] .st-key-espace_menu label[data-baseweb="radio"] > div:not(:has([data-testid="stMarkdownContainer"])):not(:has(p)) {
+    display: none;
+}
+section[data-testid="stSidebar"] .st-key-espace_menu label[data-baseweb="radio"]:hover { background: var(--fond-survol); }
+section[data-testid="stSidebar"] .st-key-espace_menu label[data-baseweb="radio"]:has(input:checked) {
+    background: var(--fond-actif); border-left-color: var(--primaire);
+}
+section[data-testid="stSidebar"] .st-key-espace_menu label[data-baseweb="radio"] p { font-size: 0.86rem; font-weight: 500; }
+section[data-testid="stSidebar"] .st-key-espace_menu label[data-baseweb="radio"]:has(input:checked) p {
+    font-weight: 600; color: var(--primaire-fonce);
+}
+section[data-testid="stSidebar"] .st-key-espace_menu [data-testid="stCaptionContainer"] p,
+section[data-testid="stSidebar"] .st-key-espace_menu label small {
+    font-size: 0.72rem !important; font-weight: 400 !important; color: var(--texte-3) !important;
+}
+
+/* Données : champs et zone de dépôt compacts */
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
+    padding: 0.55rem 0.7rem; border: 1px dashed #c9d0da; background: var(--fond-carte); border-radius: 8px;
+}
+section[data-testid="stSidebar"] [data-testid="stFileUploader"] label p { font-size: 0.78rem; color: var(--texte-2); }
+
+/* Paramètres repliés */
+section[data-testid="stSidebar"] [data-testid="stExpander"] details {
+    border: none; background: transparent; box-shadow: none;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary { padding: 0.3rem 0; }
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary p {
+    font-size: 0.78rem; color: var(--texte-2); font-weight: 500;
+}
+
+/* Informations en bas de la barre */
+.infos { font-size: 0.72rem; color: var(--texte-3); line-height: 1.75; }
+.infos b { color: var(--texte-2); font-weight: 500; }
 
 /* ---- Pied de page ---- */
 .pied {
     margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--bordure);
     font-size: 0.76rem; color: var(--texte-3); text-align: center;
 }
-
-/* ---- Échelle de risque SRI (1 à 7) ---- */
-.sri { margin: 0.4rem 0 0.8rem; }
-.sri-legende { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--texte-3); margin-bottom: 0.3rem; }
-.sri-cases { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.sri-case {
-    text-align: center; padding: 0.45rem 0; border-radius: 6px; font-weight: 700;
-    background: var(--neutre-fond); color: var(--texte-3);
-}
-.sri-case.sri-active { background: var(--primaire); color: #ffffff; }
-
-/* ---- Tableau des critères d'adéquation ---- */
-table.criteres { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin-top: 0.3rem; }
-table.criteres th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
-                    color: var(--texte-3); border-bottom: 1px solid var(--bordure); padding: 0.4rem 0.3rem; }
-table.criteres td { border-bottom: 1px solid var(--bordure); padding: 0.45rem 0.3rem; }
-table.criteres .num { text-align: right; font-variant-numeric: tabular-nums; }
-
-/* ---- Verdict du profil ---- */
-.verdict { border-radius: 12px; padding: 1rem 1.1rem; margin: 0.3rem 0 0.8rem; }
-.verdict.ok { background: var(--positif-fond); color: var(--positif); }
-.verdict.ko { background: var(--negatif-fond); color: var(--negatif); }
-.verdict-titre { font-weight: 700; font-size: 1.05rem; }
-.verdict-texte { font-size: 0.86rem; margin-top: 0.25rem; color: var(--texte); }
 
 /* ---------- Onglet « Expositions » : pastilles orange et constats ---------- */
 .pastille.attention { color: #9a5b00; background: #fff3dd; }
@@ -184,3 +251,12 @@ table.criteres .num { text-align: right; font-variant-numeric: tabular-nums; }
 .synthese-case { border: 1px solid var(--bordure); border-radius: 12px; padding: 0.65rem 0.8rem; background: var(--fond-carte); }
 .synthese-nom { font-size: 0.78rem; color: var(--texte-2); margin-bottom: 0.3rem; }
 .synthese-chiffre { font-size: 0.8rem; color: var(--texte-3); margin-top: 0.3rem; }
+
+/* ---------- Petits tableaux de synthèse (VaR comparées, etc.) ---------- */
+table.tableau-simple { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin: 0.4rem 0 0.2rem; }
+table.tableau-simple th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+                          color: var(--texte-3); font-weight: 600; border-bottom: 1px solid var(--bordure);
+                          padding: 0.35rem 0.3rem; }
+table.tableau-simple td { border-bottom: 1px solid var(--bordure); padding: 0.42rem 0.3rem; color: var(--texte); }
+table.tableau-simple .num { text-align: right; font-variant-numeric: tabular-nums; }
+table.tableau-simple tr:last-child td { border-bottom: none; }

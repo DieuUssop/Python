@@ -88,3 +88,15 @@ def test_points_nuage():
     assert len(points) == 20 * simulation.TAILLE_ECHANTILLON
     assert set(points["tranche"].unique()) <= {0, 1, 2, 3, 4}
     assert sim["echantillon"].shape == (121, simulation.TAILLE_ECHANTILLON)
+
+
+def test_probabilite_de_doubler_et_lecture():
+    """proba_doubler = part des scénarios qui finissent à au moins 2 × le montant investi ;
+    la lecture signale l'écart moyenne / médiane (distribution log-normale)."""
+    from src import lecture
+    sim = simulation.simuler(10_000, 0.08, 0.20, annees=15, nb_simulations=4000, graine=1)
+    attendu = (sim["valeurs_finales"] >= 2 * sim["total_apporte"]).mean()
+    assert sim["proba_doubler"] == pytest.approx(attendu)
+    assert sim["moyenne"] > sim["mediane"]                    # asymétrie de la loi log-normale
+    texte = " ".join(lecture.lecture_valeur_finale(sim))
+    assert "Dans 90 % des scénarios" in texte and "doubler" in texte and "médiane" in texte

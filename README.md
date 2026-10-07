@@ -14,21 +14,22 @@ un tableau de bord web interactif et dans un rapport PDF généré automatiqueme
 |---|---|
 | **Suivi** | PRU, plus-values latentes et réalisées, dividendes, frais, valorisation quotidienne, titres en devises étrangères convertis en euros |
 | **Performance** | TWR (total, annualisé, par année civile), TRI, comparaison avec un indice de référence |
-| **Risque** | Volatilité, maximum drawdown, VaR et CVaR (historique et paramétrique), corrélations |
+| **Risque** | Volatilité, maximum drawdown, VaR historique, loi normale et Cornish-Fisher, CVaR ; distribution des rendements comparée à la loi normale (asymétrie, kurtosis, test de Jarque-Bera) ; corrélations |
 | **Performance relative** | Ratios de Sharpe et de Sortino, bêta, alpha de Jensen, tracking error, ratio d'information |
-| **Optimisation** | Markowitz : variance minimale, Sharpe maximal, frontière efficiente, droite de marché des capitaux |
-| **Projection** | Simulation de Monte-Carlo (loi normale ou bootstrap historique), versements mensuels, objectif, nuage de points par tranche de probabilité |
-| **Conseil patrimonial** | Profil de risque client (questionnaire inspiré de MiFID II), indicateur SRI, test d'adéquation ; fiscalité comparée CTO / PEA / assurance-vie (taux 2026) ; stress tests (5 crises historiques et chocs hypothétiques) |
+| **Optimisation** | Markowitz : variance minimale, Sharpe maximal, frontière efficiente, droite de marché des capitaux ; « Répartitions comparées » (ce qu'il faudrait changer, titre par titre et par classe d'actifs, avec les montants) |
+| **Projection** | Simulation de Monte-Carlo (loi normale ou bootstrap historique), versements mensuels, objectif, nuage de points par tranche de probabilité ; distribution de la valeur finale (zone de 90 %, probabilités, échelle logarithmique) |
+| **Conseil patrimonial** | Fiscalité comparée CTO / PEA / assurance-vie (taux 2026) ; stress tests (5 crises historiques et chocs hypothétiques) |
 | **Gestion d'actifs** | Attribution de performance de Brinson-Fachler face au MSCI ACWI (lissage de Cariño) ; budget de risque et parité des risques ; backtest de stratégies de rééquilibrage et d'investissement progressif |
-| **Restitution** | Tableau de bord Streamlit en 3 espaces (analyse, conseil patrimonial, gestion d'actifs), version en ligne de commande, rapport PDF de synthèse |
+| **Restitution** | Tableau de bord Streamlit en 4 espaces (analyse, conseil patrimonial, gestion d'actifs, manuel et aide), mode clair / nuit, version en ligne de commande, rapport PDF de synthèse |
+| **Manuel et assistant** | Manuel complet (13 chapitres, plus de 300 fiches, français et anglais, aussi en Word et PDF) ; assistant « Poser une question » hors connexion, sans IA générative : recherche tolérante aux fautes et aux synonymes, réponses avec les chiffres du portefeuille, aveu honnête quand rien ne correspond, journal local des questions sans réponse |
 | **Langues** | Tableau de bord disponible en français et en anglais (sélecteur FR / EN dans la barre latérale) ; le rapport PDF et la version en ligne de commande restent en français |
 | **Import libre** | Fichier CSV, Excel ou PDF (relevé, avis d'opéré) quelconque (export de banque ou de courtier, tableau personnel, même sans ligne de titres) : colonnes reconnues par leur nom, leur contenu et la cohérence des chiffres, codes ISIN, tickers Bloomberg / Google / Reuters et tickers sans place de cotation convertis en tickers Yahoo, prix vérifiés avec les cours du jour et reconvertis dans la devise du titre ; assistant d'import en cas de doute — voir docs/GUIDE_IMPORT.md |
 | **Hors connexion** | Base locale de plusieurs milliers de titres (grands indices mondiaux, ETF, indices, taux de change) avec leurs cours depuis 2015 ; mémoire des titres reconnus (ISIN, noms) ; l'application et l'import de fichiers fonctionnent sans Internet — voir docs/GUIDE_HORS_CONNEXION.md |
 | **Espace personnel** | Comptes utilisateurs ; portefeuilles enregistrés chiffrés avec le mot de passe (PBKDF2 + AES), lisibles par leur seul propriétaire ; changement de mot de passe, suppression du compte (RGPD) |
 | **Expositions** | Analyse en transparence (ETF répartis selon leur indice) : carte du monde, pays, secteurs, devise réelle, concentration (règle 5/10/40), sensibilité aux taux, diversification réelle (blocs de titres corrélés, ratio de diversification) ; diagnostic vert / orange / rouge avec risques et pistes, selon le profil — voir docs/GUIDE_EXPOSITIONS.md |
 | **Indices de référence** | 14 indices : actions (monde, États-Unis, Europe, France, émergents), obligations, monétaire (€STR) et mixtes 20/80, 60/40, 80/20 calculés par l'outil |
-| **Mise à jour** | Ajout de nouvelles opérations sans renvoyer tout l'historique (avis d'opéré PDF, Excel, CSV, saisie manuelle), doublons détectés, contrôles, annulation du dernier ajout |
-| **Fiabilité** | 142 tests automatiques, contrôle croisé du gain total, base cumulative hors ligne |
+| **Mise à jour** | Ajout de nouvelles opérations sans renvoyer tout l'historique (avis d'opéré PDF, Excel, CSV, saisie manuelle), doublons détectés, contrôles ; suppression ou correction de n'importe quelle opération (onglet Transactions) ; annulation de la dernière modification |
+| **Fiabilité** | 156 tests automatiques, contrôle croisé du gain total, base cumulative hors ligne |
 
 ## Démarrage rapide
 
@@ -54,7 +55,7 @@ python generer_portefeuille_mondial.py              # crée le fonds actions mon
 python generer_portefeuille_diversifie.py           # crée le portefeuille diversifié (50 lignes, depuis 2017)
 python construire_base_titres.py                    # base locale hors connexion (≈ 1 h, une fois)
 python construire_base_titres.py --mise-a-jour      # ajoute les derniers cours (quelques minutes)
-python -m pytest                                    # lance les 142 tests
+python -m pytest                                    # lance les 156 tests
 ```
 
 Python 3.11 ou plus récent est nécessaire, ainsi qu'une connexion Internet pour l'installation.
@@ -109,6 +110,7 @@ portfolio_tracker/
 ├── lanceur.py                       # ouvre le tableau de bord (raccourci, .bat), sur cet ordinateur uniquement
 ├── fabriquer_installateur.bat/.ps1  # fabrique l'installateur Windows (Python embarqué + Inno Setup)
 ├── installateur/portfolio_tracker.iss  # recette de l'installateur (Inno Setup)
+├── exporter_manuel.py               # versions Word et PDF du manuel (pandoc, LibreOffice)
 ├── requirements.txt · pytest.ini · .gitignore
 ├── data/
 │   ├── transactions.csv             # portefeuille du particulier
@@ -132,13 +134,12 @@ portfolio_tracker/
 │   ├── metrics.py                   # TWR, TRI, volatilité, drawdown, Sharpe, bêta, VaR...
 │   ├── optimisation.py              # Markowitz (SciPy, SLSQP)
 │   ├── simulation.py                # Monte-Carlo
-│   ├── profil.py                    # profil de risque client, SRI, adéquation
 │   ├── fiscalite.py                 # CTO, PEA, assurance-vie (taux 2026)
 │   ├── stress.py                    # stress tests historiques et hypothétiques
 │   ├── attribution.py               # attribution de Brinson-Fachler
 │   ├── budget_risque.py             # contributions au risque, parité des risques
 │   ├── backtest.py                  # stratégies de rééquilibrage, DCA
-│   ├── extensions.py                # calcule les six analyses ci-dessus (main.py, PDF)
+│   ├── extensions.py                # calcule les analyses ci-dessus (main.py, PDF)
 │   ├── analyse.py                   # enchaînement complet de l'analyse
 │   ├── graphiques.py                # graphiques matplotlib (rapport PDF)
 │   ├── graphiques_interactifs.py    # graphiques Plotly (tableau de bord)
@@ -154,10 +155,15 @@ portfolio_tracker/
 │   ├── traductions.py               # dictionnaire français -> anglais du tableau de bord
 │   ├── vues_conseil.py              # espace « Conseil patrimonial » du tableau de bord
 │   ├── vues_gestion.py              # espace « Gestion d'actifs » du tableau de bord
+│   ├── vues_transactions.py         # onglet « Transactions » : consulter, supprimer, corriger
+│   ├── vues_manuel.py               # espace « Manuel et aide » (assistant, sommaire)
+│   ├── manuel.py                    # lecture du manuel et moteur de recherche de l'assistant
+│   ├── lecture.py                   # phrases de lecture automatique des graphiques
+│   ├── theme.py                     # mode clair / nuit
 │   └── rapport.py                   # rapport PDF (reportlab)
 ├── assets/style.css · assets/icone.ico · .streamlit/config.toml   # apparence du tableau de bord
-├── tests/                           # 142 tests automatiques (pytest)
-└── docs/                            # guides pas à pas des étapes du projet
+├── tests/                           # 156 tests automatiques (pytest)
+└── docs/                            # guides pas à pas ; docs/manuel/ : le manuel (fr, en, Word, PDF)
 ```
 
 ## Tests
@@ -201,11 +207,10 @@ du gain total (ligne par ligne et jour par jour).
 - **Rapport PDF** : reportlab, graphiques matplotlib intégrés ; généré par `python main.py` ou depuis le tableau de bord.
 - **Portefeuille actions monde** : allocation cible par région (États-Unis 55 %, Europe 18 %, Japon 6 %, Royaume-Uni 5 %, Émergents 5 %, Suisse 4 %, Asie-Pacifique 4 %, Canada 3 %), équipondération dans chaque région ; 2 M€ investis le 15/01/2024 ; souscription de 100 000 € et rééquilibrage chaque trimestre (bande de tolérance de 10 %) ; frais de 0,05 % (minimum 5 €).
 - **Portefeuille diversifié (multi-actifs)** : allocation stratégique 60 % actions (39 sociétés, 8 régions, 11 secteurs, équipondérées dans chaque région), 35 % obligations (10 ETF : États zone euro et États-Unis, indexées sur l'inflation, entreprises, haut rendement, émergents), 5 % or physique ; 500 000 € investis le 16/01/2017 ; versement de 10 000 € et rééquilibrage chaque trimestre (bande de tolérance de 10 %) ; frais de 0,10 % (minimum 5 €).
-- **Classes d'actifs** : le référentiel indique la classe (Actions, Obligations, Or) et la duration des fonds obligataires. Elles servent au test d'adéquation (part d'actions), à l'éligibilité au PEA (actions uniquement), aux stress tests (fonds obligataire de même catégorie comme approximation, choc de taux ≈ −duration × 1 %) et à l'attribution (poche actions seulement).
+- **Classes d'actifs** : le référentiel indique la classe (Actions, Obligations, Or) et la duration des fonds obligataires. Elles servent à l'éligibilité au PEA (actions uniquement), aux stress tests (fonds obligataire de même catégorie comme approximation, choc de taux ≈ −duration × 1 %) et à l'attribution (poche actions seulement).
 - **Nuage de points Monte-Carlo** : 400 scénarios affichés tous les 6 mois, classés par tranche de probabilité (< 5 %, 5-25 %, 25-75 %, 75-95 %, > 95 %) selon les percentiles de l'ensemble des 5 000 scénarios.
 - **Cache** : chaque récupération de cours est enregistrée dans `data/cache_prix.csv`. Si Yahoo Finance est injoignable, l'outil utilise ces derniers cours et l'indique.
 
-- **Profil client** : 7 questions notées de 0 à 4 ; 5 profils (Sécuritaire à Offensif) avec limites de volatilité, de perte, de part d'actions et de SRI ; la tolérance aux pertes plafonne le profil. SRI : classes de risque de marché PRIIPs appliquées à la volatilité annuelle (approximation de la VEV).
 - **Fiscalité (2026)** : flat tax 31,4 % (12,8 % + 18,6 % de prélèvements sociaux, LFSS 2026) ; PEA après 5 ans : 18,6 % ; assurance-vie : 17,2 % de prélèvements sociaux, 7,5 % après 8 ans au-delà de l'abattement de 4 600 € (9 200 € pour un couple).
 - **Stress tests** : variation du plus haut au plus bas de 5 crises (2008, 2011, 2020, 2022, 2024) appliquée aux lignes actuelles ; indice régional (ou fonds obligataire de même catégorie) si le titre n'était pas coté ; chocs hypothétiques : actions via le bêta, dollar, hausse des taux via la duration.
 - **Attribution** : Brinson-Fachler mensuel par région, poids de début de mois, lissage de Cariño ; référence : poids régionaux du MSCI ACWI IMI au 30/06/2026 et indices régionaux convertis en euros.
@@ -221,7 +226,7 @@ du gain total (ligne par ligne et jour par jour).
 - Données Yahoo Finance gratuites, sans garantie d'exactitude.
 - Hors connexion, les cours ne sont pas plus récents que la dernière mise à jour de la base ; un titre absent de la base doit être importé par son ticker Yahoo.
 - Sur la version en ligne (Streamlit Community Cloud), les comptes sont effacés à chaque redémarrage du site : l'espace personnel est fait pour l'application installée sur l'ordinateur ou sur un serveur privé. Mot de passe oublié = portefeuilles illisibles (aucune porte dérobée).
-- Fiscalité simplifiée (pas de barème progressif, plafonds de 150 000 € non modélisés) ; SRI approché par la volatilité.
+- Fiscalité simplifiée (pas de barème progressif, plafonds de 150 000 € non modélisés).
 - Stress tests et attribution calculés sur des indices hors dividendes et, pour les stress tests, en devise locale.
 
 *Outil pédagogique : les résultats ne constituent pas un conseil en investissement.*

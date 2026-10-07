@@ -6,8 +6,7 @@ Six outils d'aide à la décision, répartis dans deux nouveaux **espaces** du t
 
 | Espace | Onglet | Question à laquelle il répond |
 |---|---|---|
-| **Conseil patrimonial** | Profil client | Ce portefeuille convient-il à mon client ? |
-| | Fiscalité | Combien reste-t-il après impôts, selon l'enveloppe ? |
+| **Conseil patrimonial** | Fiscalité | Combien reste-t-il après impôts, selon l'enveloppe ? |
 | | Stress tests | Que perdrait-on si une crise passée se reproduisait ? |
 | **Gestion d'actifs** | Attribution de performance | Pourquoi a-t-on battu (ou non) l'indice ? |
 | | Budget de risque | D'où vient le risque du portefeuille ? |
@@ -19,8 +18,8 @@ Les résultats apparaissent aussi dans `python main.py` et sur deux nouvelles pa
 
 1. Dézippe `mise_a_jour_etape10.zip` et copie son contenu dans `portfolio_tracker` (**Remplacer**).
 2. Aucune bibliothèque nouvelle à installer.
-3. Lance les tests : `python -m pytest`. Résultat attendu : **142 passed**.
-4. Relance le tableau de bord : `python -m streamlit run app.py`.
+2. Lance les tests : `python -m pytest`. Résultat attendu : **156 passed**.
+3. Relance le tableau de bord : `python -m streamlit run app.py`.
 
 Au premier affichage des stress tests, l'outil télécharge l'historique depuis 2008 (30 secondes à 1 minute pour le portefeuille mondial). Ensuite, le cache prend le relais.
 
@@ -28,27 +27,7 @@ Au premier affichage des stress tests, l'outil télécharge l'historique depuis 
 
 ## B. Conseil patrimonial
 
-### 1. Le profil de risque client
-
-**Contexte réglementaire.** Depuis la directive européenne **MiFID II** (2018), un conseiller doit évaluer son client *avant* de lui recommander un placement : connaissances, situation financière, objectifs, tolérance aux pertes. C'est le **test d'adéquation**.
-
-**Le questionnaire** comporte 7 questions notées de 0 à 4 (horizon, objectif, réaction à une baisse, perte acceptable, expérience, part du patrimoine, épargne de précaution). Le score, sur 28, donne le profil :
-
-| Score | Profil | Volatilité max | Perte max | Part d'actions max | SRI max |
-|---|---|---|---|---|---|
-| 0 – 6 | Sécuritaire | 3 % | 5 % | 10 % | 2 |
-| 7 – 12 | Prudent | 7 % | 12 % | 30 % | 3 |
-| 13 – 18 | Équilibré | 12 % | 20 % | 60 % | 4 |
-| 19 – 23 | Dynamique | 18 % | 30 % | 85 % | 5 |
-| 24 – 28 | Offensif | 30 % | 45 % | 100 % | 6 |
-
-**Règle de prudence** : la réponse sur la perte acceptable **plafonne** le profil. Un client qui n'accepte pas plus de 5 % de perte ne peut pas être classé « Dynamique », même avec un score élevé. Le critère le plus prudent l'emporte, comme dans les questionnaires réels.
-
-**L'indicateur SRI** (Summary Risk Indicator) est l'échelle de 1 à 7 imprimée sur les documents d'information des produits financiers (règlement européen **PRIIPs**). Il est estimé ici à partir de la volatilité. Le calcul réglementaire utilise une VaR ajustée (Cornish-Fisher) : c'est une approximation, à signaler.
-
-**Si le portefeuille est trop risqué**, l'outil propose une solution simple : mélanger le portefeuille avec un placement sans risque. Si la volatilité du portefeuille est σ et que le profil accepte au plus σ_max, on garde **σ_max / σ** du capital sur le portefeuille. Par exemple, avec 16 % de volatilité pour un maximum de 12 %, on garde 75 % du capital sur le portefeuille et on place 25 % en fonds euros.
-
-### 2. La fiscalité des enveloppes (taux 2026)
+### 1. La fiscalité des enveloppes (taux 2026)
 
 | Enveloppe | Avant le délai | Après le délai |
 |---|---|---|
@@ -64,7 +43,7 @@ Le graphique « Gain net selon l'année de sortie » montre les **sauts** à 5 a
 
 **Simplifications** : option pour le barème progressif, plafonds de 150 000 € et frais des contrats ne sont pas modélisés.
 
-### 3. Les stress tests
+### 2. Les stress tests
 
 On rejoue **5 crises réelles** sur le portefeuille **actuel**, du plus haut au plus bas du marché :
 
@@ -86,7 +65,7 @@ Si un titre n'était pas coté à l'époque, on utilise l'**indice de sa région
 
 ## C. Gestion d'actifs
 
-### 4. L'attribution de performance (Brinson-Fachler, 1985)
+### 3. L'attribution de performance (Brinson-Fachler, 1985)
 
 Elle explique l'écart de performance avec l'indice de référence, région par région, en trois effets :
 
@@ -100,7 +79,7 @@ Elle explique l'écart de performance avec l'indice de référence, région par 
 
 **Limites** : indices régionaux hors dividendes (l'indice est donc désavantagé d'environ 2 % par an), et attribution par région seulement (pas par secteur).
 
-### 5. Le budget de risque et la parité des risques
+### 4. Le budget de risque et la parité des risques
 
 **Contribution au risque** : le poids d'une ligne ne dit pas quelle part du **risque** elle apporte. Pour chaque ligne :
 
@@ -114,7 +93,7 @@ Une ligne dont la part du risque dépasse sa part de la valeur est plus volatile
 
 **Nombre effectif de paris** = 1 / Σ(part de risqueᵢ)². Il indique combien de lignes « indépendantes » le portefeuille représente vraiment : 69 lignes peuvent ne valoir qu'une trentaine de paris.
 
-### 6. Le backtest de stratégies
+### 5. Le backtest de stratégies
 
 Avec les **mêmes titres et les mêmes poids de départ** que le portefeuille actuel :
 
@@ -128,20 +107,16 @@ Avec les **mêmes titres et les mêmes poids de départ** que le portefeuille ac
 ## D. Réglages (src/config.py)
 
 ```python
-PROFIL_CLIENT = "Équilibré"          # profil utilisé par main.py et le rapport PDF
 SITUATION_FAMILIALE = "célibataire"  # ou "couple"
 ```
 
-Dans le tableau de bord, le profil est calculé à partir du questionnaire.
-
 ## E. Exercices
 
-1. Remplis le questionnaire pour un étudiant de 23 ans, puis pour un retraité de 70 ans. Le portefeuille mondial est-il adapté à chacun ? Que proposes-tu au retraité ?
-2. Dans l'onglet Fiscalité, à partir de combien d'années le PEA devient-il plus intéressant que le compte-titres ? Et l'assurance-vie ?
-3. Quelle crise aurait coûté le plus cher au portefeuille actuel ? Pourquoi (régions, secteurs) ?
-4. Dans l'attribution, l'écart avec l'indice vient-il surtout de l'allocation ou de la sélection ? Relie ta réponse à l'équipondération des titres du fonds mondial (les grandes capitalisations, très lourdes dans l'indice, sont sous-pondérées).
-5. Compare « Portefeuille actuel » et « Parité des risques » : laquelle des deux allocations a le meilleur Sharpe ? Le plus grand nombre effectif de paris ?
-6. Le rééquilibrage a-t-il amélioré la performance sur la période ? Explique pourquoi avec le comportement des marchés depuis 2024.
+1. Dans l'onglet Fiscalité, à partir de combien d'années le PEA devient-il plus intéressant que le compte-titres ? Et l'assurance-vie ?
+2. Quelle crise aurait coûté le plus cher au portefeuille actuel ? Pourquoi (régions, secteurs) ?
+3. Dans l'attribution, l'écart avec l'indice vient-il surtout de l'allocation ou de la sélection ? Relie ta réponse à l'équipondération des titres du fonds mondial (les grandes capitalisations, très lourdes dans l'indice, sont sous-pondérées).
+4. Compare « Portefeuille actuel » et « Parité des risques » : laquelle des deux allocations a le meilleur Sharpe ? Le plus grand nombre effectif de paris ?
+5. Le rééquilibrage a-t-il amélioré la performance sur la période ? Explique pourquoi avec le comportement des marchés depuis 2024.
 
 ## F. Si ça ne marche pas
 

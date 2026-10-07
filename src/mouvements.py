@@ -38,7 +38,7 @@ def lire(contenu):
     tableau["type"] = tableau["type"].astype(str).str.upper().str.strip()
     tableau["ticker"] = tableau["ticker"].astype(str).str.strip()
     for c in ["quantite", "prix", "frais"]:
-        tableau[c] = pd.to_numeric(tableau[c], errors="coerce").fillna(0.0)
+        tableau[c] = pd.to_numeric(tableau[c], errors="coerce").fillna(0.0).astype(float)
     tableau["nom"] = tableau["nom"].fillna("").astype(str)
     return tableau
 
@@ -136,3 +136,58 @@ def fusionner_operations(existant, nouvelles):
     """Fonction tout-en-un : (fusion, doublons exclus, alertes)."""
     preparees, alertes = preparer(existant, nouvelles)
     return fusionner(existant, preparees), preparees[~preparees["inclure"]], alertes
+
+
+# ======================================================================
+# Modifier ou supprimer des opérations existantes (onglet « Transactions »)
+# ======================================================================
+CHAMPS_MODIFIABLES = ["date", "quantite", "prix", "frais"]
+
+
+def appliquer_modifications(source, edite):
+    """Applique les modifications faites dans le tableau éditable.
+
+    source : le fichier du portefeuille (octets ou tableau), lignes numérotées dans l'ordre du fichier ;
+    edite  : tableau édité, indexé par le numéro de ligne d'origine, avec les colonnes modifiables
+             et une colonne booléenne « supprimer ». Les lignes absentes (filtrées) sont inchangées.
+
+    Renvoie (nouveau tableau trié par date, supprimées, corrections) où corrections est une liste
+    de dictionnaires {ligne, champ, avant, apres}."""
+    source = lire(source)
+    nouveau = source.copy()
+    a_supprimer = []
+    corrections = []
+    for ligne, valeurs in edite.iterrows():
+        if ligne not in nouveau.index:
+            continue
+        if bool(valeurs.get("supprimer", False)):
+            a_supprimer.append(ligne)
+            continue
+        for champ in CHAMPS_MODIFIABLES:
+            if champ not in valeurs.index:
+                continue
+            avant, apres = nouveau.at[ligne, champ], valeurs[champ]
+            if champ == "date":
+                apres = pd.Timestamp(apres)
+                change = pd.Timestamp(avant).normalize() != apres.normalize()
+            else:
+                apres = float(apres) if apres == apres and apres is not None else 0.0
+                change = abs(float(avant) - apres) > 1e-9
+            if change:
+                corrections.append({"ligne": ligne, "champ": champ, "avant": avant, "apres": apres})
+                nouveau.at[ligne, champ] = apres
+    supprimees = source.loc[a_supprimer]
+    nouveau = nouveau.drop(index=a_supprimer)
+    return _trier(nouveau), supprimees, corrections
+
+
+def positions_finales(tableau):
+    """Quantité détenue à la fin, par titre."""
+    signe = tableau["type"].map({"ACHAT": 1, "VENTE": -1}).fillna(0)
+    return (signe * tableau["quantite"]).groupby(tableau["ticker"]).sum()
+
+
+def titres_disparus(avant, apres):
+    """Titres détenus avant la modification et qui ne le sont plus après."""
+    q_avant, q_apres = positions_finales(lire(avant)), positions_finales(lire(apres))
+    return [t for t in q_avant.index if q_avant[t] > 1e-6 and q_apres.get(t, 0) <= 1e-6]

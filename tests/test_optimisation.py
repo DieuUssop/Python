@@ -98,3 +98,26 @@ def test_frontiere_toujours_dessinable():
     nuage = pd.DataFrame({"rendement": [0.05, 0.04, 0.08, 0.07], "volatilite": [0.10, 0.12, 0.15, 0.20],
                           "sharpe": [0, 0, 0, 0]})
     assert list(opt.enveloppe_efficiente(nuage)["rendement"]) == [0.05, 0.08]
+
+
+def test_comparer_repartitions():
+    """Tableau « de → à » : sens du changement, montants à valeur totale inchangée, classes."""
+    opti = {
+        "poids": pd.DataFrame({"nom": ["A", "B", "C", "D"], "classe": ["Actions", "Actions", "Obligations", "Or"],
+                               "actuel": [0.40, 0.30, 0.20, 0.10], "sharpe_max": [0.30, 0.30, 0.40, 0.0],
+                               "variance_min": [0.1, 0.2, 0.6, 0.1]}, index=list("ABCD")),
+        "valeur_totale": 10_000.0,
+    }
+    c = opt.comparer_repartitions(opti, "sharpe_max")
+    assert list(c.index[:2]) == ["C", "A"] or list(c.index[:2]) == ["C", "D"]      # plus gros écart en premier
+    assert c.at["A", "sens"] == "alleger" and c.at["B", "sens"] == "inchange"
+    assert c.at["C", "sens"] == "renforcer" and c.at["D", "sens"] == "sortir"
+    assert c.at["C", "euros"] == pytest.approx(2000) and c["euros"].sum() == pytest.approx(0)
+    par_classe = opt.repartition_par_classe(c)
+    assert par_classe.at["Obligations", "cible"] == pytest.approx(0.40)
+    r = opt.resume_changements(c)
+    assert r["renforcer"] == ["C"] and r["nb_sortent"] == 1 and r["nb_inchanges"] == 1
+    assert r["rotation"] == pytest.approx(0.20)
+    from src import lecture
+    phrase = lecture.synthese_optimisation(r, par_classe, "Sharpe maximal")
+    assert "renforcer C" in phrase and "1 titre(s) sortent" in phrase and "20 %" in phrase
