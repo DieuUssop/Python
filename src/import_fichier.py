@@ -313,34 +313,74 @@ class PdfIllisible(ValueError):
     """PDF scanné (image) : pas de texte à lire."""
 
 
+class PdfProtege(ValueError):
+    """PDF protégé par un mot de passe : il faut le demander à l'utilisateur (dechiffrer_pdf)."""
+
+
+MESSAGE_PROTEGE = ("PDF protégé par un mot de passe : saisissez-le pour l'ouvrir (souvent indiqué dans le courriel "
+                   "de la banque : date de naissance, identifiant client…). Il n'est pas enregistré.")
+
+
+def dechiffrer_pdf(brut, mot_de_passe):
+    """Copie du PDF sans protection (bibliothèque pypdfium2). ValueError si le mot de passe est faux."""
+    import pypdfium2
+    try:
+        document = pypdfium2.PdfDocument(io.BytesIO(brut), password=mot_de_passe)
+    except Exception:
+        raise ValueError("Mot de passe incorrect.")
+    sortie = io.BytesIO()
+    document.save(sortie, flags=getattr(pypdfium2.raw, "FPDF_REMOVE_SECURITY", 3))
+    return sortie.getvalue()
+
+
+def est_protege(brut):
+    """Vrai si le PDF ne s'ouvre pas sans mot de passe."""
+    if brut[:5] != b"%PDF-":
+        return False
+    try:
+        import pypdfium2
+        pypdfium2.PdfDocument(io.BytesIO(brut))
+        return False
+    except Exception as erreur:
+        return "password" in str(erreur).lower()
+
+
+class PdfNonReconnu(ValueError):
+    """PDF lisible, mais aucune opération reconnue avec certitude : le formulaire de secours
+    (src/vues_pdf.py) propose les dates, codes et nombres trouvés."""
+
+
 MESSAGE_SCAN = ("PDF scanné (image) : impossible à lire automatiquement. Exportez le relevé en PDF depuis "
                 "votre espace bancaire, ou en Excel / CSV, ou saisissez l'opération à la main.")
 MESSAGE_SCAN_OCR = ("PDF image (scan, photo ou page imprimée avec « Imprimer en PDF ») : le texte a été lu par "
                     "reconnaissance de caractères, mais aucune opération n'a été reconnue. Utilisez le bouton "
                     "« Format PDF » de votre banque, un export Excel / CSV, ou la saisie manuelle.")
+MESSAGE_TEXTE_CODE = ("Le texte de ce PDF est « codé » (il s'affiche correctement mais ne peut pas être extrait) et "
+                      "aucun moteur de reconnaissance de caractères n'est installé. Complétez l'opération dans le "
+                      "formulaire, ou installez la reconnaissance de caractères (requirements-ocr.txt).")
 COLONNES_AVIS = ["Date", "Sens", "ISIN", "Libellé", "Quantité", "Cours", "Devise", "Frais", "Montant"]
 _NOMBRE = r"([+\-]?\d[\d \u00a0\u202f.,']*\d|[+\-]?\d)"
 _DEVISE = r"(EUR|USD|GBP|GBX|CHF|JPY|CAD|AUD|HKD|DKK|SEK|NOK|€|\$|£)"
 MOTIFS_AVIS = {
     "date": re.compile(r"(?:date\s*(?:d['’]\s*ex[ée]cution|d['’]\s*op[ée]ration|de\s*n[ée]gociation|"
                        r"d['’]\s*ex[ée]c\.?|de\s*l['’]\s*op[ée]ration)|ex[ée]cut[ée]e?\s*le|trade\s*date|"
-                       r"execution\s*date)\s*:?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}|\d{4}-\d{2}-\d{2})",
+                       r"execution\s*date)[ \t]*:?[ \t]*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}|\d{4}-\d{2}-\d{2})",
                        re.IGNORECASE),
-    "date_simple": re.compile(r"date\s*:?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}|\d{4}-\d{2}-\d{2})",
+    "date_simple": re.compile(r"date[ \t]*:?[ \t]*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}|\d{4}-\d{2}-\d{2})",
                               re.IGNORECASE),
     "quantite": re.compile(r"(?:quantit[ée]\s*(?:ex[ée]cut[ée]e)?|qt[ée]|nombre\s*de\s*titres|nombre|quantity|"
-                           r"nominal)\s*:?\s*" + _NOMBRE, re.IGNORECASE),
+                           r"nominal)[ \t]*:?[ \t]*" + _NOMBRE, re.IGNORECASE),
     "cours": re.compile(r"(?:cours\s*(?:d['’]\s*ex[ée]cution|ex[ée]cut[ée]|net|brut|unitaire)?|prix\s*(?:unitaire|"
-                        r"d['’]\s*ex[ée]cution|d['’]\s*achat|de\s*vente)?|price|execution\s*price)\s*:?\s*"
-                        + _DEVISE + r"?\s*" + _NOMBRE + r"\s*" + _DEVISE + "?", re.IGNORECASE),
+                        r"d['’]\s*ex[ée]cution|d['’]\s*achat|de\s*vente)?|price|execution\s*price)[ \t]*:?[ \t]*"
+                        + _DEVISE + r"?[ \t]*" + _NOMBRE + r"[ \t]*" + _DEVISE + "?", re.IGNORECASE),
     "frais": re.compile(r"(?:courtage|commission|frais(?:\s*de\s*(?:bourse|courtage|transaction))?|"
-                        r"taxe\s*sur\s*les\s*transactions\s*financi[èe]res|ttf|fees|brokerage)\s*:?\s*"
-                        + _DEVISE + r"?\s*" + _NOMBRE, re.IGNORECASE),
+                        r"taxe\s*sur\s*les\s*transactions\s*financi[èe]res|ttf|fees|brokerage)[ \t]*:?[ \t]*"
+                        + _DEVISE + r"?[ \t]*" + _NOMBRE, re.IGNORECASE),
     "montant": re.compile(r"(?:montant\s*net|net\s*[àa]\s*(?:d[ée]biter|cr[ée]diter|payer|recevoir)|"
-                          r"total\s*net|net\s*amount)\s*:?\s*" + _DEVISE + r"?\s*" + _NOMBRE, re.IGNORECASE),
-    "montant_simple": re.compile(r"(?:montant\s*total|montant\s*brut|montant|brut)\s*:?\s*" + _DEVISE + r"?\s*"
+                          r"total\s*net|net\s*amount)[ \t]*:?[ \t]*" + _DEVISE + r"?[ \t]*" + _NOMBRE, re.IGNORECASE),
+    "montant_simple": re.compile(r"(?:montant\s*total|montant\s*brut|montant|brut)[ \t]*:?[ \t]*" + _DEVISE + r"?[ \t]*"
                                  + _NOMBRE, re.IGNORECASE),
-    "libelle": re.compile(r"(?:valeur|libell[ée]|titre|d[ée]signation|instrument|security|produit)\s*:\s*([^\n]+)",
+    "libelle": re.compile(r"(?:valeur|libell[ée]|titre|d[ée]signation|instrument|security|produit)[ \t]*:[ \t]*([^\n]+)",
                           re.IGNORECASE),
 }
 # Pas de limite de mot à droite : la reconnaissance de caractères colle parfois les mots
@@ -357,6 +397,8 @@ def _pages_pdf(brut):
         import pdfplumber
     except ImportError:
         raise ValueError("Pour lire un PDF, installer pdfplumber : python -m pip install pdfplumber")
+    if est_protege(brut):
+        raise PdfProtege(MESSAGE_PROTEGE)
     pages = []
     with pdfplumber.open(io.BytesIO(brut)) as pdf:
         for page in pdf.pages:
@@ -372,7 +414,15 @@ def _pages_pdf(brut):
                 bruts = [t for t in page.extract_tables() if t]
             except Exception:
                 bruts = []
-            pages.append({"texte": page.extract_text() or "", "tableaux": tableaux, "tableaux_bruts": bruts})
+            texte = page.extract_text() or ""
+            try:                                  # intitulés au-dessus des valeurs (colonnes sans traits)
+                from .lecture_pdf import texte_par_colonnes
+                paires = texte_par_colonnes(page.extract_words(keep_blank_chars=False))
+            except Exception:
+                paires = ""
+            # « paires » : intitulé : valeur reconstitués d'après la position des mots ; utilisés par la
+            # lecture par intitulés (pas par la lecture par le contenu, pour ne pas compter deux fois)
+            pages.append({"texte": texte, "paires": paires, "tableaux": tableaux, "tableaux_bruts": bruts})
     return pages
 
 
@@ -413,11 +463,25 @@ def _champ(champs, *mots, sauf=()):
     return None
 
 
+# Préfixes possibles d'un ISIN : codes pays ISO 3166 (et XS, XC, XD, EU des émetteurs internationaux)
+PAYS_ISIN = set((
+    "AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY "
+    "BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK "
+    "FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR "
+    "IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK "
+    "ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM "
+    "PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF "
+    "TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW "
+    "XS XC XD EU ANN").split())
+
+
 def isin_plausible(code):
-    """ISIN valide ET d'allure réaliste : au moins 6 chiffres sur 12. Écarte les faux ISIN
-    qu'une lecture approximative peut fabriquer à partir de mots (« EURONEXT PARIS » lu
-    « EUR0NEXPAR15 », dont la clé de contrôle tombe juste par hasard)."""
-    return isin_valide(code) and sum(ch.isdigit() for ch in code) >= 6
+    """ISIN valide ET d'allure réaliste : préfixe pays existant et au moins 4 chiffres. Écarte
+    les faux ISIN qu'une lecture approximative peut fabriquer à partir de mots (« EURONEXT
+    PARIS » lu « EUR0NEXPAR15 », dont la clé de contrôle tombe juste par hasard), sans écarter
+    les vrais ISIN riches en lettres (IE00B3XXRP09, Vanguard S&P 500)."""
+    code = str(code)
+    return isin_valide(code) and code[:2] in PAYS_ISIN and sum(ch.isdigit() for ch in code) >= 4
 
 
 def _nom_apres_isin(texte, isin):
@@ -503,18 +567,40 @@ def grille_pdf(brut):
 
 
 def _grille_pdf(brut):
+    from . import lecture_pdf
     pages = _pages_pdf(brut)
     texte_total = "".join(p["texte"] for p in pages)
-    if len(texte_total.strip()) < 20:
-        # PDF « image » : reconnaissance de caractères (src/ocr.py), si un moteur est installé
+    try:                       # mémorise toutes les lectures cohérentes (départage par le marché ensuite)
+        for p in pages:
+            lecture_pdf.lire_par_le_contenu(p["texte"])
+    except Exception:
+        pass
+    texte_code = lecture_pdf.texte_illisible(texte_total)
+    if len(texte_total.strip()) < 20 or texte_code:
+        # PDF « image » (scan), ou texte « codé » illisible une fois extrait : reconnaissance de
+        # caractères sur l'image des pages (src/ocr.py), si un moteur est installé
         from . import ocr
         if not ocr.disponible():
-            raise PdfIllisible(MESSAGE_SCAN)
-        textes = ocr.texte_pdf(brut)
-        lignes = [l for l in (lire_avis_opere(t) for t in textes) if l]
+            raise PdfIllisible(MESSAGE_TEXTE_CODE if texte_code else MESSAGE_SCAN)
+        lignes = []
+        # 1re lecture rapide ; si rien de sûr : image redressée, contrastée, en plus haute résolution
+        for reglage in ({}, {"echelle": 4, "pretraitement": True}):
+            textes = ocr.texte_pdf(brut, **reglage)
+            texte_ocr = "\n".join(textes)
+            lignes = [l for l in (lire_avis_opere(t) for t in textes) if l and _ligne_complete(l, texte_ocr)]
+            if not lignes:
+                lignes = _par_le_contenu(textes) or _par_un_modele(textes)
+            if lignes:
+                break
         if not lignes:
             raise PdfIllisible(MESSAGE_SCAN_OCR)
         return [COLONNES_AVIS] + lignes, "pdf_ocr"
+    # 0. Relevé de portefeuille (positions et prix de revient) : un portefeuille de départ
+    from . import lecture_pdf as _lp
+    if _lp.est_un_releve_de_positions(texte_total):
+        positions = _lp.lire_releve_positions(texte_total)
+        if positions and all(p["date"] for p in positions):
+            return [COLONNES_AVIS] + _lp.positions_en_lignes_avis(positions), "pdf_positions"
     # 1. Relevé : les tableaux (le plus large d'abord ; lignes de même largeur mises bout à bout)
     # (un vrai tableau d'opérations contient des dates sur plusieurs lignes)
     tableaux = [t for p in pages for t in p["tableaux"]
@@ -522,8 +608,8 @@ def _grille_pdf(brut):
     est_un_avis = re.search(r"avis\s*d['’]\s*op[ée]r|confirmation\s*d['’]\s*(?:ex[ée]cution|ordre)|"
                             r"avis\s*d['’]\s*ex[ée]cution|trade\s*confirmation", texte_total, re.IGNORECASE)
     if est_un_avis:
-        lignes = [l for l in (lire_avis_opere(p["texte"], p["tableaux_bruts"]) for p in pages) if l]
-        if lignes:
+        lignes = [l for l in (lire_avis_opere(_avec_paires(p), p["tableaux_bruts"]) for p in pages) if l]
+        if lignes and all(_ligne_complete(l, texte_total) for l in lignes):
             return [COLONNES_AVIS] + lignes, "pdf_avis"
     if tableaux:
         largeur = max((len(t[0]) for t in tableaux), key=lambda l: sum(len(t) for t in tableaux if len(t[0]) == l))
@@ -538,14 +624,58 @@ def _grille_pdf(brut):
                 grille.append(cellules)
         if len(grille) >= 2:
             return grille, "pdf_tableau"
-    # 2. Avis d'opéré : une opération par page (ou par fichier)
-    lignes = [l for l in (lire_avis_opere(p["texte"], p["tableaux_bruts"]) for p in pages) if l]
+    # 2. Avis d'opéré lu par ses intitulés : une opération par page (ou par fichier), à condition
+    #    d'être complet (sens écrit, cours ou montant d'un dividende) ; sinon on passe à la suite
+    lignes = [l for l in (lire_avis_opere(_avec_paires(p), p["tableaux_bruts"]) for p in pages) if l]
     if not lignes:
-        ligne = lire_avis_opere(texte_total, [t for p in pages for t in p["tableaux_bruts"]])
+        ligne = lire_avis_opere("\n".join(_avec_paires(p) for p in pages),
+                                [t for p in pages for t in p["tableaux_bruts"]])
         lignes = [ligne] if ligne else []
-    if lignes:
+    if lignes and all(_ligne_complete(l, texte_total) for l in lignes):
         return [COLONNES_AVIS] + lignes, "pdf_avis"
-    raise ValueError("Aucune opération trouvée dans ce PDF (ni tableau d'opérations, ni avis d'opéré lisible).")
+    # 3. Avis d'opéré lu par son contenu, quel que soit le courtier : ISIN, date, et
+    #    quantité × cours = montant (src/lecture_pdf.py)
+    lignes = _par_le_contenu([p["texte"] for p in pages])
+    if lignes:
+        return [COLONNES_AVIS] + lignes, "pdf_contenu"
+    # 4. Modèle appris : ce type de document a déjà été complété dans le formulaire
+    lignes = _par_un_modele([p["texte"] for p in pages])
+    if lignes:
+        return [COLONNES_AVIS] + lignes, "pdf_modele"
+    raise PdfNonReconnu(MESSAGE_NON_RECONNU)
+
+
+def _par_un_modele(textes):
+    from . import lecture_pdf
+    operation = lecture_pdf.lire_avec_modele("\n".join(textes))
+    return [lecture_pdf.en_ligne_avis(operation)] if operation and operation["sur"] else []
+
+
+def _avec_paires(page):
+    return page["texte"] + ("\n" + page["paires"] if page.get("paires") else "")
+
+
+def _ligne_complete(ligne, texte):
+    """Une opération lue par ses intitulés est retenue si son sens est écrit dans le document et
+    si elle a un cours (ou, pour un dividende, un montant)."""
+    date, sens, isin, libelle, quantite, cours, devise, frais, montant = ligne
+    if not MOTIF_SENS.search(texte):
+        return False
+    return bool(str(cours).strip()) or (classer_type(sens) == "DIVIDENDE" and bool(str(montant).strip()))
+
+
+def _par_le_contenu(textes):
+    """Opérations sûres lues par le contenu, page par page puis sur tout le document."""
+    from . import lecture_pdf
+    for morceaux in ([t for t in textes if t.strip()], ["\n".join(textes)]):
+        operations = [o for t in morceaux for o in lecture_pdf.lire_par_le_contenu(t)]
+        if operations and all(o["sur"] for o in operations):
+            return [lecture_pdf.en_ligne_avis(o) for o in operations]
+    return []
+
+
+MESSAGE_NON_RECONNU = ("Opération non reconnue automatiquement dans ce PDF : complétez-la dans le formulaire "
+                       "« Compléter l'opération » (les valeurs trouvées sont proposées).")
 
 
 def nature_fichier(brut):
@@ -1367,7 +1497,7 @@ def importer_automatiquement(brut, chercher=None, marche=donnees_de_marche):
         return {"sur": False, "transactions": None, "resume": resume,
                 "raison": " ; ".join(message_erreur(e) for e in rapport["erreurs"]) or "Aucune transaction lue."}
     # Noms officiels (Yahoo Finance) à la place des libellés abrégés des avis d'opéré (« AM.C.C.40 UC.ETF C »)
-    if (not correspondance.get("nom") or resume.get("source_pdf") in ("pdf_avis", "pdf_ocr")) and noms_trouves:
+    if (not correspondance.get("nom") or resume.get("source_pdf") in ("pdf_avis", "pdf_ocr", "pdf_contenu", "pdf_modele")) and noms_trouves:
         transactions["nom"] = [noms_trouves.get(tk, n) for tk, n in zip(transactions["ticker"], transactions["nom"])]
     resume["ignorees"] = rapport["ignorees"]
 
@@ -1376,7 +1506,18 @@ def importer_automatiquement(brut, chercher=None, marche=donnees_de_marche):
         info, historique = marche(transactions)
     except Exception:
         info, historique = {}, None
+    if resume.get("source_pdf") in ("pdf_contenu", "pdf_ocr", "pdf_avis"):
+        # Avis d'opéré lu par son contenu : si plusieurs lectures étaient cohérentes, le cours du
+        # marché ce jour-là départage (src/lecture_pdf.py)
+        from . import lecture_pdf
+        isin_par_ticker = {ticker: code for code, ticker in correspondances_titres.items() if isin_valide(code)}
+        transactions, resume["arbitrages"] = lecture_pdf.arbitrer_par_le_marche(transactions, historique,
+                                                                                isin_par_ticker)
     transactions, rapport_devises = harmoniser_devises(transactions, info, historique)
+    if str(resume.get("source_pdf", "")).startswith("pdf"):
+        from . import lecture_pdf
+        resume["controles_pdf"] = lecture_pdf.controles(tableau if resume.get("source_pdf") != "pdf_tableau" else None,
+                                                        transactions)
     resume["devises"] = rapport_devises
     resume["operations"] = len(transactions)
     resume["titres"] = int(transactions["ticker"].nunique())

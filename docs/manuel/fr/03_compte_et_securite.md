@@ -416,11 +416,15 @@ Vos portefeuilles enregistrés sont chiffrés avec une clé tirée de votre mot 
 
 ### Ce qui est lisible sans mot de passe
 
-Quelques fichiers locaux, communs à tous les utilisateurs de l'ordinateur, ne sont pas chiffrés : la liste des identifiants de comptes, le cache des cours (codes des titres analysés récemment et leurs cours), la mémoire des titres reconnus et le journal des questions sans réponse. Ils ne contiennent ni quantité ni montant, mais ils révèlent quels titres ont été analysés.
+Quelques fichiers locaux, communs à tous les utilisateurs de l'ordinateur, ne sont pas chiffrés : la liste des identifiants de comptes, le cache des cours (codes des titres analysés récemment et leurs cours), la mémoire des titres reconnus, les modèles d'avis d'opéré appris (`modeles_pdf.json`) et le journal des questions sans réponse. Ils ne contiennent ni quantité ni montant, mais ils révèlent quels titres ont été analysés. Les modèles appris ne gardent que les intitulés des valeurs (« Quantité », « Cours »…) et le vocabulaire du document sous forme d'empreintes (hachage) : aucun montant, aucun nom en clair.
 
 ### Le cas d'un enseignant
 
 Votre enseignant ne voit vos portefeuilles que si vous lui transmettez vous-même un fichier (export CSV, rapport PDF) ou si vous lui montrez votre écran.
+
+### Signaler un PDF mal lu
+
+Pour aider le créateur à améliorer la lecture d'un type d'avis d'opéré, vous pouvez lui envoyer vous-même le rapport produit par [[Préparer un rapport anonymisé]] (formulaire « Compléter l'opération ») : noms, lignes d'adresse, adresses électroniques, IBAN, téléphones et numéros de compte y sont masqués. Rien n'est envoyé sans votre action.
 
 ### La version en ligne est différente
 
@@ -444,6 +448,7 @@ Certains fichiers servent à tout le monde et ne sont pas chiffrés. Ils ne cont
 
 - la base locale de titres et la mémoire des titres reconnus (correspondances entre codes ISIN, noms et tickers, avec leur date) ;
 - les fichiers de cache des cours (codes et cours des derniers titres analysés) ;
+- les modèles d'avis d'opéré appris (`modeles_pdf.json`) : intitulés des valeurs et empreintes du vocabulaire, sans montant ni nom en clair ;
 - le journal des questions sans réponse de l'assistant : **toutes les questions restées sans réponse sont visibles par tous les utilisateurs**, dans l'espace Manuel et aide. N'y tapez pas d'information personnelle.
 
 Un utilisateur qui ouvre le dossier des comptes voit aussi la liste des identifiants existants.
@@ -504,6 +509,9 @@ Le logiciel a été conçu en tenant compte de trois articles du Règlement gén
 - Aucun mot de passe n'est stocké, seulement une empreinte.
 - Aucune donnée de portefeuille n'est enregistrée en clair dans l'espace personnel ; même les noms des portefeuilles sont chiffrés.
 - Minimisation : seuls les codes des titres sont envoyés à Yahoo Finance, jamais les quantités ni les montants.
+- Le mot de passe d'un PDF protégé n'est enregistré nulle part : la copie déchiffrée du document reste en mémoire le temps de la session.
+- Les modèles d'avis d'opéré appris sur l'ordinateur ne contiennent aucun montant ni aucun nom en clair (intitulés et empreintes seulement).
+- Pour signaler un PDF mal lu, un rapport anonymisé masque noms, adresses, IBAN, téléphones et numéros de compte avant que vous ne décidiez de l'envoyer.
 - Les données restent sur l'ordinateur de l'utilisateur ; elles ne sont transmises à aucun tiers.
 
 ### Article 32 : sécurité du traitement

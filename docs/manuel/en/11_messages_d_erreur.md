@@ -231,25 +231,44 @@ Wordings:
 
 The possible causes are detailed in the entry "A security is not found: the possible causes".
 
-## PDF messages: scan, image, no transaction found
-<!-- fiche: erreur-pdf | questions: scanned pdf impossible to read automatically ; no transaction was recognised in my image pdf ; no transaction found in this pdf ; my trade confirmation is not read ; pdf refused ; print to pdf does not work ; character recognition fails | mots: PDF, scan, image, OCR, trade confirmation, statement, no transaction, PDF format, manual entry -->
+## PDF messages: scan, encoded text, password, transaction not recognised
+<!-- fiche: erreur-pdf | questions: scanned pdf impossible to read automatically ; no transaction was recognised in my image pdf ; transaction not recognised automatically in this pdf ; the text of this pdf is encoded ; my trade confirmation is not read ; pdf refused ; print to pdf does not work ; character recognition fails ; password-protected pdf enter it ; incorrect password to open the pdf | mots: PDF, scan, image, OCR, encoded text, protected PDF, PDF password, trade confirmation, statement, transaction not recognised, PDF format, form, manual entry -->
 
-### The three messages
+### The reading messages
 
-| Message (start) | Cause |
+| Message | Cause |
 |---|---|
+| "Transaction not recognised automatically in this PDF: complete it in the "Complete the transaction" form (the values found are suggested)." | Readable text PDF, but neither a transaction table nor a trade confirmation read with certainty (by its headings or by its content) |
+| "The text of this PDF is "encoded" (it displays correctly but cannot be extracted) and no character recognition engine is installed. Complete the transaction in the form, or install character recognition (requirements-ocr.txt)." | Text that extracts as unintelligible signs, with no character recognition engine |
 | "Scanned PDF (image): it cannot be read automatically…" | PDF with no text and no character recognition engine installed |
-| "Image PDF (scan, photo or page printed with "Print to PDF"): the text was read by character recognition, but no transaction was recognised…" | Image read, but without a valid ISIN, quantity and date at the same time |
-| "No transaction found in this PDF (no transaction table and no readable trade confirmation)." | Text PDF that is neither a statement in table form nor a recognisable trade confirmation |
+| "Image PDF (scan, photo or page printed with "Print to PDF"): the text was read by character recognition, but no transaction was recognised…" | Image (or encoded text) read, but no certain transaction found |
 
-A PDF is treated as an image when it contains fewer than 20 characters of text.
+A PDF is treated as an image when it contains fewer than 20 characters of text; "encoded" text is treated the same way.
+
+### The password messages
+
+| Message | Cause | Solution |
+|---|---|---|
+| "Password-protected PDF: enter the password to open it (often given in the bank's e-mail: date of birth, customer ID…). It is not stored." | The bank has encrypted the PDF: it does not open without a password | Type the password in [[PDF password]], then click [[Open the PDF]] ([[Protected PDF]] box) |
+| "Incorrect password." | The password entered does not open the document | Check it in your bank's e-mail or terms (often a date of birth or a customer ID) and try again |
+
+The password is kept nowhere; the decrypted copy of the PDF stays in memory for the session. In "My account", "Add a portfolio" section, no password is requested: upload the PDF from the sidebar (see the chapter on import, fiche "My PDF is password-protected").
+
+### The points to check in the summary
+
+After reading a PDF, the sidebar summary may contain messages that block nothing but call for a check: "…: the amount written (…) does not match quantity × price ± fees (…): check the quantity and the price.", "…: transaction dated on a Saturday (…), a non-trading day: check the execution date.", "…: fees of … for an amount of … (more than 3%): check the fees.", "…: the same transaction appears twice (…): confirmation sent twice?". It may also say that a price read was replaced by the reading that matches the day's closing price. See the chapter on import, fiches "Checks after reading a PDF" and "Checking the price read against the market price".
+
+### What is displayed
+
+These messages no longer block the import of a PDF: they appear at the top of the [[Complete the transaction]] form, which suggests the date, the ISIN code and the numbers found in the document. Check them, correct them if needed, then click [[Add this transaction]] (see the chapter on import, fiche "Completing a transaction when the PDF is not recognised").
 
 ### Solution, from the most reliable to the least reliable
 
 1. Download the real PDF from your online banking (the "PDF format" or "Download" button, not "Print").
 2. Export the transactions to Excel or CSV.
-3. Enter the transaction by hand: [[Add transactions]], [[Manual entry]] tab.
-4. From the source code, `python diagnostic_pdf.py` shows what the software has read (see the chapter on import).
+3. Complete the transaction in the suggested form, or enter it by hand: [[Add transactions]], [[Manual entry]] tab.
+4. For a scan or encoded text, install character recognition from the source code: `python -m pip install -r requirements-ocr.txt`.
+5. From the source code, `python diagnostic_pdf.py` shows what the software has read; with `--anonyme`, the report contains no name, address or account number. In the form, [[Prepare an anonymised report]] produces the same kind of report (see the chapter on import).
 
 ## "To read a PDF, install pdfplumber…" and other missing libraries
 <!-- fiche: erreur-bibliotheques | questions: install pdfplumber ; install openpyxl ; install reportlab ; no module named ; missing library ; the pdf report is not generated install reportlab ; module not found streamlit | mots: library, module, pip install, pdfplumber, openpyxl, reportlab, source code, requirements -->
@@ -319,7 +338,7 @@ As long as one of these messages is displayed, the [[Save transactions]] button 
 
 ### The messages
 
-- On the [[Add transactions]] page: the file name followed by the reason (for example "statement.pdf: No transaction found in this PDF…").
+- On the [[Add transactions]] page: the file name followed by the reason (for example for a CSV file whose columns are not recognised). A PDF is not refused this way: the [[Complete the transaction]] form opens instead, with the reason at the top (for example "Transaction not recognised automatically in this PDF…").
 - In [[My account]], under "Add a portfolio": "This file could not be read automatically. Upload it from the sidebar…".
 
 ### Cause

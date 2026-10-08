@@ -44,6 +44,7 @@ Why? To value your portfolio at the **real price shown on the exchange**, the on
 |---|---|
 | History (day-by-day value, performance, risk) | the daily closing prices since the date of your first transaction |
 | Current value | the prices of the last 5 days; the software keeps the last known value of each security |
+| Check at import | the closing price on the day of each transaction: currency check, tie-break between readings of a PDF trade confirmation, price reminded in the "Complete the transaction" form |
 
 The latest price is therefore the most recent one Yahoo Finance provides: the closing price of the last session, or a value from the current session if the exchange is open. The 5 days are there so that a price can always be found at weekends and on public holidays.
 
@@ -74,13 +75,13 @@ The same principle applies to the benchmark index: an accumulating ETF gives a "
 
 ### Stock splits
 
-Yahoo Finance retroactively corrects its closing prices after a stock split. The software, for its part, only knows the transaction types ACHAT (buy), VENTE (sell) and DIVIDENDE (dividend): **it does not handle stock splits or reverse splits**.
+Yahoo Finance retroactively corrects its closing prices after a stock split. The software, for its part, only knows the transaction types ACHAT (buy), VENTE (sell) and DIVIDENDE (dividend): it **does not detect** stock splits or reverse splits by itself, but it can adjust your transactions from your broker's notice.
 
 Example: you bought 10 shares at €800. The company then splits each share into 10. Yahoo now shows a history of around €80 for the date of your purchase. Your file still says 10 shares: the software would value 10 × €80 = €800 instead of €8,000.
 
 At import, the price check flags it: the price in the file is far from the market price of the day (here, a gap of +900%), with the note "check the ticker, currency or a stock split".
 
-**The fix**: express the transaction in securities as they stand after the split, without changing the amount. Here, 100 shares at €80 (100 × 80 = €8,000). You can do this in the Transactions tab with [[Edit transactions]]. The total cost, fees and cash flows stay the same.
+**The fix**: express the transaction in securities as they stand after the split, without changing the amount. Here, 100 shares at €80 (100 × 80 = €8,000). The simplest way is to drop the split or reverse split notice sent by your broker on the [[Add transactions]] page: the [[Corporate action]] box offers [[Apply to earlier transactions]], which multiplies the quantity and divides the price of each earlier purchase and sale by the same factor (see the chapter on import, fiche "Stock split or reverse split"). You can also do it by hand in the Transactions tab with [[Edit transactions]]. The total cost, fees and cash flows stay the same.
 
 ### Other corporate actions
 
@@ -201,7 +202,7 @@ Each line contains: the identifier (in capitals), the Yahoo Finance ticker found
 
 For an identifier to be recognised, the software looks in this order:
 
-1. the built-in table of ETF ISINs (it takes priority over the memory, to repair a wrong match learned earlier);
+1. the built-in table of ETF ISINs, then the one of share ISINs (CAC 40 and large US stocks): they take priority over the memory, to repair a wrong match learned earlier;
 2. the memory;
 3. the local securities database;
 4. the Yahoo Finance search engine, as a last resort.
@@ -219,10 +220,10 @@ If an identifier has been matched to the wrong security, the memory will propose
 
 The memory is common to all users of the software on the computer: a security recognised by one is recognised for everyone.
 
-## The built-in table of ETF ISINs
-<!-- fiche: sources-isin-etf | questions: which ETFs are recognised without internet ; my ETF is not recognised at import ; list of built-in ETF ISINs ; is the cw8 isin recognised offline ; trade confirmation ETF abbreviated name ; why is my ETF recognised with the wrong ticker ; table of the 31 ETFs | mots: ETF, ISIN, built-in table, offline, trade confirmation, CW8, Amundi, iShares, Vanguard, recognition -->
+## The built-in tables of ETF and share ISINs
+<!-- fiche: sources-isin-etf | questions: which ETFs are recognised without internet ; my ETF is not recognised at import ; list of built-in ETF ISINs ; is the cw8 isin recognised offline ; trade confirmation ETF abbreviated name ; why is my ETF recognised with the wrong ticker ; table of the 31 ETFs ; are cac 40 shares recognised without a connection ; apple microsoft recognised by their isin offline | mots: ETF, ISIN, built-in table, offline, trade confirmation, CW8, Amundi, iShares, Vanguard, CAC 40, US stocks, recognition -->
 
-Trade confirmations and statements often give only an ISIN code and an abbreviated name (for example "AM.C.C.40 UC.ETF C"). To recognise the most common ETFs **without Internet**, the software contains a table of **31 ETF ISINs**, each matched to a Yahoo Finance ticker.
+Trade confirmations and statements often give only an ISIN code and an abbreviated name (for example "AM.C.C.40 UC.ETF C"). To recognise the most common securities **without Internet**, the software contains two tables: **31 ETF ISINs**, and the ISINs of the **CAC 40** shares and of large US stocks, each matched to a Yahoo Finance ticker.
 
 ### The ETFs in the table
 
@@ -237,17 +238,24 @@ Trade confirmations and statements often give only an ISIN code and an abbreviat
 
 (PEA = Plan d'Épargne en Actions, the French equity savings plan.)
 
+### The shares in the table
+
+| Family | Shares (ticker) |
+|---|---|
+| CAC 40, with a few former members | Air Liquide (AI.PA), Airbus (AIR.PA), AXA (CS.PA), BNP Paribas (BNP.PA), Danone (BN.PA), Hermès (RMS.PA), L'Oréal (OR.PA), LVMH (MC.PA), Michelin (ML.PA), Orange (ORA.PA), Safran (SAF.PA), Sanofi (SAN.PA), Schneider Electric (SU.PA), TotalEnergies (TTE.PA), Vinci (DG.PA)… |
+| Large US stocks | Apple (AAPL), Microsoft (MSFT), Amazon (AMZN), Alphabet (GOOGL), Meta (META), NVIDIA (NVDA), Tesla (TSLA) |
+
 ### Priority
 
-This table is consulted **first**, before the securities memory and before any online search. It thus repairs any wrong match learned earlier.
+The ETF table is consulted **first**, then the share table, before the securities memory and before any online search. They thus repair any wrong match learned earlier.
 
-### An ETF missing from the table
+### A security missing from the tables
 
 It is looked up in the memory, the local database, then, with Internet, through the Yahoo Finance search engine (by its ISIN, then by its name). The answer is then memorised. Offline and unknown to the memory, it cannot be recognised: the import reports it as not found.
 
 ### The trading venue chosen
 
-The same ETF is often listed on several venues and in several currencies. The table fixes one specific listing for each ISIN: if you bought on another venue, the price used may differ slightly from yours.
+The same ETF is often listed on several venues and in several currencies. The tables fix one specific listing for each ISIN: if you bought on another venue, the price used may differ slightly from yours.
 
 ## How an ISIN, a name or a Bloomberg code becomes a ticker
 <!-- fiche: sources-identifiant-ticker | questions: how does the software find the ticker from the isin ; my file contains bloomberg codes ; is MC FP Equity recognised ; the software chose the wrong trading venue ; ticker without suffix MC or AIR ; recognition of the company name ; security not found at import ; EPA:MC google finance format | mots: ISIN, ticker, Bloomberg, Google Finance, Reuters, RIC, MIC code, trading venue, suffix, Yahoo search -->
@@ -274,7 +282,7 @@ MIC venue codes (`XPAR`, `XETR`…) and usual names ("Euronext Paris") are also 
 
 ### 3. ISIN code or company name
 
-The software searches the table of ETF ISINs, the memory, then the local database (by ticker, by ISIN, then by name). Failing that, it queries the Yahoo Finance search engine with the ISIN, then with the label from the file. Among the answers (shares, ETFs, funds, indices), it prefers the venue of the ISIN's country (Paris for an `FR` ISIN, Frankfurt for `DE`…), then a listing in euros (Paris, Frankfurt, Amsterdam, Milan), then the United States.
+The software searches the tables of ETF and share ISINs, the memory, then the local database (by ticker, by ISIN, then by name). Failing that, it queries the Yahoo Finance search engine with the ISIN, then with the label from the file. Among the answers (shares, ETFs, funds, indices), it prefers the venue of the ISIN's country (Paris for an `FR` ISIN, Frankfurt for `DE`…), then a listing in euros (Paris, Frankfurt, Amsterdam, Milan), then the United States.
 
 ### 4. Ticker without a venue (`MC`, `AIR`, `TSLA`)
 
@@ -481,8 +489,14 @@ Here, one by one, are the checks that are actually in place.
 - Only the types ACHAT, VENTE and DIVIDENDE (buy, sell, dividend) are accepted; negative prices and quantities are refused.
 - **Sale not possible**: selling more securities than are held on that date stops the analysis, with a message giving the date and the quantities.
 - The columns of an unknown file are accepted automatically only if their names are meaningful, or if the numbers are consistent (quantity × price, plus or minus fees, equals the amount to within 1% on at least 80% of the rows). Otherwise, the import assistant opens.
-- An **ISIN code** is recognised only if its check digit is correct; in a PDF, it must in addition contain at least 6 digits.
+- An **ISIN code** is recognised only if its check digit is correct; in a PDF, it must in addition start with an existing country code and contain at least 4 digits.
 - Ambiguous dates (day/month or month/day) are detected and the choice made is reported.
+
+### When reading a PDF
+
+- A transaction read by its headings is accepted only if a direction word (achat, vente, buy, sell…) is written in the document and a price (or a dividend amount) was found.
+- When several readings of a trade confirmation are consistent (quantity × price = amount), the day's Yahoo Finance closing price decides: a reading within 5% of that price replaces a reading more than 15% away from it.
+- The summary reports an amount written that does not match quantity × price ± fees (within 1%), a date falling on a Saturday or Sunday, fees above 3% of the amount and the same transaction present twice.
 
 ### Prices compared with the market
 
@@ -517,7 +531,7 @@ To be honest about reliability, here is what is **not** checked.
 - **A single source**: all prices come from Yahoo Finance. The software does not compare them with any other source (Euronext, Bloomberg, your broker).
 - **No detection of outlier prices** in the history: an abnormal one-day jump, a missing value or a frozen price are not spotted. A day with no price simply takes the last known price.
 - **No freshness check per security**: a suspended or delisted security keeps its last known price, with no alert.
-- **No adjustment for corporate actions**: splits, reverse splits, spin-offs, mergers and ticker changes are not handled.
+- **No detection of corporate actions**: a split or reverse split is adjusted only if you drop the corresponding notice on the [[Add transactions]] page; spin-offs, mergers and ticker changes are not handled.
 - **No download of dividends**: only those in your file count.
 - The 25% price check takes place only **at import**, with Internet, and only on buys and sells.
 

@@ -374,7 +374,7 @@ VaR historique = − quantile(1 − niveau) des rendements quotidiens
 VaR en euros = VaR historique × valeur actuelle du portefeuille
 ```
 
-Le niveau se règle dans [[Paramètres]], avec [[Niveau de confiance de la VaR]] : 90, 95 (par défaut) ou 99 %. Le quantile est calculé par la bibliothèque pandas, avec interpolation linéaire entre deux observations. Le résultat est un nombre positif : une perte.
+Le niveau se règle en haut de l'onglet Risque, avec [[Niveau de confiance de la VaR]] : 90, 95 (par défaut) ou 99 %. Le quantile est calculé par la bibliothèque pandas, avec interpolation linéaire entre deux observations. Le résultat est un nombre positif : une perte.
 
 ### Exemple
 

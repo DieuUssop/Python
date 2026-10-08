@@ -53,7 +53,7 @@ rsync -a "$RACINE/" "$RES/app/" \
   --exclude "*.bat" --exclude "*.ps1" --exclude ".installe" --exclude "data/cache_*.csv" \
   --exclude "data/historique.csv" --exclude "data/transactions_sauvegarde.csv" --exclude "graphique_*.png" \
   --exclude "rapport_portefeuille*.pdf" --exclude "*.zip" --exclude ".gitignore" --exclude "pytest.ini" \
-  --exclude "data/base/progression.json" --exclude "data/base/*.tmp" --exclude "data/questions_sans_reponse.csv"
+  --exclude "data/base/progression.json" --exclude "data/base/*.tmp" --exclude "data/questions_sans_reponse.csv" --exclude "data/base/modeles_pdf.json"
 ( cd "$RES/app" && "$PY" -c "import src.analyse, src.comptes, src.expositions; print('    modules du projet OK')" )
 # Fond de carte du monde (carte hors connexion)
 ( cd "$RES/app" && "$PY" -c "from src import fond_de_carte as f; print('    fond de carte :', f.chemin().exists() or f.telecharger())" ) || true
@@ -105,7 +105,7 @@ mkdir -p "$SUPPORT"
 if [ "$(cat "$SUPPORT/version.txt" 2>/dev/null)" != "$VERSION" ]; then
   # Nouvelle version : le code et la base de titres sont remplacés ;
   # les comptes (data/comptes) et la mémoire des titres sont conservés.
-  /usr/bin/rsync -a --delete --exclude "/data/comptes/" --exclude "/data/base/memoire.csv" --exclude "/data/questions_sans_reponse.csv" \
+  /usr/bin/rsync -a --delete --exclude "/data/comptes/" --exclude "/data/base/memoire.csv" --exclude "/data/base/modeles_pdf.json" --exclude "/data/questions_sans_reponse.csv" \
     --exclude "/data/cache_*" "$RES/app/" "$SUPPORT/app/"
   echo "$VERSION" > "$SUPPORT/version.txt"
 fi

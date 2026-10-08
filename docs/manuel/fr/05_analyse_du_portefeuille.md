@@ -21,7 +21,7 @@ L'espace « Analyse du portefeuille » compte huit onglets, affichés en haut de
 
 ### Bon à savoir
 
-- Tous les onglets analysent le même portefeuille, avec l'indice de référence, le taux sans risque et le niveau de VaR choisis dans le panneau **Paramètres** de la barre latérale.
+- Tous les onglets analysent le même portefeuille, avec l'indice de référence et le taux sans risque choisis dans le panneau **Paramètres** de la barre latérale ; le niveau de la VaR se règle dans l'onglet Risque.
 - Tous les montants sont exprimés **en euros**, y compris pour les titres cotés dans une autre devise.
 - Les corrélations entre les lignes ne sont pas dans l'onglet Risque : elles se trouvent dans l'onglet [[Expositions]], sous-onglet [[Corrélations]].
 
@@ -776,7 +776,7 @@ Quelques phrases interprètent la distribution : asymétrie, queues épaisses, r
 
 ### Le réglage qui compte
 
-Le niveau des VaR et de la CVaR se règle dans **Paramètres**, avec le curseur [[Niveau de confiance de la VaR]] (90, 95 ou 99 %).
+Le niveau des VaR et de la CVaR se règle en haut à droite de cet onglet, avec le sélecteur [[Niveau de confiance de la VaR]] (90, 95 ou 99 %).
 
 ## La volatilité
 <!-- fiche: analyse-volatilite | questions: c'est quoi la volatilité ; comment est calculée la volatilité annualisée ; pourquoi racine de 252 ; ma volatilité est de 15 % c'est beaucoup ; volatilité de l'indice sous la carte ; écart type des rendements ; mon portefeuille est il risqué | mots: volatilité, écart-type, risque, √252, annualisation, dispersion, standard deviation, variabilité | aller: Analyse du portefeuille/Risque | chiffres: volatilite -->

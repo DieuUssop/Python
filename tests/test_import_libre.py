@@ -78,7 +78,8 @@ def test_isin_vers_ticker_prefere_la_place_du_pays():
 def test_isin_introuvable_sans_connexion():
     def chercher(requete):
         raise OSError("pas d'Internet")
-    res = imp.resoudre_identifiants(["FR0000121014"], chercher=chercher)
+    # SAP (DE0007164600) : absent des tables intégrées, donc introuvable sans Internet
+    res = imp.resoudre_identifiants(["DE0007164600"], chercher=chercher)
     assert res.iloc[0]["statut"] == "introuvable" and res.iloc[0]["ticker"] == ""
 
 

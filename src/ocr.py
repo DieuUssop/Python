@@ -123,13 +123,48 @@ def _score(texte):
     return 5 * isins + len(MOTS_UTILES.findall(texte)) + len(texte) / 2000
 
 
-def texte_pdf(brut, echelle=3):
-    """Texte de chaque page d'un PDF image (liste de textes). Essaie les 4 orientations."""
+def ameliorer(image):
+    """Image plus facile à lire : niveaux de gris, contraste étiré, page redressée (inclinaison
+    estimée par le profil des lignes, de −3° à +3°), puis noir et blanc (seuil d'Otsu)."""
+    import numpy as np
+    from PIL import ImageOps
+    gris = ImageOps.autocontrast(image.convert("L"), cutoff=2)
+    # inclinaison : l'angle qui rend les lignes de texte les plus nettes (variance des sommes par ligne)
+    petit = gris.resize((max(1, gris.width // 4), max(1, gris.height // 4)))
+    meilleur, variance_max = 0.0, -1.0
+    for angle in [a / 2 for a in range(-6, 7)]:
+        essai = np.asarray(petit.rotate(angle, expand=False, fillcolor=255), dtype=float)
+        variance = float(np.var((essai < 128).sum(axis=1)))
+        if variance > variance_max:
+            meilleur, variance_max = angle, variance
+    if meilleur:
+        gris = gris.rotate(meilleur, expand=True, fillcolor=255)
+    # seuil d'Otsu
+    histogramme = np.bincount(np.asarray(gris).ravel(), minlength=256).astype(float)
+    total, cumul, moyenne_totale = histogramme.sum(), 0.0, (np.arange(256) * histogramme).sum()
+    poids_fond, somme_fond, seuil, ecart_max = 0.0, 0.0, 128, -1.0
+    for niveau in range(256):
+        poids_fond += histogramme[niveau]
+        if poids_fond == 0 or poids_fond == total:
+            continue
+        somme_fond += niveau * histogramme[niveau]
+        m1, m2 = somme_fond / poids_fond, (moyenne_totale - somme_fond) / (total - poids_fond)
+        ecart = poids_fond * (total - poids_fond) * (m1 - m2) ** 2
+        if ecart > ecart_max:
+            seuil, ecart_max = niveau, ecart
+    return gris.point(lambda v: 255 if v > seuil else 0)
+
+
+def texte_pdf(brut, echelle=3, pretraitement=False):
+    """Texte de chaque page d'un PDF image (liste de textes). Essaie les 4 orientations.
+    pretraitement : redresser et nettoyer l'image avant lecture (seconde tentative, plus lente)."""
     import pypdfium2
     document = pypdfium2.PdfDocument(io.BytesIO(brut))
     pages = []
     for i in range(len(document)):
         image = document[i].render(scale=echelle).to_pil()
+        if pretraitement:
+            image = ameliorer(image)
         meilleur, score_max = "", -1
         for angle in (0, 90, 270, 180):
             texte = texte_image(image.rotate(angle, expand=True) if angle else image)
@@ -138,7 +173,7 @@ def texte_pdf(brut, echelle=3):
                 meilleur, score_max = texte, score
             if score >= 8:                       # orientation manifestement bonne : inutile d'essayer les autres
                 break
-        pages.append(reparer_isin(meilleur))
+        pages.append(reparer_nombres(reparer_isin(meilleur)))
     return pages
 
 
@@ -175,3 +210,18 @@ def reparer_isin(texte):
         return brut
 
     return re.sub(r"(?<![A-Z0-9])[A-Z]{2}[A-Z0-9OoIlSBZ]{10}[A-Z0-9OoIlSBZ.]*", corriger, texte)
+
+
+_CONFUSIONS = str.maketrans({"O": "0", "o": "0", "I": "1", "l": "1", "|": "1", "S": "5", "B": "8"})
+
+
+def reparer_nombres(texte):
+    """Chiffres lus comme des lettres dans un nombre (« 1O5,OO » -> « 105,00 », « 65O,2O »
+    -> « 650,20 ») : seulement dans un groupe qui contient déjà au moins deux vrais chiffres,
+    une virgule ou un point décimal, et aucune autre lettre ; les mots ne sont jamais modifiés."""
+    def corriger(m):
+        groupe = m.group(0)
+        if sum(ch.isdigit() for ch in groupe) < 2 or not re.search(r"[.,]", groupe):
+            return groupe
+        return groupe.translate(_CONFUSIONS)
+    return re.sub(r"(?<![A-Za-z0-9])[0-9OoIl|SB][0-9OoIl|SB ]*[.,][0-9OoIl|SB]{1,4}(?![A-Za-z0-9])", corriger, texte)

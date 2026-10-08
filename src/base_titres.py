@@ -81,6 +81,36 @@ ISIN_ETF = {
     "LU0290358497": ("XEON.DE", "Xtrackers II EUR Overnight Rate Swap UCITS ETF"),
 }
 
+# Actions reconnues sans Internet : CAC 40 (et anciens membres courants) et grandes valeurs
+# américaines. Chaque code a une clé de contrôle valide (vérifié par tests/test_base_titres.py).
+ISIN_ACTIONS = {
+    "FR0000120073": ("AI.PA", "Air Liquide"), "NL0000235190": ("AIR.PA", "Airbus"),
+    "FR0010220475": ("ALO.PA", "Alstom"), "LU1598757687": ("MT.AS", "ArcelorMittal"),
+    "FR0000120628": ("CS.PA", "AXA"), "FR0000131104": ("BNP.PA", "BNP Paribas"),
+    "FR0000120503": ("EN.PA", "Bouygues"), "FR0000125338": ("CAP.PA", "Capgemini"),
+    "FR0000120172": ("CA.PA", "Carrefour"), "FR0000045072": ("ACA.PA", "Crédit Agricole"),
+    "FR0000120644": ("BN.PA", "Danone"), "FR0014003TT8": ("DSY.PA", "Dassault Systèmes"),
+    "FR0010908533": ("EDEN.PA", "Edenred"), "FR0010208488": ("ENGI.PA", "Engie"),
+    "FR0000121667": ("EL.PA", "EssilorLuxottica"), "FR0014000MR3": ("ERF.PA", "Eurofins Scientific"),
+    "FR0000052292": ("RMS.PA", "Hermès International"), "FR0000121485": ("KER.PA", "Kering"),
+    "FR0000120321": ("OR.PA", "L'Oréal"), "FR0010307819": ("LR.PA", "Legrand"),
+    "FR0000121014": ("MC.PA", "LVMH Moët Hennessy Louis Vuitton"), "FR001400AJ45": ("ML.PA", "Michelin"),
+    "FR0000121261": ("ML.PA", "Michelin"), "FR0000133308": ("ORA.PA", "Orange"),
+    "FR0000120693": ("RI.PA", "Pernod Ricard"), "FR0000130577": ("PUB.PA", "Publicis Groupe"),
+    "FR0000131906": ("RNO.PA", "Renault"), "FR0000073272": ("SAF.PA", "Safran"),
+    "FR0000125007": ("SGO.PA", "Saint-Gobain"), "FR0000120578": ("SAN.PA", "Sanofi"),
+    "FR0000121972": ("SU.PA", "Schneider Electric"), "FR0000130809": ("GLE.PA", "Société Générale"),
+    "NL00150001Q9": ("STLAP.PA", "Stellantis"), "NL0000226223": ("STMPA.PA", "STMicroelectronics"),
+    "FR0000051807": ("TEP.PA", "Teleperformance"), "FR0000121329": ("HO.PA", "Thales"),
+    "FR0000120271": ("TTE.PA", "TotalEnergies"), "FR0013326246": ("URW.PA", "Unibail-Rodamco-Westfield"),
+    "FR0000124141": ("VIE.PA", "Veolia Environnement"), "FR0000125486": ("DG.PA", "Vinci"),
+    "FR0000127771": ("VIV.PA", "Vivendi"),
+    "US0378331005": ("AAPL", "Apple Inc."), "US5949181045": ("MSFT", "Microsoft Corporation"),
+    "US0231351067": ("AMZN", "Amazon.com Inc."), "US02079K3059": ("GOOGL", "Alphabet Inc. (A)"),
+    "US30303M1027": ("META", "Meta Platforms Inc."), "US67066G1040": ("NVDA", "NVIDIA Corporation"),
+    "US88160R1014": ("TSLA", "Tesla Inc."),
+}
+
 _memoire_paquets = {}            # paquets déjà lus : {chemin: (date de modification, tableau)}
 
 
@@ -311,6 +341,9 @@ def chercher_localement(identifiant):
     if cle in ISIN_ETF:
         ticker, nom = ISIN_ETF[cle]
         return [{"symbol": ticker, "longname": nom, "quoteType": "ETF", "local": True}]
+    if cle in ISIN_ACTIONS:
+        ticker, nom = ISIN_ACTIONS[cle]
+        return [{"symbol": ticker, "longname": nom, "quoteType": "EQUITY", "local": True}]
     memoire = lire_memoire()
     trouve = memoire[memoire["identifiant"] == cle]
     if not trouve.empty:

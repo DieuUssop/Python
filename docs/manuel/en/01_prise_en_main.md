@@ -4,9 +4,9 @@
 This chapter explains what Portfolio Tracker is, how to install it on Windows or Mac, how to start and close it, what works without Internet, how to update or uninstall it, and how to use it online or from its source code. Start here if you are new to the software.
 
 ## What is Portfolio Tracker and who is it for?
-<!-- fiche: demarrage-presentation | questions: what is this software ; what is portfolio tracker for ; what can I do with this program ; is it investment advice ; who is this tool made for ; does the software connect to my bank ; what exactly does the app do ; software overview | mots: overview, purpose, features, Master G2C, educational tool, portfolio tracking, dashboard | aller: Analyse du portefeuille -->
+<!-- fiche: demarrage-presentation | questions: what is this software ; what is portfolio tracker for ; what can I do with this program ; is it investment advice ; who is this tool made for ; does the software connect to my bank ; what exactly does the app do ; software overview ; who is this software aimed at ; which master's programme is it for ; is it the iae caen project ; what does g2c stand for | mots: overview, purpose, features, Master G2C, asset management, risk control, compliance, IAE Caen, University of Caen Normandy, educational tool, portfolio tracking, dashboard | aller: Analyse du portefeuille -->
 
-Portfolio Tracker is a tool for tracking and analysing a securities portfolio, built as part of the Master G2C (wealth management) programme. It reads a portfolio's transaction history (purchases, sales, dividends), values it at market prices and calculates the indicators used by investment professionals.
+Portfolio Tracker is a tool for tracking and analysing a securities portfolio, built by a student of the Master G2C (Asset Management, Risk Control and Compliance) at IAE Caen (University of Caen Normandy), as part of the programme. It reads a portfolio's transaction history (purchases, sales, dividends), values it at market prices and calculates the indicators used by investment professionals.
 
 ### What it does
 
@@ -19,7 +19,7 @@ Portfolio Tracker is a tool for tracking and analysing a securities portfolio, b
 
 ### Who it is for
 
-It is aimed first and foremost at master's students in wealth management and their teachers, but also at any individual who wants to understand the performance and risk of their portfolio.
+It was designed first for the students and teachers of the Master G2C at IAE Caen: it applies, on a real portfolio, the three strands of the programme: **asset management** (performance measurement and attribution, allocation, Markowitz optimisation, strategy backtesting), **risk control** (volatility, historical, normal and Cornish-Fisher VaR, CVaR, stress tests, risk budget, exposure diagnosis) and **compliance** (checks on the transactions entered, traceability of sources, encrypted data and personal data protection). It can also be used by any individual who wants to understand the performance and risk of their portfolio.
 
 ### What it does not do
 

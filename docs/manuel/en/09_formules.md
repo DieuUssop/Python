@@ -374,7 +374,7 @@ Historical VaR = − quantile(1 − level) of daily returns
 VaR in euros = historical VaR × current portfolio value
 ```
 
-The level is set in [[Settings]], with [[VaR confidence level]]: 90, 95 (default) or 99%. The quantile is calculated by the pandas library, with linear interpolation between two observations. The result is a positive number: a loss.
+The level is set at the top of the Risk tab, with [[VaR confidence level]]: 90, 95 (default) or 99%. The quantile is calculated by the pandas library, with linear interpolation between two observations. The result is a positive number: a loss.
 
 ### Example
 

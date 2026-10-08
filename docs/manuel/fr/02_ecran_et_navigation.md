@@ -14,7 +14,7 @@ L'écran est divisé en deux parties : la **barre latérale**, à gauche, qui re
 2. **L'espace personnel** : la mention « Espace personnel chiffré » et le lien [[Se connecter]]. Une fois connecté, vos initiales, votre identifiant et les liens [[Mon compte]] et [[Déconnexion]].
 3. **Espace de travail** : le menu des quatre espaces (Analyse du portefeuille, Conseil patrimonial, Gestion d'actifs, Manuel et aide), chacun avec une ligne de description grise. L'espace affiché est surligné en bleu clair, avec un trait bleu à gauche.
 4. **Données** : la liste des portefeuilles, la zone [[Envoyer un fichier (CSV, Excel ou PDF)]] (bouton [[Parcourir]], ou glisser-déposer le fichier), puis les liens [[Ajouter des opérations]] et [[Modèle de fichier]].
-5. **Paramètres** : un panneau replié qui contient l'indice de référence, le taux sans risque et le niveau de confiance de la VaR. Son titre résume les réglages en cours.
+5. **Paramètres** : un panneau replié qui contient l'indice de référence et le taux sans risque. Son titre résume les réglages en cours. (Le niveau de confiance de la VaR se règle dans l'onglet Risque, le seul où il sert.)
 6. **Les informations** sur le portefeuille analysé : fichier, période, nombre d'opérations, provenance des cours, et les taux de change repliés sous « Taux de change ».
 7. **Les boutons** [[Rapport PDF]] et [[Actualiser les cours]].
 
@@ -124,7 +124,7 @@ Si un fichier figure dans la zone [[Envoyer un fichier (CSV, Excel ou PDF)]], c'
 L'envoi d'un fichier, l'assistant d'import et l'ajout de nouvelles opérations sont expliqués dans le chapitre consacré à l'import. La gestion de vos portefeuilles enregistrés (renommer, télécharger, supprimer) se fait sur la page [[Mon compte]].
 
 ## Où régler les paramètres d'analyse ?
-<!-- fiche: ecran-parametres | questions: ou sont les parametres ; comment changer l'indice de référence ; je ne trouve pas le taux sans risque ; régler la var ; que veut dire la ligne parametres msci world 2,50 % var 95 % ; les paramètres sont ils enregistrés ; pourquoi tous les chiffres changent quand je modifie un paramètre ; réglages de l'analyse | mots: paramètres, réglages, settings, options, indice de référence, taux sans risque, VaR, niveau de confiance -->
+<!-- fiche: ecran-parametres | questions: ou sont les parametres ; comment changer l'indice de référence ; je ne trouve pas le taux sans risque ; que veut dire la ligne parametres msci world 2,50 % ; les paramètres sont ils enregistrés ; pourquoi tous les chiffres changent quand je modifie un paramètre ; réglages de l'analyse | mots: paramètres, réglages, settings, options, indice de référence, taux sans risque, VaR, niveau de confiance -->
 
 Les paramètres d'analyse se trouvent dans le panneau **Paramètres** de la barre latérale, sous le bloc Données. Il est replié par défaut : cliquez sur son titre pour l'ouvrir.
 
@@ -132,19 +132,18 @@ Les paramètres d'analyse se trouvent dans le panneau **Paramètres** de la barr
 
 Même replié, le titre du panneau rappelle les réglages en cours, par exemple :
 
-`Paramètres · MSCI World · 2,50 % · VaR 95 %`
+`Paramètres · MSCI World · 2,50 %`
 
-soit l'indice de référence, le taux sans risque annuel et le niveau de confiance de la VaR.
+soit l'indice de référence et le taux sans risque annuel.
 
-### Les trois réglages
+### Les deux réglages
 
 | Réglage | Valeur de départ | Sert à |
 |---|---|---|
 | [[Indice de référence]] | MSCI World (ETF CW8, dividendes réinvestis) | Comparer la performance, calculer le bêta, l'alpha, la tracking error |
 | [[Taux sans risque (% par an)]] | 2,50 % | Ratios de Sharpe et de Sortino, alpha de Jensen |
-| [[Niveau de confiance de la VaR]] | 95 % | VaR et CVaR (perte d'un mauvais jour) |
 
-Chacun fait l'objet d'une fiche détaillée dans ce chapitre.
+Chacun fait l'objet d'une fiche détaillée dans ce chapitre. Le niveau de confiance de la VaR (95 % au départ) n'est pas dans ce panneau : il se règle en haut de l'onglet Risque, là où la VaR est affichée (voir la fiche dédiée).
 
 ### Effet d'un changement
 
@@ -256,9 +255,9 @@ Le champ accepte de 0 % à 10 %, par pas de 0,25 point (les boutons + et −), o
 Le même taux est appliqué à **toute la période** analysée, alors qu'il a varié dans la réalité. Sur un historique long, le ratio de Sharpe est donc approximatif. Pour une étude sur une période ancienne, vous pouvez saisir le taux moyen de cette période.
 
 ## Régler le niveau de confiance de la VaR (90, 95 ou 99 %)
-<!-- fiche: ecran-niveau-var | questions: changer le niveau de la var ; var 95 ou 99 laquelle choisir ; c'est quoi le niveau de confiance ; mettre la var à 99 % ; pourquoi la var augmente quand je passe à 99 ; ou régler la value at risk ; var 90 % | mots: VaR, value at risk, niveau de confiance, 95 %, 99 %, 90 %, CVaR, expected shortfall, perte maximale -->
+<!-- fiche: ecran-niveau-var | questions: changer le niveau de la var ; var 95 ou 99 laquelle choisir ; c'est quoi le niveau de confiance ; mettre la var à 99 % ; pourquoi la var augmente quand je passe à 99 ; ou régler la value at risk ; var 90 % ; le niveau de var a disparu de la barre latérale | mots: VaR, value at risk, niveau de confiance, 95 %, 99 %, 90 %, CVaR, expected shortfall, perte maximale -->
 
-La VaR (Value at Risk) indique la perte d'un mauvais jour. Son niveau de confiance se règle dans le panneau **Paramètres**, avec le curseur [[Niveau de confiance de la VaR]], qui propose trois valeurs : **90 %**, **95 %** (valeur de départ) et **99 %**.
+La VaR (Value at Risk) indique la perte d'un mauvais jour. Son niveau de confiance se règle **en haut à droite de l'onglet Risque** (espace « Analyse du portefeuille »), avec le sélecteur [[Niveau de confiance de la VaR]], qui propose trois valeurs : **90 %**, **95 %** (valeur de départ) et **99 %**. Il n'est plus dans la barre latérale : c'est le seul écran où la VaR est affichée. Le niveau choisi est gardé pendant toute la session, même si vous changez d'onglet ou d'espace.
 
 ### Ce que signifie le niveau
 
@@ -361,7 +360,7 @@ Le rapport est rédigé en français même si l'écran est en anglais, et garde 
 
 ### Réglages utilisés
 
-Le rapport reprend le portefeuille, l'indice de référence, le taux sans risque et le niveau de VaR choisis. En revanche, pour l'optimisation et la projection, il utilise des réglages fixes, et non ceux des curseurs de l'écran : poids maximal de 30 % par titre, horizon de 10 ans, 5 000 scénarios, loi normale, sans versement mensuel.
+Le rapport reprend le portefeuille, l'indice de référence, le taux sans risque et le niveau de VaR choisi dans l'onglet Risque. En revanche, pour l'optimisation et la projection, il utilise des réglages fixes, et non ceux des curseurs de l'écran : poids maximal de 30 % par titre, horizon de 10 ans, 5 000 scénarios, loi normale, sans versement mensuel.
 
 ### Où est le bouton ?
 

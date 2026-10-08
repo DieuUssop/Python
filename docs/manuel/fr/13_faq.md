@@ -248,7 +248,7 @@ Un portefeuille par client fonctionne de la même façon, mais le logiciel n'a n
 ### Comment y faire entrer vos opérations
 
 1. **Un export** de votre banque ou courtier, en CSV ou Excel : envoyez-le avec [[Envoyer un fichier (CSV, Excel ou PDF)]] ; l'import automatique reconnaît la plupart des formats, sinon l'assistant d'import vous guide.
-2. **Un relevé ou un avis d'opéré en PDF** : il est lu automatiquement (PDF texte, ou image si la reconnaissance de caractères est installée).
+2. **Un relevé ou un avis d'opéré en PDF** (plusieurs à la fois si vous le souhaitez, même protégés par un mot de passe) : il est lu automatiquement, quel que soit le courtier (PDF texte, ou image si la reconnaissance de caractères est installée) ; s'il n'est pas reconnu, le formulaire [[Compléter l'opération]] propose les valeurs trouvées dans le document.
 3. **Une saisie à la main** : [[Ajouter des opérations]], onglet [[Saisie manuelle]].
 
 ### Mettre à jour ensuite
@@ -414,7 +414,7 @@ Chaque analyse avec Internet télécharge les cours récents et les ajoute à la
 
 - une seule source de cours (Yahoo Finance), sans recoupement ni détection des valeurs aberrantes ;
 - dividendes non téléchargés : seuls ceux saisis comptent ;
-- divisions d'actions, fusions et autres opérations sur titres non gérées ;
+- divisions et regroupements d'actions ajustés seulement à partir de l'avis du courtier ; fusions et autres opérations sur titres non gérées ;
 - composition des ETF, classement des titres et taux sans risque fixes et datés ;
 - pays d'une action de la base locale déduit de sa place de cotation.
 
@@ -583,7 +583,7 @@ La langue est gardée pendant la session. Le chapitre « L'écran et la navigati
 ## Les divisions d'actions et opérations sur titres sont-elles gérées ?
 <!-- fiche: faq-divisions | questions: les divisions d'actions sont elles gérées ; split d'actions ; mon titre a fait un split ; regroupement d'actions ; fusion de sociétés ; attribution d'actions gratuites ; perte de 90 % après un split | mots: division d'actions, split, regroupement, fusion, scission, opération sur titres, actions gratuites -->
 
-**Non, pas automatiquement.** Le logiciel ne connaît que trois types d'opération : achat, vente et dividende.
+**En partie.** Le logiciel ne connaît que trois types d'opération : achat, vente et dividende, et il ne détecte pas seul une division. Mais il sait ajuster vos opérations à partir de l'avis de division ou de regroupement envoyé par votre courtier.
 
 ### Le problème
 
@@ -595,7 +595,7 @@ Après une division d'actions, Yahoo Finance corrige rétroactivement ses cours.
 
 ### La correction
 
-Exprimez l'opération en titres d'après la division, **sans changer le montant** : ici, 100 actions à 80 €. Faites-le dans l'onglet Transactions avec [[Modifier les opérations]].
+Exprimez l'opération en titres d'après la division, **sans changer le montant** : ici, 100 actions à 80 €. Le plus simple : déposez l'avis de division (PDF) sur la page [[Ajouter des opérations]], puis cliquez sur [[Appliquer aux opérations antérieures]] (voir le chapitre sur l'import, fiche « Division ou regroupement d'actions »). Sinon, faites-le à la main dans l'onglet Transactions avec [[Modifier les opérations]].
 
 ### Les autres opérations sur titres
 

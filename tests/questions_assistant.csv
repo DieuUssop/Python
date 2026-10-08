@@ -168,3 +168,16 @@ mettre a jour mes prix;ecran-actualiser-cours,erreur-cours-pas-a-jour,sources-ca
 frontiere eficiente;optim-frontiere-efficiente,formule-frontiere-efficiente
 le petit bouton aide en bas de l'ecran;ecran-bulle-aide
 poser une question sans changer d'onglet;ecran-bulle-aide,ecran-assistant
+le pdf de mon courtier n'est pas reconnu;import-pdf-tout-courtier,import-pdf-formulaire
+mon prof a un pdf qui ne passe pas;import-pdf-formulaire,import-pdf-scan-refuse
+avis d'opere degiro en anglais;import-pdf-tout-courtier
+c'est fait pour quel master;demarrage-presentation
+que veut dire g2c;demarrage-presentation
+le logiciel a remplacé le cours de mon avis par un autre;import-pdf-verification-marche
+il faut remplir le formulaire a chaque avis du meme courtier;import-pdf-modeles-appris
+message operation datee d'un dimanche jour sans bourse;import-pdf-controles,erreur-pdf
+importer l'etat de mon portefeuille avec les prix de revient;import-releve-portefeuille-pdf
+ma banque m'envoie un pdf verrouillé par mot de passe;import-pdf-protege,erreur-pdf
+deposer tous mes avis d'opere en une seule fois;import-plusieurs-fichiers,import-ajouter-operations
+mon action a ete divisee par 10 comment ajuster mes achats;import-division-actions,sources-dividendes-divisions,faq-divisions
+envoyer mon pdf au developpeur sans mon nom ni mon adresse;import-rapport-anonymise

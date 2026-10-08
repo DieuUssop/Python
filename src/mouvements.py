@@ -191,3 +191,19 @@ def titres_disparus(avant, apres):
     """Titres détenus avant la modification et qui ne le sont plus après."""
     q_avant, q_apres = positions_finales(lire(avant)), positions_finales(lire(apres))
     return [t for t in q_avant.index if q_avant[t] > 1e-6 and q_apres.get(t, 0) <= 1e-6]
+
+
+# ======================================================================
+# Division ou regroupement d'actions (avis d'opération sur titres)
+# ======================================================================
+def appliquer_division(source, ticker, date, facteur):
+    """Ramène les opérations d'un titre antérieures à une division (ou à un regroupement) dans
+    les unités d'après : quantité × facteur, prix ÷ facteur (les cours de Yahoo Finance sont
+    eux-mêmes ajustés de cette façon). Les dividendes (montants totaux) ne changent pas.
+    Renvoie (nouveau tableau, nombre d'opérations ajustées)."""
+    tableau = lire(source)
+    date = pd.Timestamp(date)
+    concernees = (tableau["ticker"] == ticker) & (tableau["date"] < date) & tableau["type"].isin(["ACHAT", "VENTE"])
+    tableau.loc[concernees, "quantite"] = tableau.loc[concernees, "quantite"] * facteur
+    tableau.loc[concernees, "prix"] = tableau.loc[concernees, "prix"] / facteur
+    return tableau, int(concernees.sum())

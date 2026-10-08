@@ -14,7 +14,7 @@ The screen is split into two parts: the **sidebar**, on the left, which groups a
 2. **The personal space**: the label "Encrypted personal space" and the [[Sign in]] link. Once signed in, your initials, your username and the [[My account]] and [[Sign out]] links.
 3. **Workspace**: the menu of the four workspaces (Portfolio analysis, Wealth advisory, Asset management, Manual and help), each with a grey line of description. The workspace on screen is highlighted in light blue, with a blue bar on the left.
 4. **Data**: the list of portfolios, the [[Upload a file (CSV, Excel or PDF)]] area ([[Browse]] button, or drag and drop the file), then the [[Add transactions]] and [[File template]] links.
-5. **Settings**: a collapsed panel that contains the benchmark index, the risk-free rate and the VaR confidence level. Its title summarises the current settings.
+5. **Settings**: a collapsed panel that contains the benchmark index and the risk-free rate. Its title summarises the current settings. (The VaR confidence level is set in the Risk tab, the only place where it is used.)
 6. **Information** about the portfolio being analysed: file, period, number of transactions, source of prices, and the exchange rates folded under "Exchange rates".
 7. **The buttons** [[PDF report]] and [[Refresh prices]].
 
@@ -124,7 +124,7 @@ If a file is present in the [[Upload a file (CSV, Excel or PDF)]] area, **it** i
 Uploading a file, the import wizard and adding new transactions are explained in the chapter on importing. Managing your saved portfolios (renaming, downloading, deleting) is done on the [[My account]] page.
 
 ## Where do I set the analysis settings?
-<!-- fiche: ecran-parametres | questions: where are the settings ; how do I change the benchmark index ; I can't find the risk-free rate ; set the var ; what does the line settings msci world 2.50% var 95% mean ; are the settings saved ; why do all the figures change when I change a setting ; analysis settings | mots: settings, options, benchmark index, risk-free rate, VaR, confidence level -->
+<!-- fiche: ecran-parametres | questions: where are the settings ; how do I change the benchmark index ; I can't find the risk-free rate ; what does the line settings msci world 2.50% mean ; are the settings saved ; why do all the figures change when I change a setting ; analysis settings | mots: settings, options, benchmark index, risk-free rate, VaR, confidence level -->
 
 The analysis settings are in the **Settings** panel of the sidebar, under the Data block. It is collapsed by default: click its title to open it.
 
@@ -132,19 +132,18 @@ The analysis settings are in the **Settings** panel of the sidebar, under the Da
 
 Even when collapsed, the panel's title recalls the current settings, for example:
 
-`Settings · MSCI World · 2.50% · VaR 95%`
+`Settings · MSCI World · 2.50%`
 
-that is, the benchmark index, the annual risk-free rate and the VaR confidence level.
+that is, the benchmark index and the annual risk-free rate.
 
-### The three settings
+### The two settings
 
 | Setting | Starting value | Used for |
 |---|---|---|
 | [[Benchmark index]] | MSCI World (CW8 ETF, dividends reinvested) | Comparing performance, calculating beta, alpha and tracking error |
 | [[Risk-free rate (% per year)]] | 2.50% | Sharpe and Sortino ratios, Jensen's alpha |
-| [[VaR confidence level]] | 95% | VaR and CVaR (loss on a bad day) |
 
-Each has its own detailed entry in this chapter.
+Each has its own detailed entry in this chapter. The VaR confidence level (95% at the start) is not in this panel: it is set at the top of the Risk tab, where the VaR is shown (see the dedicated entry).
 
 ### Effect of a change
 
@@ -258,7 +257,7 @@ The same rate is applied to the **whole period** analysed, whereas in reality it
 ## Setting the VaR confidence level (90, 95 or 99%)
 <!-- fiche: ecran-niveau-var | questions: change the var level ; var 95 or 99 which one to choose ; what is the confidence level ; set the var to 99% ; why does the var go up when I switch to 99 ; where do I set the value at risk ; var 90% | mots: VaR, value at risk, confidence level, 95%, 99%, 90%, CVaR, expected shortfall, maximum loss -->
 
-The VaR (Value at Risk) indicates the loss on a bad day. Its confidence level is set in the **Settings** panel, with the [[VaR confidence level]] slider, which offers three values: **90%**, **95%** (starting value) and **99%**.
+The VaR (Value at Risk) indicates the loss on a bad day. Its confidence level is set **at the top right of the Risk tab** ("Portfolio analysis" workspace), with the [[VaR confidence level]] selector, which offers three values: **90%**, **95%** (starting value) and **99%**. It is no longer in the sidebar: this is the only screen where the VaR is shown. The chosen level is kept for the whole session, even if you change tab or workspace.
 
 ### What the level means
 

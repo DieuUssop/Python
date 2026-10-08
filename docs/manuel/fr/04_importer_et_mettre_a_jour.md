@@ -1,7 +1,7 @@
 # Importer et mettre à jour son portefeuille
 <!-- chapitre: import | ordre: 4 -->
 
-Ce chapitre explique comment donner vos opérations au logiciel : quels fichiers il accepte (CSV, Excel, PDF), le format du projet et son modèle, la lecture automatique des exports de banque ou de courtier, l'assistant d'import, la reconnaissance des titres (ticker, ISIN, nom, codes Bloomberg, Google ou Reuters) et des devises. Il décrit ensuite la mise à jour d'un portefeuille : ajout de nouvelles opérations, doublons, contrôles, correction ou suppression d'une opération, annulation. Il se termine par les erreurs fréquentes et un exemple complet.
+Ce chapitre explique comment donner vos opérations au logiciel : quels fichiers il accepte (CSV, Excel, PDF), le format du projet et son modèle, la lecture automatique des exports de banque ou de courtier et des PDF (avis d'opéré, relevés, documents scannés ou protégés par un mot de passe, plusieurs fichiers à la fois), l'assistant d'import, la reconnaissance des titres (ticker, ISIN, nom, codes Bloomberg, Google ou Reuters) et des devises. Il décrit ensuite la mise à jour d'un portefeuille : ajout de nouvelles opérations, divisions d'actions, doublons, contrôles, correction ou suppression d'une opération, annulation. Il se termine par les erreurs fréquentes et un exemple complet.
 
 ## Quels fichiers peut-on importer dans le logiciel ?
 <!-- fiche: import-fichiers-acceptes | questions: quels fichiers je peux importer ; quel format de fichier accepte le logiciel ; est-ce que je peux mettre un fichier excel ; ça prend les pdf de ma banque ; on peut importer un csv ; mon fichier xls ne passe pas ; est ce que je peux importer une capture d'écran ou une photo ; import depuis boursorama ou bourse direct ; le logiciel se connecte t il à mon courtier | mots: import, formats acceptés, CSV, Excel, xlsx, PDF, relevé, avis d'opéré, export courtier, fichier -->
@@ -14,13 +14,13 @@ Le logiciel lit vos opérations à partir d'un fichier que vous lui envoyez. Il 
 |---|---|---|
 | CSV (texte) | `.csv` | Fichier au format du projet, export de courtier, fichier enregistré depuis Excel |
 | Excel | `.xlsx` | Tableau personnel, export de banque |
-| PDF | `.pdf` | Relevé d'opérations présenté en tableau, avis d'opéré (confirmation d'un ordre exécuté) |
+| PDF | `.pdf` | Relevé d'opérations présenté en tableau, avis d'opéré (confirmation d'un ordre exécuté), relevé de portefeuille (positions et prix de revient), PDF protégé par un mot de passe |
 
-Les zones d'envoi n'acceptent que ces trois extensions. L'ancien format Excel `.xls` n'est pas accepté : ouvrez le fichier dans Excel et enregistrez-le en `.xlsx` ou en CSV. Le logiciel reconnaît la nature réelle du fichier à son contenu (un PDF commence par `%PDF-`, un `.xlsx` est une archive ZIP), puis le lit en conséquence.
+Les zones d'envoi n'acceptent que ces trois extensions. Elles acceptent plusieurs fichiers à la fois (voir la fiche « Envoyer plusieurs fichiers d'un coup »). L'ancien format Excel `.xls` n'est pas accepté : ouvrez le fichier dans Excel et enregistrez-le en `.xlsx` ou en CSV. Le logiciel reconnaît la nature réelle du fichier à son contenu (un PDF commence par `%PDF-`, un `.xlsx` est une archive ZIP), puis le lit en conséquence.
 
 ### Ce que le fichier doit contenir
 
-Il faut un **historique d'opérations datées** : achats, ventes, et éventuellement dividendes. Une simple liste de positions (titres et quantités détenues aujourd'hui, sans dates d'achat) ne permet pas de calculer les performances. Trois informations sont indispensables pour chaque ligne : la **date**, le **titre** et la **quantité**, ainsi que le **prix unitaire ou le montant total**.
+Il faut un **historique d'opérations datées** : achats, ventes, et éventuellement dividendes. Une simple liste de positions (titres et quantités détenues aujourd'hui, sans dates d'achat) ne permet pas de calculer les performances sur tout l'historique ; seule exception, un relevé de portefeuille PDF peut servir de portefeuille de départ, chaque position devenant un achat à la date du relevé (voir la fiche « Importer un relevé de portefeuille PDF »). Trois informations sont indispensables pour chaque ligne : la **date**, le **titre** et la **quantité**, ainsi que le **prix unitaire ou le montant total**.
 
 ### Le format n'a pas besoin d'être parfait
 
@@ -29,7 +29,7 @@ Le fichier peut avoir ses propres noms de colonnes, en français ou en anglais, 
 ### Ce qui n'est pas possible
 
 - une photo ou une capture d'écran au format image (`.png`, `.jpg`) n'est pas acceptée ;
-- un PDF scanné n'est lu que si un moteur de reconnaissance de caractères est installé, et seulement pour des avis d'opéré (voir la fiche sur les PDF image) ;
+- un PDF scanné (ou dont le texte est « codé ») n'est lu automatiquement que si un moteur de reconnaissance de caractères est installé, et seulement pour des avis d'opéré (voir la fiche sur les PDF image) ; à défaut, un formulaire permet de compléter l'opération à la main (voir la fiche « Compléter une opération quand le PDF n'est pas reconnu ») ;
 - il n'existe pas de connexion automatique à un compte bancaire.
 
 ## Que se passe-t-il quand j'envoie un fichier ?
@@ -37,7 +37,7 @@ Le fichier peut avoir ses propres noms de colonnes, en français ou en anglais, 
 
 ### Où envoyer le fichier
 
-Dans la barre latérale, rubrique « Données », utilisez la zone [[Envoyer un fichier (CSV, Excel ou PDF)]] : glissez-y le fichier ou cliquez pour le choisir. Le fichier envoyé est **prioritaire** sur le portefeuille choisi dans la liste juste au-dessus : tant qu'il est présent dans la zone d'envoi, c'est lui qui est analysé.
+Dans la barre latérale, rubrique « Données », utilisez la zone [[Envoyer un fichier (CSV, Excel ou PDF)]] : glissez-y le fichier ou cliquez pour le choisir. Vous pouvez y déposer plusieurs fichiers à la fois : leurs opérations sont réunies (voir la fiche « Envoyer plusieurs fichiers d'un coup »). Le fichier envoyé est **prioritaire** sur le portefeuille choisi dans la liste juste au-dessus : tant qu'il est présent dans la zone d'envoi, c'est lui qui est analysé.
 
 ### Ce que fait le logiciel
 
@@ -46,7 +46,7 @@ Dans la barre latérale, rubrique « Données », utilisez la zone [[Envoyer un 
 3. **Si le résultat est sûr**, le portefeuille est analysé immédiatement. Un encadré dans la barre latérale résume ce qui a été compris, par exemple « Fichier reconnu automatiquement : 12 opération(s), 5 titre(s). ».
 4. **S'il reste un doute** (colonne non reconnue, titre introuvable, ligne illisible), l'**assistant d'import** s'affiche à la place du tableau de bord, déjà pré-rempli : il suffit de vérifier et de valider.
 
-Vous pouvez à tout moment reprendre la lecture à la main avec le bouton [[Ouvrir l'assistant d'import]], visible sous la zone d'envoi tant qu'un fichier y est présent.
+Vous pouvez à tout moment reprendre la lecture à la main avec le bouton [[Ouvrir l'assistant d'import]], visible sous la zone d'envoi tant qu'un seul fichier y est présent. Un PDF protégé par un mot de passe affiche d'abord l'encadré [[PDF protégé]] (voir la fiche dédiée).
 
 ### Le fichier n'est pas conservé automatiquement
 
@@ -302,7 +302,7 @@ L'assistant le rappelle : « Sans colonne « Type d'opération » : une quantit�
 
 ### Dans un avis d'opéré PDF
 
-Le sens est cherché dans le texte (achat, vente, souscription, rachat, buy, sell, dividende, coupon…). Faute de mot reconnu, l'opération est lue comme un achat : vérifiez-la.
+Le sens est cherché dans le texte (achat, vente, souscription, rachat, buy, sell, dividende, coupon…). Une lecture par les intitulés n'est acceptée que si l'un de ces mots est écrit dans le document. Pour un avis lu par son contenu, le sens doit aussi être trouvé (un mot, ou une quantité précédée de + ou −). Un avis dont le sens n'est écrit qu'en code (« Sens : S ») peut être lu grâce à un modèle appris. Sinon, le formulaire [[Compléter l'opération]] vous fait choisir le sens.
 
 ## Mon relevé donne le montant total et pas le prix unitaire
 <!-- fiche: import-montant-prix | questions: mon fichier n'a pas de prix unitaire seulement le montant ; comment le prix est calculé à partir du montant ; montant net ou montant brut lequel choisir ; le montant total inclut les frais ; le prix calculé est faux ; débit crédit au lieu du prix ; le prix unitaire ne tombe pas juste | mots: montant total, montant net, montant brut, prix unitaire, frais inclus, déduction du prix, débit, crédit -->
@@ -387,7 +387,7 @@ Un code de 12 caractères commençant par deux lettres et finissant par un chiff
 
 ### L'ordre de recherche d'un ISIN ou d'un nom
 
-1. **Hors connexion d'abord** : la table intégrée des ISIN d'ETF courants, puis la mémoire des titres déjà reconnus, puis la base locale de titres (par ticker, par ISIN, ou par nom).
+1. **Hors connexion d'abord** : la table intégrée des ISIN d'ETF courants, puis celle des actions du CAC 40 et des grandes valeurs américaines, puis la mémoire des titres déjà reconnus, puis la base locale de titres (par ticker, par ISIN, ou par nom).
 2. **Sinon, le moteur de recherche de Yahoo Finance** (Internet nécessaire), avec l'ISIN puis, si le fichier en contient un, le nom du titre.
 
 Parmi les réponses, seuls les actions, ETF, fonds et indices sont retenus, et la cotation préférée est celle de la **Bourse du pays de l'ISIN** : FR → Paris, DE → Xetra puis Francfort, NL → Amsterdam, IT → Milan, ES → Madrid, GB → Londres, CH → Suisse, US → New York, etc. Pour un ISIN irlandais (IE) ou luxembourgeois (LU), typique des ETF, une cotation en euros est privilégiée (Paris, Xetra, Amsterdam, Milan), puis Londres et New York.
@@ -457,8 +457,8 @@ Exemple : `MC` acheté à 740 € en janvier 2024 correspond au cours de LVMH à
 - Le résumé indique « … ticker(s) sans place de cotation identifié(s) grâce aux cours. ».
 - Si votre fichier contient aussi une colonne de place (XPAR, Euronext Paris…), elle est utilisée en priorité.
 
-## Titres reconnus sans Internet : la table des ETF et la mémoire
-<!-- fiche: import-memoire-etf | questions: est-ce que l'import marche sans internet ; isin reconnu hors connexion ; mon etf amundi est il reconnu sans connexion ; c'est quoi la mémoire des titres ; le logiciel se souvient il des isin ; quels etf sont reconnus automatiquement ; la mémoire contient elle mes données ; il a reconnu un mauvais ticker la dernière fois | mots: hors connexion, mémoire des titres, memoire.csv, table des ISIN, ETF, base locale, Amundi, iShares, Vanguard, apprentissage -->
+## Titres reconnus sans Internet : les tables d'ISIN et la mémoire
+<!-- fiche: import-memoire-etf | questions: est-ce que l'import marche sans internet ; isin reconnu hors connexion ; mon etf amundi est il reconnu sans connexion ; c'est quoi la mémoire des titres ; le logiciel se souvient il des isin ; quels etf sont reconnus automatiquement ; la mémoire contient elle mes données ; il a reconnu un mauvais ticker la dernière fois ; les actions du cac 40 sont elles reconnues hors ligne | mots: hors connexion, mémoire des titres, memoire.csv, table des ISIN, ETF, base locale, Amundi, iShares, Vanguard, CAC 40, actions américaines, apprentissage -->
 
 ### La table des ISIN d'ETF
 
@@ -478,6 +478,10 @@ Les avis d'opéré et les relevés ne donnent souvent qu'un code ISIN et un libe
 
 La table couvre aussi des ETF Amundi (Euro Stoxx 50, Nasdaq-100, marchés émergents, Stoxx Europe 600, monétaire), iShares, Vanguard, SPDR, Invesco et Xtrackers, actions comme obligations. Elle est consultée **en premier**, avant la mémoire : elle corrige ainsi une mauvaise correspondance qui aurait été apprise auparavant.
 
+### La table des ISIN d'actions
+
+Une seconde table, consultée juste après celle des ETF, reconnaît sans Internet les actions du **CAC 40** (avec quelques anciens membres) et sept grandes valeurs américaines : Apple (AAPL), Microsoft (MSFT), Amazon (AMZN), Alphabet (GOOGL), Meta (META), NVIDIA (NVDA) et Tesla (TSLA). Exemples : FR0000121014 devient `MC.PA` (LVMH), FR0000120578 `SAN.PA` (Sanofi), US0378331005 `AAPL`. Un avis d'opéré sur l'une de ces actions est donc lu entièrement hors connexion.
+
 ### La mémoire des titres reconnus
 
 Chaque fois qu'un ISIN, un nom ou un code est trouvé grâce au moteur de recherche de Yahoo Finance, la correspondance est enregistrée dans un fichier de mémoire (`memoire.csv`, dans le dossier de la base de titres). La fois suivante, elle est retrouvée instantanément, même hors connexion.
@@ -491,7 +495,7 @@ Après la table et la mémoire, le logiciel cherche dans la base locale de titre
 
 ### Sans Internet, concrètement
 
-Un ISIN d'ETF de la table, un titre déjà rencontré ou un titre de la base locale sont reconnus. Un titre totalement nouveau ne peut pas l'être : l'assistant s'ouvre et vous pouvez saisir son ticker à la main.
+Un ISIN d'ETF ou d'action des deux tables, un titre déjà rencontré ou un titre de la base locale sont reconnus. Un titre totalement nouveau ne peut pas l'être : l'assistant s'ouvre et vous pouvez saisir son ticker à la main.
 
 ## Un titre est introuvable : que faire ?
 <!-- fiche: import-titre-introuvable | questions: titre introuvable à l'import ; le logiciel ne trouve pas mon isin ; comment saisir le ticker à la main ; statut introuvable dans l'assistant ; mon fonds n'existe pas sur yahoo ; pas de cours pour mon titre ; sicav ou fonds non coté ; le ticker proposé est faux | mots: introuvable, ticker manuel, ISIN inconnu, fonds non coté, OPCVM, Yahoo Finance, correction du ticker, recherche -->
@@ -510,7 +514,7 @@ Sans ticker, les lignes d'un ISIN introuvable sont ignorées (motif « titre man
 
 ### Causes fréquentes
 
-- **Pas de connexion** : la recherche en ligne est impossible ; seuls les titres de la table des ETF, de la mémoire et de la base locale sont reconnus.
+- **Pas de connexion** : la recherche en ligne est impossible ; seuls les titres des tables d'ISIN (ETF, CAC 40, grandes valeurs américaines), de la mémoire et de la base locale sont reconnus.
 - **Fonds non coté** (certains OPCVM, fonds en euros, produits structurés) : sans cours sur Yahoo Finance, il ne peut pas être suivi par le logiciel.
 - **Nom trop vague ou abrégé** : un libellé comme « AM.C.C.40 UC.ETF C » ne donne rien ; c'est l'ISIN qui permet la reconnaissance.
 
@@ -584,13 +588,13 @@ La valeur `GBX` est lue comme `GBP`. Elle exclut la lecture en euros, mais laiss
 Une ligne de Londres valorisée 100 fois trop haut ou trop bas trahit une confusion entre livres et pence. Corrigez le prix dans l'onglet Transactions (colonne [[Prix (devise de cotation)]], en pence), ou réimportez avec la détection automatique.
 
 ## Importer un relevé d'opérations en PDF
-<!-- fiche: import-pdf-releve | questions: comment importer un pdf de ma banque ; mon relevé pdf est il lu ; le logiciel lit il les tableaux des pdf ; relevé de compte titres pdf ; pdf de plusieurs pages ; aucune opération trouvée dans ce pdf ; pdf avec tableau d'opérations | mots: PDF, relevé d'opérations, tableau, pdfplumber, extraction, plusieurs pages, relevé de compte titres -->
+<!-- fiche: import-pdf-releve | questions: comment importer un pdf de ma banque ; mon relevé pdf est il lu ; le logiciel lit il les tableaux des pdf ; relevé de compte titres pdf ; pdf de plusieurs pages ; aucune opération trouvée dans ce pdf ; pdf avec tableau d'opérations ; dans quel ordre le logiciel essaie de lire un pdf | mots: PDF, relevé d'opérations, tableau, pdfplumber, extraction, plusieurs pages, relevé de compte titres, ordre des lectures -->
 
 ### Comment le PDF est lu
 
 Le logiciel lit le texte et les tableaux du PDF (bibliothèque pdfplumber), page par page.
 
-- Un tableau est retenu s'il a au moins deux lignes, trois colonnes, et des dates sur au moins deux lignes : c'est la marque d'un vrai tableau d'opérations.
+- Un tableau est retenu s'il a au moins deux lignes, trois colonnes, et des dates sur au moins deux lignes : c'est la marque d'un vrai tableau d'opérations. Si la page n'a pas de traits de tableau, le logiciel essaie aussi de reconstituer les colonnes d'après l'alignement du texte.
 - Les tableaux de même largeur sont mis bout à bout (relevé sur plusieurs pages) ; l'en-tête répété en haut de chaque page n'est gardé qu'une fois.
 - Le tableau obtenu suit ensuite exactement le même chemin qu'un fichier Excel : ligne des titres, reconnaissance des colonnes, ISIN, dates, nombres, devises.
 
@@ -598,12 +602,23 @@ Le logiciel lit le texte et les tableaux du PDF (bibliothèque pdfplumber), page
 
 Si le texte contient « avis d'opéré », « avis d'exécution », « confirmation d'exécution », « confirmation d'ordre » ou « trade confirmation », le logiciel lit d'abord le document comme un avis d'opéré (une opération par page). S'il n'y a pas de tableau d'opérations exploitable, il essaie aussi cette lecture.
 
-### Si rien n'est trouvé
+### L'ordre des lectures
 
-Le message « Aucune opération trouvée dans ce PDF (ni tableau d'opérations, ni avis d'opéré lisible). » s'affiche. Dans ce cas :
+1. Texte absent, ou texte « codé » (il s'affiche bien mais s'extrait en caractères incompréhensibles) : le PDF est traité comme un scan (voir la fiche sur les PDF image).
+2. Relevé de portefeuille (positions et prix de revient) : chaque position devient un achat à la date du relevé (voir la fiche « Importer un relevé de portefeuille PDF »).
+3. Lecture par les intitulés de l'avis d'opéré, et lecture des tableaux du relevé. Une opération lue par ses intitulés n'est acceptée que si un mot de sens (achat, vente, dividende…) est écrit dans le document et si un cours (ou, pour un dividende, un montant) a été trouvé ; sinon, le logiciel passe à la lecture suivante.
+4. Lecture **par le contenu**, quel que soit le courtier : code ISIN, date d'exécution et relation `quantité × cours = montant` (voir la fiche « Un avis d'opéré d'une autre banque ou d'un autre courtier »).
+5. Lecture avec un **modèle appris** : ce type de document a déjà été complété une fois dans le formulaire (voir la fiche « Le logiciel apprend vos avis d'opéré »).
+6. Si rien n'est sûr : « Opération non reconnue automatiquement dans ce PDF : complétez-la dans le formulaire « Compléter l'opération » (les valeurs trouvées sont proposées). ».
 
-- téléchargez plutôt l'export Excel ou CSV des opérations depuis votre espace bancaire ;
-- ou utilisez l'outil de diagnostic pour voir ce que le logiciel lit (voir la fiche sur `diagnostic_pdf.py`).
+Un PDF protégé par un mot de passe demande d'abord ce mot de passe (voir la fiche « Mon PDF est protégé par un mot de passe »).
+
+### Si rien n'est reconnu
+
+Au lieu d'un simple refus, le formulaire [[Compléter l'opération]] s'ouvre avec les dates, codes et nombres trouvés dans le document (voir la fiche « Compléter une opération quand le PDF n'est pas reconnu »). Pour un long relevé en tableau, il est souvent plus rapide de :
+
+- télécharger plutôt l'export Excel ou CSV des opérations depuis votre espace bancaire ;
+- ou utiliser l'outil de diagnostic pour voir ce que le logiciel lit (voir la fiche sur `diagnostic_pdf.py`).
 
 ### Conseil
 
@@ -614,20 +629,24 @@ Sur le site de votre banque, préférez le bouton de téléchargement du documen
 
 Un **avis d'opéré** est la confirmation que votre courtier envoie après chaque ordre exécuté. Le logiciel en extrait une opération par page.
 
+L'avis peut venir de **n'importe quelle banque ou courtier** : Bourse Direct n'est qu'un exemple. Le logiciel lit d'abord les intitulés habituels (tableau ci-dessous) ; s'il n'y parvient pas, il lit l'avis par son contenu (voir la fiche « Un avis d'opéré d'une autre banque ou d'un autre courtier »).
+
 ### Ce qui est lu
 
 | Information | Où le logiciel la cherche |
 |---|---|
-| Code ISIN | Premier code de 12 caractères dont la clé de contrôle est juste et qui compte au moins 6 chiffres |
+| Code ISIN | Premier code de 12 caractères dont la clé de contrôle est juste, qui commence par un code pays existant et compte au moins 4 chiffres |
 | Date | Date d'exécution, d'opération ou de négociation, « exécuté le », « trade date » ; à défaut une date proche du mot exécution ou suivie de « achat »/« vente » ; les dates d'édition, d'émission, de règlement, de valeur ou de livraison sont écartées |
-| Sens | Achat, vente, souscription, rachat, buy, sell, dividende, coupon… (achat par défaut) |
+| Sens | Achat, vente, souscription, rachat, buy, sell, dividende, coupon… : un de ces mots doit être écrit dans le document |
 | Quantité | « Quantité », « Qté », « Nombre de titres », « Quantity », « Nominal » |
 | Cours et devise | « Cours », « Prix unitaire », « Price », avec EUR, USD, GBP, €, $, £… |
 | Frais | Somme de toutes les lignes « Courtage », « Commission », « Frais », « TTF » (taxe sur les transactions financières), « Fees » |
 | Montant | « Montant net », « Net à débiter/créditer », sinon « Montant » ou « Brut » |
 | Libellé | Après « Libellé : » ou « Valeur : », sinon le nom écrit juste après l'ISIN |
 
-Les intitulés et valeurs peuvent être présentés en texte (« Quantité : 15 ») ou rangés dans un tableau. Une opération n'est retenue que si l'ISIN, la quantité et la date sont trouvés.
+Les intitulés et valeurs peuvent être présentés en texte (« Quantité : 15 »), rangés dans un tableau, ou placés en colonnes sans traits, l'intitulé au-dessus de la valeur : le logiciel associe alors chaque valeur à l'intitulé placé au-dessus d'elle, d'après la position des mots sur la page (« Quantité » au-dessus de « 12 » donne « Quantité : 12 »).
+
+Une opération n'est retenue par cette lecture que si l'ISIN, la quantité et la date sont trouvés, si un mot de sens est écrit dans le document, et si le cours (ou, pour un dividende, le montant) est trouvé. Sinon, le logiciel passe à la lecture par le contenu.
 
 ### Exemple : avis Bourse Direct téléchargé avec « Format PDF »
 
@@ -644,18 +663,158 @@ Le logiciel lit : date 28/09/2026, sens VENTE, ISIN FR0013380607, libellé « AM
 
 ### Plusieurs avis
 
-Un PDF de plusieurs pages contenant un avis par page donne une opération par page. Pour ajouter plusieurs avis séparés à un portefeuille existant, la page [[Ajouter des opérations]] accepte plusieurs fichiers à la fois.
+Un PDF de plusieurs pages contenant un avis par page donne une opération par page. Plusieurs avis en fichiers séparés peuvent être déposés ensemble, dans la zone d'envoi de la barre latérale comme sur la page [[Ajouter des opérations]] (voir la fiche « Envoyer plusieurs fichiers d'un coup »).
 
 ### Après la lecture
 
-Le résumé de la barre latérale indique « Avis d'opéré PDF lu. ». Vérifiez toujours l'opération : un avis inhabituel peut être mal interprété.
+Le résumé de la barre latérale indique « Avis d'opéré PDF lu. » (ou, pour une lecture par le contenu, « Avis d'opéré PDF lu d'après son contenu (quantité × cours = montant) : vérifiez l'opération (onglet « Transactions »). »). Il signale aussi un cours remplacé grâce au cours du marché (voir la fiche « Vérification du cours lu avec le cours du marché ») et les points à vérifier repérés après la lecture (voir la fiche « Les contrôles après la lecture d'un PDF »). Vérifiez toujours l'opération : un avis inhabituel peut être mal interprété.
+
+## Un avis d'opéré d'une autre banque ou d'un autre courtier
+<!-- fiche: import-pdf-tout-courtier | questions: mon avis d'opéré n'est pas de bourse direct est ce qu'il marche ; le logiciel lit il les avis de boursorama fortuneo degiro trade republic ; avis d'opéré d'une autre banque ; mon courtier n'est pas reconnu ; trade confirmation en anglais est elle lue ; avis d'opere de ma banque avec une autre mise en page ; comment le logiciel lit un pdf sans intitulés ; lecture d'après son contenu c'est quoi ; est ce que ça marche avec tous les courtiers | mots: avis d'opéré, tout courtier, autre banque, lecture par le contenu, quantité × cours, ISIN, trade confirmation, mise en page, pdf_contenu | aller: Analyse du portefeuille/Transactions -->
+
+Chaque courtier présente ses avis d'opéré à sa façon (« Quantité : », « Nombre de titres », « Qté », « Buy 15 … at 85.12 »…). Quand les intitulés habituels ne suffisent pas, le logiciel lit l'avis **par son contenu**, sans se fier à la mise en page.
+
+### Ce que le logiciel cherche
+
+Tout avis d'opéré contient les mêmes éléments :
+
+- un **code ISIN**, reconnu grâce à sa clé de contrôle, avec un code pays existant et au moins 4 chiffres ;
+- une **date d'exécution**, écrite en chiffres ou avec le mois en lettres, en français ou en anglais ; les dates d'édition, de règlement ou de valeur sont écartées, et quand deux mots se disputent une date, le plus proche l'emporte ;
+- **trois nombres liés** : `quantité × cours = montant brut`, au centime près, ou à défaut `quantité × cours ± frais = montant net` ;
+- les **frais** : les nombres qui suivent « courtage », « commission », « frais », « costs », « TTF »… ;
+- le **sens** : achat, vente, buy, sell, bought, sold, dividende… ;
+- la **devise** écrite à côté du cours.
+
+Plusieurs opérations sur une même page sont lues séparément : une par code ISIN.
+
+### Exemple
+
+Un avis en anglais contient :
+
+```
+Date 07-05-2024 14:32
+Buy 15 VANGUARD S&P 500 UCITS ETF IE00B3XXRP09 at 85.12 EUR
+Value EUR 1,276.80
+Transaction costs EUR 2.00
+Total EUR 1,278.80
+```
+
+Aucun intitulé « Quantité » ni « Cours ». Le logiciel essaie les nombres deux à deux et trouve `15 × 85,12 = 1 276,80`, qui figure dans le texte. Il retient : date 07/05/2024, achat (« Buy »), ISIN IE00B3XXRP09, 15 titres à 85,12 EUR, frais 2,00 (nombre après « costs »), et vérifie que `1 276,80 + 2,00 = 1 278,80`, le total écrit.
+
+### Quand plusieurs lectures tombent juste
+
+Il arrive que deux couples de nombres donnent le même montant. Le logiciel garde la lecture la plus probable (quantité entière, nombres placés près de leurs intitulés), mais retient aussi les autres : avec Internet, le cours de clôture du jour permet ensuite de les départager (voir la fiche « Vérification du cours lu avec le cours du marché »).
+
+### Après la lecture
+
+Le résumé indique « Avis d'opéré PDF lu d'après son contenu (quantité × cours = montant) : vérifiez l'opération (onglet « Transactions »). ». Contrôlez la date, la quantité et le cours dans l'onglet [[Transactions]].
+
+### Les limites
+
+L'opération n'est retenue automatiquement que si l'ISIN, la date, un trio de nombres cohérent et le sens sont tous trouvés (le sens peut aussi venir d'une quantité précédée de + ou −). Aucune lecture ne peut garantir de comprendre 100 % des documents existants : si l'un de ces éléments manque, le logiciel essaie encore un modèle appris (voir la fiche « Le logiciel apprend vos avis d'opéré »), puis le formulaire [[Compléter l'opération]] prend le relais avec les valeurs trouvées (voir la fiche suivante).
+
+## Vérification du cours lu avec le cours du marché
+<!-- fiche: import-pdf-verification-marche | questions: le logiciel vérifie t il le cours lu dans mon avis ; cours lu remplacé par pourquoi ; le logiciel a changé ma quantité et mon prix ; comment il choisit entre deux lectures du pdf ; cours de clôture affiché dans le formulaire ; le prix unitaire doit en être proche ça veut dire quoi ; vérification avec yahoo finance du prix de mon avis ; pourquoi les nombres de la liste sont dans cet ordre | mots: vérification par le marché, cours de clôture, Yahoo Finance, départage, arbitrage, lecture alternative, 15 %, 5 %, cours lu remplacé | aller: Analyse du portefeuille/Transactions -->
+
+Dans un avis d'opéré, plusieurs couples de nombres peuvent vérifier `quantité × cours = montant`. Pour choisir la bonne lecture, le logiciel compare le cours lu au **cours de clôture du titre le jour de l'opération**, téléchargé sur Yahoo Finance.
+
+### La règle
+
+Pour un achat ou une vente lu dans un avis d'opéré :
+
+- si le cours retenu s'écarte de **plus de 15 %** du cours de clôture du jour,
+- et si une autre lecture cohérente du même document donne un cours à **moins de 5 %** de ce cours de clôture,
+
+alors cette autre lecture remplace la première : la quantité, le cours et, s'ils sont connus, les frais de cette lecture sont repris. Sinon, rien ne change.
+
+### Exemple
+
+Deux lectures tombent juste : `10 × 65,02 = 650,20` et `5 × 130,04 = 650,20`. Le cours de clôture du jour est de 130,50 €. La première lecture s'en écarte de 50 % (plus de 15 %), la seconde de 0,4 % (moins de 5 %) : le logiciel retient 5 titres à 130,04 €.
+
+Le résumé de la barre latérale l'indique, sous la forme : « [ticker] ([date]) : cours lu [ancien] remplacé par [nouveau], la lecture qui correspond au cours de clôture du jour ([cours]). ».
+
+### Dans le formulaire « Compléter l'opération »
+
+Quand le formulaire [[Compléter l'opération]] s'ouvre et que le titre et la date sont connus, une ligne indique le cours de clôture de ce jour, par exemple « Cours de clôture de MC.PA le 04/03/2024 : … (Yahoo Finance) — le prix unitaire doit en être proche. ». Si aucune proposition de cours n'a été trouvée, la liste [[Prix unitaire]] est classée en mettant en tête les nombres les plus proches de ce cours de clôture.
+
+### Les limites
+
+- Il faut disposer du cours du jour, donc en général d'une connexion Internet : sans lui, la lecture n'est ni vérifiée ni modifiée.
+- Seuls les achats et les ventes sont concernés, pas les dividendes.
+- Le départage ne choisit qu'entre des lectures qui figurent déjà dans le document : il n'invente jamais un cours.
+- Le cours de clôture n'est pas votre cours d'exécution : un écart de quelques pour cent est normal.
+
+## Compléter une opération quand le PDF n'est pas reconnu
+<!-- fiche: import-pdf-formulaire | questions: mon avis d'opéré n'est pas reconnu ; aucune opération trouvée dans ce pdf ; mon prof a un pdf qui ne passe pas ; le pdf de ma banque ne marche pas que faire ; opération non reconnue automatiquement dans ce pdf ; c'est quoi le formulaire compléter l'opération ; comment choisir la quantité et le cours dans la liste ; le logiciel me propose des nombres je prends lequel ; saisir mon avis d'opéré à la main à partir du pdf | mots: formulaire, compléter l'opération, PDF non reconnu, saisie assistée, valeurs proposées, quantité, cours, frais, filet de sécurité -->
+
+Quand un PDF ne donne aucune opération sûre, le logiciel ne se contente pas d'un message d'erreur : il ouvre le formulaire [[Compléter l'opération]], pré-rempli avec ce qu'il a trouvé dans le document.
+
+### Quand le formulaire apparaît
+
+- Sur la page [[Ajouter des opérations]], onglet [[Depuis un fichier]] : pour tout PDF dont l'import automatique n'est pas sûr (aucune opération lue, titre introuvable…).
+- Après un envoi avec [[Envoyer un fichier (CSV, Excel ou PDF)]] dans la barre latérale : quand le PDF ne donne aucune opération, que le fichier soit envoyé seul ou avec d'autres.
+
+La raison s'affiche sous le titre du formulaire, par exemple « Opération non reconnue automatiquement dans ce PDF… ».
+
+### Remplir le formulaire, étape par étape
+
+1. **[[Type]]** (au-dessus du formulaire) : ACHAT, VENTE ou DIVIDENDE, le sens trouvé dans le document étant choisi d'avance. Pour un dividende, la quantité et le cours sont remplacés par le champ [[Montant total reçu]].
+2. **[[Date d'exécution]]** : pré-remplie avec la date d'exécution probable ; l'aide du champ liste les dates trouvées dans le document.
+3. **[[Titre]]** : le code ISIN trouvé, suivi du nom ; vous pouvez aussi taper un ticker (ex. MC.PA), un ISIN ou un nom.
+4. **[[Quantité]]**, **[[Prix unitaire]]** et **[[Frais (€)]]** : chaque liste contient les nombres du document, chacun suivi des mots qui l'entourent (par exemple « Quantité : [60] »). La meilleure proposition est déjà choisie ; vous pouvez en choisir une autre ou taper une valeur.
+5. Avec Internet, une ligne rappelle le cours de clôture du titre ce jour-là : le prix unitaire doit en être proche (voir la fiche « Vérification du cours lu avec le cours du marché »).
+6. Vérifiez la ligne de contrôle, par exemple « Contrôle : 60 × 41,295 = 2477,7 » : elle doit retomber sur le montant brut de votre avis.
+7. Cliquez sur [[Ajouter cette opération]].
+
+L'encadré [[Texte lu dans le document]] montre le texte extrait, pour vérifier une valeur. Il contient aussi le bouton [[Préparer un rapport anonymisé]] (voir la fiche « Envoyer un PDF mal lu sans données personnelles »).
+
+### Le logiciel retient la leçon
+
+En validant un achat ou une vente, vous apprenez au logiciel à lire ce type de document : il retient, sur l'ordinateur, l'intitulé placé devant chaque valeur que vous avez choisie. Le prochain avis de même présentation sera lu automatiquement (voir la fiche « Le logiciel apprend vos avis d'opéré »).
+
+### Ensuite
+
+- Page [[Ajouter des opérations]] : l'opération rejoint le tableau [[Vérification avant enregistrement]]. Le formulaire y ajoute une opération par fichier ; pour une seconde opération du même PDF, utilisez l'onglet [[Saisie manuelle]].
+- Barre latérale, fichier envoyé seul : le nombre d'opérations prêtes s'affiche ; ajoutez-en d'autres si le PDF en contient plusieurs, puis cliquez sur [[Analyser ces opérations]].
+
+### Rien n'est inventé
+
+Chaque valeur proposée figure dans le document. Si le PDF ne contient aucun texte lisible (scan sans moteur de reconnaissance de caractères), le formulaire l'indique : « Aucun texte lisible dans ce document : saisissez l'opération à la main. ».
+
+## Le logiciel apprend vos avis d'opéré : les modèles appris
+<!-- fiche: import-pdf-modeles-appris | questions: le logiciel apprend il mes avis d'opéré ; je dois remplir le formulaire à chaque fois pour le même courtier ; c'est quoi un modèle appris ; avis lu avec le modèle appris lors d'une saisie précédente ; où est stocké modeles_pdf.json ; le modèle garde t il mes montants ; sens S ou A sur mon avis d'opéré ; pourquoi le formulaire revient alors que j'ai déjà rempli ce type d'avis ; oublier un modèle appris | mots: modèle appris, apprentissage, modeles_pdf.json, intitulés, empreinte, hachage, code de sens, pdf_modele, mise en page -->
+
+Certains avis d'opéré utilisent des intitulés que le logiciel ne connaît pas (« Nominal exécuté », « Px moyen », « Sens : S »…). La première fois, le formulaire [[Compléter l'opération]] vous fait compléter l'opération. Le logiciel en profite pour **apprendre la présentation** du document.
+
+### Ce qui est retenu
+
+Quand vous cliquez sur [[Ajouter cette opération]] pour un achat ou une vente, le logiciel enregistre un « modèle » de ce type de document :
+
+- pour la quantité, le cours, les frais et le montant (quantité × cours, s'il est écrit) : l'**intitulé** écrit juste avant la valeur que vous avez choisie (au plus trois mots) et sa place sur la ligne ;
+- l'intitulé écrit juste avant la date retenue ;
+- si le sens n'est écrit qu'en code (« Sens : S », « Op. : A ») et qu'aucun mot comme achat ou vente ne figure dans le document : la correspondance entre ce code et le type choisi (par exemple « s » pour VENTE) ;
+- le **vocabulaire** du document, mais seulement sous forme d'empreintes (hachage) : les mots eux-mêmes ne sont pas lisibles dans le fichier.
+
+Aucun montant, aucune quantité, aucun nom n'est enregistré en clair. Le modèle n'est retenu que si les intitulés de la quantité et du cours ont été trouvés. Les dividendes ne sont pas appris.
+
+### La fois suivante
+
+Si aucune autre lecture n'aboutit, le logiciel compare le vocabulaire du nouveau document à celui des modèles. Si la ressemblance atteint **0,6** (60 % de mots en commun, mesurés sur l'ensemble des mots des deux documents), il lit les valeurs placées après les intitulés appris. L'opération n'est acceptée que si un ISIN, une quantité, un cours et une date sont trouvés ; si le modèle connaît l'intitulé du montant, quantité × cours doit en plus retomber sur ce montant (à 1 % près, ou à quelques centimes près une fois les frais ajoutés ou retirés). Le résumé indique alors : « Avis d'opéré PDF lu avec le modèle appris lors d'une saisie précédente : vérifiez l'opération (onglet « Transactions »). ».
+
+Le sens est lu dans le document (achat, vente…) ; à défaut, dans le code de sens appris ; si le document n'a ni mot de sens ni code, le type choisi lors de l'apprentissage est repris. Si le document porte un code de sens jamais vu (par exemple « Sens : R » alors que seuls « A » et « S » ont été appris), le formulaire réapparaît : vous choisissez le type, et le nouveau code est appris à son tour.
+
+### Où sont les modèles
+
+Dans le fichier `modeles_pdf.json` du dossier de la base de titres (`data/base`). Les 50 derniers modèles sont gardés ; un document très ressemblant à un modèle existant le remplace, en conservant les codes de sens déjà appris. Le fichier est commun à tous les utilisateurs de l'ordinateur. Le logiciel ne propose pas d'écran pour l'effacer : pour oublier tous les modèles, supprimez ce fichier.
 
 ## Un PDF scanné ou « imprimé » : la reconnaissance de caractères
-<!-- fiche: import-pdf-image | questions: mon pdf est une image ; pdf scanné est il lu ; c'est quoi l'ocr ; j'ai imprimé la page en pdf avec microsoft print to pdf ; reconnaissance de caractères comment ça marche ; mon pdf est tourné en paysage ; l'isin est mal lu ; rapidocr ou tesseract ; ça prend du temps à lire le pdf | mots: OCR, reconnaissance de caractères, PDF image, scan, RapidOCR, Tesseract, rotation, ISIN mal lu, Microsoft Print to PDF -->
+<!-- fiche: import-pdf-image | questions: mon pdf est une image ; pdf scanné est il lu ; c'est quoi l'ocr ; j'ai imprimé la page en pdf avec microsoft print to pdf ; reconnaissance de caractères comment ça marche ; mon pdf est tourné en paysage ; l'isin est mal lu ; rapidocr ou tesseract ; ça prend du temps à lire le pdf ; mon scan est pâle et de travers | mots: OCR, reconnaissance de caractères, PDF image, scan, RapidOCR, Tesseract, rotation, redressement, contraste, ISIN mal lu, chiffres mal lus, Microsoft Print to PDF -->
 
 ### PDF texte et PDF image
 
 Un PDF peut contenir du **vrai texte** (chaque caractère est enregistré, comme dans un PDF téléchargé depuis la banque) ou seulement une **image** de la page (scan, photo, ou page web imprimée avec « Microsoft Print to PDF »). Le logiciel considère qu'un PDF est une image quand il contient moins de 20 caractères de texte.
+
+Il existe aussi des PDF au texte **« codé »** : la page s'affiche correctement à l'écran, mais le texte extrait n'est qu'une suite de signes incompréhensibles (par exemple `(cid:12)`). Le logiciel les reconnaît (caractères étranges, très peu de lettres ou aucun mot courant) et les traite exactement comme un scan.
 
 ### La reconnaissance de caractères
 
@@ -664,46 +823,174 @@ Pour un PDF image, le logiciel « regarde » chaque page et y reconnaît les let
 1. **RapidOCR**, bibliothèque qui fonctionne hors connexion, installée avec le fichier `requirements-ocr.txt` et intégrée aux installateurs lorsque leur fabrication a réussi à l'installer ;
 2. à défaut, **Tesseract**, s'il est installé sur l'ordinateur (en français et en anglais si la langue française est disponible).
 
+### Deux tentatives
+
+1. Une **première lecture**, rapide, de l'image de chaque page.
+2. Si elle ne donne aucune opération sûre, une **seconde lecture**, plus lente, sur une image nettoyée et en plus haute résolution (échelle 4 au lieu de 3) : passage en niveaux de gris, contraste étiré, page redressée (l'inclinaison est cherchée entre −3° et +3°, par pas d'un demi-degré), puis passage en noir et blanc pur (seuil d'Otsu, qui sépare automatiquement l'encre du fond). Un scan pâle, granuleux ou légèrement de travers devient ainsi lisible.
+
 ### Les précautions prises
 
 - **Rotation** : chaque page est essayée dans les quatre sens (0°, 90°, 270°, 180°). Le sens retenu est celui qui fait apparaître le plus de codes ISIN valides et de mots utiles (quantité, cours, courtage, achat, vente, date, montant…). Dès qu'un sens est manifestement bon, les autres ne sont pas essayés.
-- **Réparation des ISIN mal lus** : la lettre O lue à la place du chiffre 0 (`FRO013380607`), un I ou un l à la place de 1, S pour 5, B pour 8, Z pour 2, ou un caractère lu en double (`FRO0013380607`). Une correction n'est retenue que si l'ISIN corrigé a une clé de contrôle juste et au moins 6 chiffres : le logiciel n'invente jamais un code. Un mot comme « EURONEXTPARIS » n'est jamais pris pour un ISIN.
+- **Réparation des ISIN mal lus** : la lettre O lue à la place du chiffre 0 (`FRO013380607`), un I ou un l à la place de 1, S pour 5, B pour 8, Z pour 2, ou un caractère lu en double (`FRO0013380607`). Une correction n'est retenue que si l'ISIN corrigé a une clé de contrôle juste, un code pays existant et au moins 4 chiffres : le logiciel n'invente jamais un code. Un mot comme « EURONEXTPARIS » n'est jamais pris pour un ISIN.
+- **Réparation des nombres** : dans un nombre, une lettre lue à la place d'un chiffre est corrigée (O ou o en 0, I, l ou | en 1, S en 5, B en 8) : « 65O,2O » devient « 650,20 ». La correction n'a lieu que dans un groupe qui contient déjà au moins deux vrais chiffres et une virgule ou un point décimal, sans autre lettre : les mots ne sont jamais modifiés.
 - **Mots collés** : la lecture tolère les mots accolés (« VENTECOMPTANT »).
 
-Le texte reconnu est ensuite lu comme un avis d'opéré. La reconnaissance ne lit que des avis d'opéré : un relevé en tableau scanné n'est en général pas exploitable.
+Le texte reconnu est ensuite lu comme un avis d'opéré : d'abord par ses intitulés, puis par son contenu (ISIN, date, `quantité × cours = montant`), puis avec un modèle appris. La reconnaissance ne lit que des avis d'opéré : un relevé en tableau ou un relevé de portefeuille scanné n'est en général pas exploitable. Si aucune opération n'est reconnue, le formulaire [[Compléter l'opération]] propose les valeurs lues.
 
 ### À vérifier systématiquement
 
-La lecture d'une image prend plusieurs secondes et reste moins sûre qu'un PDF texte. Le résumé l'indique : « PDF image lu par reconnaissance de caractères : vérifiez les opérations (onglet « Transactions »). ». Contrôlez la date, la quantité et le cours.
+La lecture d'une image prend plusieurs secondes (davantage si la seconde tentative est nécessaire) et reste moins sûre qu'un PDF texte. Le résumé l'indique : « PDF image lu par reconnaissance de caractères : vérifiez les opérations (onglet « Transactions »). ». Contrôlez la date, la quantité et le cours.
 
 ## Pourquoi mon PDF scanné est-il refusé ?
 <!-- fiche: import-pdf-scan-refuse | questions: pdf scanné refusé ; message impossible à lire automatiquement ; aucune opération n'a été reconnue dans mon pdf image ; pourquoi mon scan ne passe pas ; le logiciel refuse ma photo d'avis d'opéré ; que faire si mon pdf est une image ; installer la reconnaissance de caractères | mots: PDF scanné, refus, PDF image, OCR non installé, message d'erreur, Format PDF, saisie manuelle, requirements-ocr -->
 
-Deux messages peuvent apparaître pour un PDF image.
+Un PDF image n'est plus simplement refusé : quand il n'est pas lu automatiquement, l'un des messages ci-dessous s'affiche en tête du formulaire [[Compléter l'opération]] (voir la fiche « Compléter une opération quand le PDF n'est pas reconnu »).
 
 ### « PDF scanné (image) : impossible à lire automatiquement… »
 
-Aucun moteur de reconnaissance de caractères n'est installé : le PDF ne contient aucun texte à lire. Le message propose trois solutions : exporter le relevé en PDF depuis votre espace bancaire, ou en Excel / CSV, ou saisir l'opération à la main.
+Aucun moteur de reconnaissance de caractères n'est installé : le PDF ne contient aucun texte à lire. Le formulaire indique alors « Aucun texte lisible dans ce document : saisissez l'opération à la main. » : il faut taper les valeurs vous-même.
 
 Si vous lancez le logiciel depuis le code source, vous pouvez installer le moteur avec la commande `python -m pip install -r requirements-ocr.txt`.
 
+### « Le texte de ce PDF est « codé »… »
+
+Le PDF contient du texte, mais il s'extrait en signes incompréhensibles, et aucun moteur de reconnaissance de caractères n'est installé. Même solution : installer le moteur, ou compléter l'opération à la main dans le formulaire.
+
 ### « PDF image (scan, photo ou page imprimée avec « Imprimer en PDF ») : le texte a été lu par reconnaissance de caractères, mais aucune opération n'a été reconnue… »
 
-Le moteur a bien lu la page, mais n'y a pas trouvé à la fois un code ISIN valide, une quantité et une date. Causes possibles : image floue ou de faible résolution, ISIN illisible, document qui n'est pas un avis d'opéré (relevé en tableau, synthèse de portefeuille).
+Le moteur a bien lu la page, deux fois (la seconde sur une image nettoyée et redressée), mais aucune lecture n'a trouvé une opération sûre. Causes possibles : image floue ou de très faible résolution, ISIN illisible, document qui n'est pas un avis d'opéré (relevé en tableau, synthèse de portefeuille). Le formulaire propose alors les dates, codes et nombres lus sur l'image.
 
-### Pourquoi le logiciel refuse plutôt que deviner
+### Pourquoi le logiciel ne devine pas
 
-Une opération mal lue (une quantité de 60 lue 80, un cours décalé d'une virgule) fausserait tous les calculs sans que vous le remarquiez. Le logiciel préfère donc refuser clairement un document qu'il ne comprend pas.
+Une opération mal lue (une quantité de 60 lue 80, un cours décalé d'une virgule) fausserait tous les calculs sans que vous le remarquiez. Le logiciel n'ajoute donc automatiquement que ce dont il est sûr ; pour le reste, c'est vous qui validez les valeurs dans le formulaire.
 
 ### Les solutions, de la plus sûre à la moins sûre
 
 1. **Télécharger le vrai PDF** depuis votre espace bancaire, avec le bouton « Format PDF » ou « Télécharger » plutôt que « Imprimer » : le texte est alors lu exactement.
 2. **Exporter les opérations en Excel ou CSV**, si votre banque le propose.
-3. **Saisir l'opération à la main** : page [[Ajouter des opérations]], onglet [[Saisie manuelle]].
-4. Lancer le diagnostic du PDF pour comprendre ce qui a été lu (voir la fiche suivante).
+3. **Compléter l'opération** dans le formulaire proposé, ou la saisir à la main : page [[Ajouter des opérations]], onglet [[Saisie manuelle]].
+4. Lancer le diagnostic du PDF pour comprendre ce qui a été lu, ou préparer un rapport anonymisé à transmettre (voir les fiches suivantes).
+
+## Les contrôles après la lecture d'un PDF
+<!-- fiche: import-pdf-controles | questions: le montant écrit ne correspond pas à quantité × cours ; opération datée d'un samedi jour sans bourse ; frais de plus de 3 % vérifiez les frais ; la même opération apparaît deux fois avis envoyé en double ; quels contrôles après la lecture d'un pdf ; messages dans le résumé de la barre latérale après un pdf ; le logiciel vérifie t il mon avis d'opéré ; date d'exécution un dimanche | mots: contrôles, vérification, montant écrit, quantité × cours, week-end, jour sans bourse, frais élevés, 3 %, doublon, avis en double, résumé -->
+
+Après la lecture d'un PDF envoyé depuis la barre latérale, le logiciel passe chaque opération au crible de quatre contrôles. Ils ne bloquent rien : chaque point repéré est ajouté au résumé de la barre latérale, pour que vous le vérifiiez dans l'onglet [[Transactions]].
+
+### Les quatre contrôles
+
+| Contrôle | Message affiché dans le résumé |
+|---|---|
+| Le montant écrit dans l'avis ne retombe pas sur `quantité × cours`, frais ajoutés ou retirés, à 1 % près | « [ISIN] : le montant écrit ([montant]) ne correspond pas à quantité × cours ± frais ([calcul]) : vérifiez la quantité et le cours. » |
+| Achat ou vente daté d'un samedi ou d'un dimanche | « [ticker] : opération datée d'un samedi ([date]), jour sans bourse : vérifiez la date d'exécution. » |
+| Frais supérieurs à 3 % du montant `quantité × cours` | « [ticker] : frais de [frais] pour un montant de [montant] (plus de 3 %) : vérifiez les frais. » |
+| Même opération deux fois (même date, type, titre, quantité et prix) | « [ticker] : la même opération apparaît deux fois ([date]) : avis envoyé en double ? » |
+
+### Ce que chaque message signale le plus souvent
+
+- **Montant incohérent** : une quantité ou un cours mal lu (une virgule déplacée, un chiffre mal reconnu sur un scan). Ce contrôle porte sur les avis d'opéré, pas sur les relevés en tableau, et ignore les dividendes.
+- **Jour sans bourse** : la date d'édition ou de règlement a été prise pour la date d'exécution.
+- **Frais élevés** : un montant pris pour des frais, ou de vrais frais élevés sur un petit ordre. Exemple : 2 titres à 50 € (100 €) avec 4,90 € de courtage : 4,9 % du montant, le message apparaît. Pour 30 titres à 172,46 € (5 173,80 €) avec 20,69 € de frais, soit 0,4 %, rien n'est signalé.
+- **Doublon** : le même avis présent deux fois dans le PDF.
+
+### Le cas de plusieurs fichiers
+
+Quand plusieurs fichiers sont envoyés ensemble, les contrôles de chaque fichier sont réunis, et une opération présente dans deux fichiers n'est comptée qu'une fois ; le résumé le précise : « … opération(s) présente(s) dans deux fichiers comptée(s) une seule fois. ».
+
+### Que faire
+
+Ouvrez l'onglet [[Transactions]] et comparez l'opération à votre avis. Une erreur se corrige avec [[Modifier les opérations]].
+
+Ces contrôles ne sont pas affichés sur la page [[Ajouter des opérations]], qui a ses propres contrôles avant enregistrement (voir la fiche « Quels contrôles bloquent l'enregistrement ? »).
+
+## Importer un relevé de portefeuille PDF (positions et PRU)
+<!-- fiche: import-releve-portefeuille-pdf | questions: importer mon relevé de portefeuille pdf ; je n'ai que la liste de mes positions avec le pru ; relevé de compte titres avec valorisation et prix de revient ; état du portefeuille pdf est il accepté ; portfolio statement pdf ; pourquoi ma performance commence à la date du relevé ; mes positions sont devenues des achats ; comment partir de mon portefeuille actuel sans l'historique | mots: relevé de portefeuille, positions, PRU, prix de revient, valorisation, portefeuille de départ, pdf_positions, état du portefeuille, statement of holdings | aller: Analyse du portefeuille/Positions -->
+
+Un **relevé de portefeuille** (ou « état du portefeuille », « valorisation du portefeuille ») liste les titres détenus à une date, avec leur quantité, leur cours, leur valorisation et souvent le prix de revient unitaire (PRU). Le logiciel peut s'en servir comme **portefeuille de départ**.
+
+### Comment il est reconnu
+
+Le PDF doit contenir un titre comme « Relevé de portefeuille », « Relevé de compte-titres », « Portefeuille titres », « État du portefeuille », « Valorisation du portefeuille », « Inventaire du portefeuille », « Estimation du portefeuille », « Positions au », « Portfolio statement » ou « Statement of holdings », et au moins un code ISIN.
+
+Pour chaque ligne de titre, le logiciel cherche :
+
+- `quantité × cours = valorisation`, au centime près ;
+- le **PRU** : le nombre précédé de « PRU », « prix de revient », « prix moyen », « PAM » ou « cost price » ; sinon, un nombre de la ligne compris entre le tiers et le triple du cours, confirmé si `quantité × (cours − PRU)` est égal à la plus-value écrite ;
+- la **date du relevé** : une date précédée de « au », « arrêté au », « en date du », « situation », « as of »…, sinon la première date du document.
+
+Si une seule ligne n'est pas sûre, ou s'il manque la date, le document n'est pas lu comme un relevé de portefeuille : le logiciel passe aux autres lectures.
+
+### Ce que devient chaque position
+
+Chaque position devient un **achat** de la quantité détenue, au PRU (ou, sans PRU, au cours du relevé), daté du jour du relevé, sans frais.
+
+Exemple : la ligne `LVMH FR0000121014 10 650,20 731,00 7 310,00 808,00` d'un relevé « Positions au 31/12/2023 » se lit : 10 × 731,00 = 7 310,00 (valorisation) ; PRU 650,20, confirmé car 10 × (731,00 − 650,20) = 808,00, la plus-value écrite. Elle devient : `2023-12-31, ACHAT, MC.PA, 10 titres à 650,20 €`.
+
+### Ce qu'il faut savoir
+
+Le résumé de la barre latérale le rappelle : « Relevé de portefeuille PDF : chaque position est reprise comme un achat au prix de revient (PRU), à la date du relevé ; la performance est donc mesurée à partir de cette date. ».
+
+- L'historique antérieur (dates d'achat réelles, ventes, dividendes passés) n'est pas connu.
+- Le PRU pouvant être éloigné du cours de ce jour-là, une note « prix éloigné(s) du cours du jour » peut apparaître : c'est normal ici.
+- La lecture ne vaut que pour un PDF texte, pas pour un relevé scanné.
+- Ajoutez ensuite vos nouvelles opérations avec [[Ajouter des opérations]].
+
+## Mon PDF est protégé par un mot de passe
+<!-- fiche: import-pdf-protege | questions: mon pdf est protégé par un mot de passe ; la banque m'envoie des pdf avec mot de passe ; quel mot de passe pour ouvrir mon relevé ; mot de passe du pdf où le saisir ; mot de passe incorrect pour mon pdf ; le mot de passe du pdf est il enregistré ; pdf chiffré ; ouvrir un pdf verrouillé | mots: PDF protégé, mot de passe, PDF chiffré, verrouillé, déchiffrement, date de naissance, identifiant client, pypdfium2 -->
+
+Certaines banques envoient leurs relevés et avis d'opéré dans des PDF protégés par un mot de passe. Le logiciel sait les ouvrir, à condition que vous lui donniez ce mot de passe.
+
+### Ce qui s'affiche
+
+À l'envoi d'un tel PDF (zone [[Envoyer un fichier (CSV, Excel ou PDF)]] de la barre latérale, ou page [[Ajouter des opérations]]), un encadré [[PDF protégé]] apparaît avec le nom du fichier et le message :
+
+« PDF protégé par un mot de passe : saisissez-le pour l'ouvrir (souvent indiqué dans le courriel de la banque : date de naissance, identifiant client…). Il n'est pas enregistré. »
+
+1. Tapez le mot de passe dans le champ [[Mot de passe du PDF]].
+2. Cliquez sur [[Ouvrir le PDF]].
+3. Le document est déchiffré, puis lu normalement (lecture automatique, sinon formulaire [[Compléter l'opération]]).
+
+Si le mot de passe est faux, le message « Mot de passe incorrect. » s'affiche : réessayez.
+
+### Que devient le mot de passe ?
+
+- Le **mot de passe** n'est conservé nulle part : il sert une seule fois, à produire une copie sans protection du document.
+- Cette **copie déchiffrée** est gardée en mémoire pendant la session, pour ne pas vous redemander le mot de passe à chaque action. Elle n'est pas écrite sur le disque et disparaît à la fermeture du logiciel.
+- Si vous enregistrez ensuite le portefeuille dans votre espace, ce sont les opérations lues qui sont enregistrées, chiffrées, pas le PDF.
+
+### Dans « Mon compte »
+
+La rubrique [[Ajouter un portefeuille]] de [[Mon compte]] ne demande pas de mot de passe : envoyez un PDF protégé depuis la barre latérale.
+
+## Envoyer plusieurs fichiers d'un coup
+<!-- fiche: import-plusieurs-fichiers | questions: envoyer plusieurs fichiers en même temps ; importer tous mes avis d'opéré d'un coup ; j'ai 10 pdf comment les mettre ensemble ; plusieurs fichiers dans la barre latérale ; analyser les opérations déjà lues ; fichiers envoyés en attente ; un avis est dans deux fichiers est il compté deux fois ; réunir plusieurs relevés dans un portefeuille ; déposer tous mes pdf en une seule fois | mots: plusieurs fichiers, lot, envoi multiple, en une fois, d'un coup, Fichiers envoyés, avis d'opéré, fusion, en attente, doublons, barre latérale -->
+
+La zone [[Envoyer un fichier (CSV, Excel ou PDF)]] de la barre latérale accepte plusieurs fichiers à la fois : par exemple tous les avis d'opéré d'une année, ou un export CSV et quelques avis PDF. Leurs opérations sont réunies dans un même portefeuille.
+
+### Ce qui se passe
+
+Un encadré [[Fichiers envoyés]] s'affiche à la place du tableau de bord et traite chaque fichier :
+
+- un fichier lu automatiquement affiche « [nom] : [n] opération(s) lue(s). » ;
+- un PDF protégé affiche l'encadré [[PDF protégé]] pour saisir son mot de passe (voir la fiche dédiée) ;
+- un PDF non reconnu ouvre le formulaire [[Compléter l'opération]] ; une fois validé, son opération rejoint les autres ;
+- un CSV ou un Excel non reconnu affiche sa raison et le conseil « Envoyez ce fichier seul pour ouvrir l'assistant d'import. » : l'assistant d'import ne s'ouvre pas pour un lot.
+
+Quand tous les fichiers sont lus, l'analyse démarre. Tant que certains attendent, la liste « En attente : … » les nomme, et le bouton « Analyser les [n] opération(s) déjà lues » permet d'analyser sans eux.
+
+### Les doublons entre fichiers
+
+Une opération présente dans plusieurs fichiers (même date, même type, même titre, même quantité, même prix) n'est comptée qu'**une fois**. Le résumé de la barre latérale l'indique : « … opération(s) présente(s) dans deux fichiers comptée(s) une seule fois. ». Il reprend aussi les contrôles de chaque fichier (voir la fiche « Les contrôles après la lecture d'un PDF »).
+
+### Garder le résultat
+
+Comme pour un fichier seul, connecté, le bloc [[Enregistrer dans mon espace]] apparaît sous la zone d'envoi ; le nom proposé est du type « 3 fichiers ». Sans compte, le résultat ne vaut que pour la session.
+
+### Pour compléter un portefeuille existant
+
+Pour ajouter des avis à un portefeuille déjà enregistré, utilisez plutôt la page [[Ajouter des opérations]], dont la zone [[Fichiers (CSV, Excel ou PDF)]] accepte aussi plusieurs fichiers et repère les opérations déjà présentes dans le portefeuille.
 
 ## Diagnostiquer un PDF mal lu avec diagnostic_pdf.py
-<!-- fiche: import-diagnostic-pdf | questions: comment savoir ce que le logiciel lit dans mon pdf ; diagnostic_pdf.py à quoi ça sert ; mon avis d'opéré est mal lu comment le signaler ; voir le texte extrait du pdf ; envoyer un rapport de lecture pdf ; diagnostic_pdf.txt ; debug pdf | mots: diagnostic, diagnostic_pdf.py, diagnostic_pdf.txt, débogage, texte extrait, PDF mal lu, signalement, terminal -->
+<!-- fiche: import-diagnostic-pdf | questions: comment savoir ce que le logiciel lit dans mon pdf ; diagnostic_pdf.py à quoi ça sert ; mon avis d'opéré est mal lu comment le signaler ; voir le texte extrait du pdf ; envoyer un rapport de lecture pdf ; diagnostic_pdf.txt ; debug pdf | mots: diagnostic, diagnostic_pdf.py, diagnostic_pdf.txt, diagnostic_pdf_anonyme.txt, débogage, texte extrait, PDF mal lu, signalement, terminal, anonyme -->
 
 Le script `diagnostic_pdf.py`, à la racine du projet, montre exactement ce que le logiciel lit dans un PDF. Il s'adresse surtout à ceux qui disposent du code source (étudiants, développeurs) et sert à comprendre ou à faire corriger une mauvaise lecture.
 
@@ -713,20 +1000,71 @@ Dans un terminal ouvert dans le dossier du projet (par exemple le terminal de VS
 
 ```
 python diagnostic_pdf.py "C:\chemin\vers\avis.pdf"
+python diagnostic_pdf.py "C:\chemin\vers\avis.pdf" --anonyme
 ```
+
+La seconde forme produit un rapport sans données personnelles (voir plus bas).
 
 ### Ce qu'il affiche
 
 - le nom et la taille du fichier, le nombre de pages et le nombre de caractères de texte intégré ;
 - **PDF texte** (au moins 20 caractères) : la mention « PDF TEXTE (lecture exacte) », puis le texte de chaque page et chaque tableau détecté, cellules séparées par `|` ;
-- **PDF image** : le moteur de reconnaissance utilisé (RapidOCR, Tesseract ou AUCUN), puis, pour la première page, le texte lu dans chacun des quatre sens avec son score, et le texte finalement retenu après correction des ISIN ;
-- enfin le **résultat** : le tableau d'opérations obtenu et sa nature (`pdf_tableau` pour un relevé, `pdf_avis` pour un avis d'opéré, `pdf_ocr` pour une lecture par reconnaissance de caractères), ou le message d'erreur.
+- **PDF image** ou texte « codé » : le moteur de reconnaissance utilisé (RapidOCR, Tesseract ou AUCUN), puis, pour la première page, le texte lu dans chacun des quatre sens avec son score, et le texte finalement retenu après correction des ISIN et des nombres ;
+- la **lecture par le contenu** : codes ISIN, dates, date proposée, proposition d'opération et nombres trouvés avec leur contexte (ce que proposerait le formulaire) ;
+- enfin le **résultat** : le tableau d'opérations obtenu et sa nature, ou le message d'erreur.
+
+| Nature | Lecture |
+|---|---|
+| `pdf_tableau` | relevé d'opérations en tableau |
+| `pdf_avis` | avis d'opéré lu par ses intitulés |
+| `pdf_contenu` | avis d'opéré lu par son contenu |
+| `pdf_modele` | avis d'opéré lu avec un modèle appris |
+| `pdf_positions` | relevé de portefeuille (positions et PRU) |
+| `pdf_ocr` | lecture par reconnaissance de caractères |
+
+Un PDF protégé par un mot de passe ne peut pas être diagnostiqué ainsi : le script s'arrête sur le message de PDF protégé.
 
 ### Le rapport
 
-Le résultat est aussi enregistré dans le fichier `diagnostic_pdf.txt`, à côté du script. C'est ce fichier qu'il faut transmettre pour faire corriger une mauvaise lecture.
+Le résultat est aussi enregistré dans le fichier `diagnostic_pdf.txt`, à côté du script. Attention : ce fichier contient tout le texte de votre document.
 
-Attention : il contient le texte de votre document. Masquez votre nom et votre numéro de compte avant de l'envoyer.
+Avec `--anonyme`, le rapport est enregistré dans `diagnostic_pdf_anonyme.txt` : noms, lignes d'adresse, adresses électroniques, IBAN, téléphones et numéros de compte ou de référence y sont masqués ; les codes ISIN, les dates et les montants sont gardés. C'est ce fichier qu'il faut transmettre pour faire corriger une mauvaise lecture (voir la fiche « Envoyer un PDF mal lu sans données personnelles »).
+
+## Envoyer un PDF mal lu sans données personnelles : le rapport anonymisé
+<!-- fiche: import-rapport-anonymise | questions: comment signaler un pdf mal lu sans donner mes infos perso ; préparer un rapport anonymisé ça fait quoi ; rapport_lecture_pdf_anonymise.txt ; est ce que mon nom et mon iban sont enlevés ; envoyer mon avis d'opéré au créateur du logiciel ; diagnostic anonyme ; ajouter un vrai avis au banc d'essai ; dossier vrais_avis et attendus.csv | mots: rapport anonymisé, anonymisation, données personnelles, masquage, IBAN, numéro de compte, vrais_avis, attendus.csv, banc d'essai, signalement, diagnostic -->
+
+Pour qu'un type d'avis mal lu soit mieux reconnu dans une prochaine version, le créateur du logiciel a besoin de son texte, pas de vos données personnelles. Le logiciel prépare donc un **rapport anonymisé**.
+
+### Depuis le logiciel
+
+Dans le formulaire [[Compléter l'opération]], ouvrez l'encadré [[Texte lu dans le document]] et cliquez sur [[Préparer un rapport anonymisé]]. Le fichier `rapport_lecture_pdf_anonymise.txt` est téléchargé. Il contient : le nom du fichier, l'indication d'un texte « codé », les codes ISIN et les dates trouvés, la date et l'opération proposées, puis le texte lu, anonymisé.
+
+Rien n'est envoyé automatiquement : c'est vous qui transmettez ce fichier, si vous le souhaitez.
+
+### Depuis le code source
+
+`python diagnostic_pdf.py fichier.pdf --anonyme` produit le même rapport, suivi du résultat de la lecture, dans `diagnostic_pdf_anonyme.txt`.
+
+### Ce qui est masqué, ce qui est gardé
+
+| Masqué | Gardé |
+|---|---|
+| lignes contenant un nom ou une adresse (Monsieur, Madame, titulaire, client, adresse, numéro et nom de rue, code postal suivi d'une ville) | codes ISIN |
+| adresses électroniques, remplacées par « [e-mail] » | dates |
+| IBAN, remplacés par « [IBAN] » | montants, cours, quantités |
+| numéros de téléphone, remplacés par « [téléphone] » | intitulés (« Quantité », « Cours », « Courtage »…) |
+| numéros de compte, de référence, d'ordre, SIREN…, et longues suites de chiffres, remplacés par « [numéro] » | |
+
+Le masquage est automatique : relisez le fichier avant de l'envoyer, une donnée écrite de façon inhabituelle pouvant lui échapper.
+
+### Le banc d'essai des vrais avis
+
+Le projet vérifie sa lecture des PDF sur 20 avis fictifs aux présentations très différentes (intitulés variés, anglais, colonnes sans traits, scans pâles, granuleux et de travers, texte « codé », relevé de portefeuille…), dans `tests/avis_fictifs.py` et `tests/test_pdf_universel.py`. Le dossier `tests/donnees/vrais_avis/` accueille en plus de **vrais** avis anonymisés. Son fichier `README.md` explique la marche à suivre :
+
+1. masquer les données personnelles (rapport anonymisé ci-dessus ; pour le PDF lui-même, le noircir avec un logiciel de PDF) ;
+2. copier le PDF dans ce dossier ;
+3. ajouter une ligne par opération dans `attendus.csv`, au format `fichier;date;sens;isin;quantite;cours;frais` (date JJ/MM/AAAA, nombres avec un point décimal, frais vide si inconnus) ;
+4. lancer `python -m pytest tests/test_pdf_universel.py` : chaque document doit être lu exactement comme indiqué.
 
 ## Comment vérifier ce que le logiciel a lu ?
 <!-- fiche: import-verifier | questions: comment vérifier mon import ; est-ce que toutes mes opérations ont été importées ; où voir les transactions importées ; prix éloigné du cours du jour c'est grave ; le résumé dans la barre latérale ; combien d'opérations ont été lues ; contrôle qualité de l'import ; division d'actions détectée | mots: vérification, résumé de l'import, onglet Transactions, alerte de prix, écart, contrôle qualité, nombre d'opérations, split, division d'actions | aller: Analyse du portefeuille/Transactions | chiffres: nb_operations -->
@@ -735,7 +1073,7 @@ Après un import, prenez une minute pour contrôler le résultat. Le logiciel vo
 
 ### 1. Le résumé de la barre latérale
 
-Après un import automatique, un encadré résume ce qui a été compris : nombre d'opérations et de titres, PDF lu, colonnes identifiées sans ligne de titres, tickers et ISIN convertis, ordre des dates, lignes ignorées, conversions de devise. En bas de la barre latérale, la ligne « Opérations » rappelle le nombre d'opérations analysées. Comparez-le au nombre de lignes de votre relevé.
+Après un import automatique, un encadré résume ce qui a été compris : nombre d'opérations et de titres, PDF lu (et de quelle façon), cours remplacés grâce au cours du marché, points à vérifier après la lecture d'un PDF, colonnes identifiées sans ligne de titres, tickers et ISIN convertis, ordre des dates, lignes ignorées, conversions de devise. En bas de la barre latérale, la ligne « Opérations » rappelle le nombre d'opérations analysées. Comparez-le au nombre de lignes de votre relevé.
 
 ### 2. Les alertes sur les prix
 
@@ -744,7 +1082,7 @@ Chaque prix d'achat et de vente est comparé au cours de clôture du jour. Si de
 Causes possibles :
 - **mauvais ticker** (homonyme sur une autre place) ;
 - **mauvaise devise** (euros lus comme des dollars, livres au lieu de pence) ;
-- **division d'actions** : après une division, l'historique de cours peut ne plus correspondre au prix payé à l'époque ;
+- **division d'actions** : après une division, l'historique de cours peut ne plus correspondre au prix payé à l'époque (voir la fiche « Division ou regroupement d'actions ») ;
 - simple erreur de saisie dans le fichier.
 
 Une alerte n'empêche pas l'analyse : c'est à vous de juger.
@@ -798,11 +1136,11 @@ La page indique le portefeuille concerné. [[Retour au tableau de bord]] la refe
 
 ### Trois façons d'ajouter
 
-- **Onglet [[Depuis un fichier]]** : zone [[Fichiers (CSV, Excel ou PDF)]], qui accepte plusieurs fichiers à la fois (plusieurs avis d'opéré, un export des dernières opérations…). Chaque fichier passe par la même lecture automatique qu'à l'envoi principal ; le message indique le nombre d'opérations lues, par exemple « avis.pdf : 1 opération(s) lue(s). ». Un fichier déjà lu sur la page n'est pas relu.
+- **Onglet [[Depuis un fichier]]** : zone [[Fichiers (CSV, Excel ou PDF)]], qui accepte plusieurs fichiers à la fois (plusieurs avis d'opéré, un export des dernières opérations…). Chaque fichier passe par la même lecture automatique qu'à l'envoi principal ; le message indique le nombre d'opérations lues, par exemple « avis.pdf : 1 opération(s) lue(s). ». Un fichier déjà lu sur la page n'est pas relu. Un PDF protégé demande d'abord son mot de passe (encadré [[PDF protégé]]). Un avis de division ou de regroupement d'actions ouvre l'encadré [[Opération sur titres]] (voir la fiche « Division ou regroupement d'actions »).
 - **Onglet [[Saisie manuelle]]** : un ordre saisi au clavier (voir la fiche dédiée).
 - Les deux peuvent se combiner : toutes les opérations s'accumulent dans la même liste.
 
-Si un fichier n'est pas compris automatiquement, la raison s'affiche. Cette page n'a pas d'assistant d'import : pour un format inhabituel, envoyez d'abord le fichier depuis la barre latérale, téléchargez le fichier converti, puis ajoutez-le ici.
+Si un fichier n'est pas compris automatiquement, la raison s'affiche ; pour un PDF, le formulaire [[Compléter l'opération]] s'ouvre avec les valeurs trouvées (voir la fiche dédiée). Cette page n'a pas d'assistant d'import : pour un format inhabituel, envoyez d'abord le fichier depuis la barre latérale, téléchargez le fichier converti, puis ajoutez-le ici.
 
 ### La vérification avant enregistrement
 
@@ -815,6 +1153,49 @@ Cliquez sur [[Enregistrer les opérations]]. Les opérations retenues sont fusio
 - Fichier envoyé ou portefeuille d'exemple : l'ajout vaut pour la session ; téléchargez le fichier mis à jour pour le garder.
 
 [[Tout effacer]] vide la liste en cours sans rien enregistrer.
+
+## Division ou regroupement d'actions : ajuster les opérations antérieures
+<!-- fiche: import-division-actions | questions: mon action a fait un split comment le saisir ; division d'actions par 4 que faire ; regroupement d'actions 10 pour 1 ; avis d'opération sur titres pdf ; appliquer aux opérations antérieures ça fait quoi ; après une division ma valeur est fausse ; reverse split ; parité 1 ancienne pour 4 nouvelles ; comment corriger mes quantités après un split | mots: division d'actions, split, regroupement, reverse split, opération sur titres, OST, parité, nominal, ajustement, Appliquer aux opérations antérieures -->
+
+Après une **division** (« split ») ou un **regroupement** d'actions, Yahoo Finance corrige rétroactivement ses cours. Vos anciennes opérations, elles, sont toujours exprimées dans les anciennes unités : il faut les ajuster. Le logiciel le fait à partir de l'avis d'opération sur titres envoyé par votre courtier.
+
+### Comment faire
+
+1. Ouvrez la page [[Ajouter des opérations]] du portefeuille, onglet [[Depuis un fichier]].
+2. Déposez l'avis de division ou de regroupement (PDF texte) dans la zone [[Fichiers (CSV, Excel ou PDF)]].
+3. L'encadré [[Opération sur titres]] résume ce qui a été lu, par exemple « Division de Michelin (ML.PA) le 16/06/2023 : 1 ancienne → 4 nouvelles. », puis le nombre d'opérations qui seront converties.
+4. Cliquez sur [[Appliquer aux opérations antérieures]].
+
+### Ce que le logiciel reconnaît
+
+- les mots « division » (du nominal, d'actions), « split », « fractionnement », « regroupement », « reverse split » ;
+- un code ISIN ;
+- la parité : « divisé par 4 », « 1 action ancienne pour 4 actions nouvelles », « 10 actions anciennes pour 1 action nouvelle », « parité : 1 pour 4 » ;
+- la date d'effet : « date d'effet », « ex-date », « détachement », « à compter du »…, sinon la date d'exécution.
+
+### Le calcul
+
+Le facteur est le nombre de titres nouveaux pour un ancien : 4 pour une division par 4, 0,1 pour un regroupement de 10 en 1. Pour chaque **achat ou vente de ce titre daté d'avant la date d'effet** :
+
+```
+nouvelle quantité = quantité × facteur
+nouveau prix      = prix ÷ facteur
+```
+
+Le montant (quantité × prix) ne change pas, et les cours de Yahoo Finance, déjà ajustés, correspondent de nouveau à vos prix. Les **dividendes** (montants totaux) ne changent pas, ni les opérations postérieures à la date d'effet.
+
+Exemple : 10 Michelin achetées 120 € le 01/03/2022, division par 4 le 16/06/2023. L'achat devient 40 titres à 30 € (10 × 120 = 40 × 30 = 1 200 €). Un dividende de 45 € reçu en 2023 et un achat du 01/09/2023 restent tels quels.
+
+### L'enregistrement
+
+L'ajustement est enregistré comme les autres modifications : le message « … opération(s) de … ajustée(s). » le confirme.
+
+- Portefeuille de votre espace : réenregistré chiffré, la version précédente reste récupérable avec [[Annuler la dernière modification]].
+- Fichier envoyé ou portefeuille d'exemple : l'ajustement vaut pour la session ; téléchargez le fichier mis à jour.
+
+### Si l'avis n'est pas reconnu
+
+Sans opération du titre avant la date d'effet, l'encadré indique qu'il n'y a rien à ajuster. Si l'avis n'est pas lu (scan, parité absente), corrigez vous-même dans l'onglet Transactions avec [[Modifier les opérations]] : quantité multipliée et prix divisé par le même facteur. Les autres opérations sur titres (fusions, scissions, attributions gratuites) ne sont pas traitées automatiquement.
 
 ## Saisir un ordre à la main
 <!-- fiche: import-saisie-manuelle | questions: comment saisir un achat à la main ; ajouter une opération manuellement ; saisie manuelle d'un dividende ; je n'ai pas de fichier je veux taper mon ordre ; quel prix mettre dans la saisie manuelle ; titre introuvable en saisie manuelle ; saisir un ordre avec l'isin ; le prix est en euros ou en dollars dans la saisie | mots: saisie manuelle, formulaire, ordre, ajout manuel, ticker, ISIN, code Bloomberg, Ajouter à la liste -->
@@ -883,7 +1264,7 @@ Si vous avez vraiment passé deux ordres identiques le même jour au même prix,
 
 ### Hors de la page d'ajout
 
-Cette détection ne s'applique qu'à la page [[Ajouter des opérations]]. Un fichier complet envoyé depuis la barre latérale est lu tel quel : s'il contient deux fois la même ligne, elle sera comptée deux fois. Supprimez alors la ligne en trop dans l'onglet Transactions.
+Cette détection ne s'applique qu'à la page [[Ajouter des opérations]]. Un fichier complet envoyé seul depuis la barre latérale est lu tel quel : s'il contient deux fois la même ligne, elle sera comptée deux fois (pour un PDF, le résumé le signale : « … la même opération apparaît deux fois … »). Supprimez alors la ligne en trop dans l'onglet Transactions. Quand plusieurs fichiers sont envoyés ensemble, une opération identique (même date, type, titre, quantité et prix) n'est comptée qu'une fois.
 
 ## Quels contrôles bloquent l'enregistrement ?
 <!-- fiche: import-controles | questions: pourquoi je ne peux pas enregistrer ; le bouton enregistrer est grisé ; vente de titres mais seulement 0 détenus ; opération datée dans le futur ; quantité ou prix nul message ; vente à découvert refusée ; message rouge dans la vérification ; le portefeuille ne peut pas être vide | mots: contrôles, blocage, vente à découvert, date future, quantité nulle, prix nul, cohérence, validation, erreur bloquante -->
@@ -1039,7 +1420,11 @@ La liste ne propose pas de les masquer ; ils restent disponibles, après vos por
 | « Impossible d'analyser le portefeuille : Vente impossible le … » | Vente de plus de titres que détenus (achat manquant dans l'historique) | Ajoutez l'achat manquant ou corrigez la quantité |
 | « Prix non vérifiés avec les cours du marché (pas de connexion). » | Pas d'Internet pendant l'import | Normal hors connexion ; vérifiez les titres étrangers |
 | « … prix éloigné(s) du cours du jour … » | Mauvais ticker, devise ou division d'actions | Voir la fiche sur la vérification de l'import |
-| Messages sur les PDF scannés | PDF image | Voir les fiches sur les PDF image et les scans refusés |
+| Messages sur les PDF scannés ou au texte « codé » | PDF image, ou texte inextractible | Voir les fiches sur les PDF image et les scans refusés |
+| « Opération non reconnue automatiquement dans ce PDF : complétez-la… » | PDF lisible, mais aucune opération sûre | Complétez l'opération dans le formulaire [[Compléter l'opération]] |
+| « PDF protégé par un mot de passe : saisissez-le pour l'ouvrir… » | PDF chiffré par la banque | Saisissez le mot de passe dans [[Mot de passe du PDF]], puis [[Ouvrir le PDF]] |
+| « Mot de passe incorrect. » | Mot de passe du PDF erroné | Vérifiez-le dans le courriel de la banque (date de naissance, identifiant client…) |
+| « … le montant écrit (…) ne correspond pas à quantité × cours ± frais … », « … jour sans bourse … », « … (plus de 3 %) … », « … apparaît deux fois … » | Points repérés après la lecture d'un PDF | Voir la fiche « Les contrôles après la lecture d'un PDF » |
 | Valeurs 1 000 fois trop petites | Séparateur de milliers lu comme décimal (`1.234`) | Retirez le séparateur de milliers dans le fichier |
 | Actions de Londres 100 fois trop chères | Confusion livres et pence | Voir la fiche sur les pence |
 

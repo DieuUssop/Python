@@ -21,7 +21,7 @@ The "Portfolio analysis" workspace has eight tabs, displayed at the top of the m
 
 ### Good to know
 
-- All tabs analyse the same portfolio, with the benchmark index, the risk-free rate and the VaR level chosen in the **Settings** panel of the sidebar.
+- All tabs analyse the same portfolio, with the benchmark index and the risk-free rate chosen in the **Settings** panel of the sidebar; the VaR level is set in the Risk tab.
 - All amounts are expressed **in euros**, including for securities quoted in another currency.
 - Correlations between holdings are not in the Risk tab: they are in the [[Exposures]] tab, [[Correlations]] sub-tab.
 
@@ -776,7 +776,7 @@ A few sentences interpret the distribution: skewness, fat tails, the result of t
 
 ### The setting that matters
 
-The level of the VaRs and the CVaR is set in **Settings**, with the [[VaR confidence level]] slider (90, 95 or 99%).
+The level of the VaRs and the CVaR is set at the top right of this tab, with the [[VaR confidence level]] selector (90, 95 or 99%).
 
 ## Volatility
 <!-- fiche: analyse-volatilite | questions: what is volatility ; how is annualised volatility calculated ; why square root of 252 ; my volatility is 15% is that a lot ; index volatility under the card ; standard deviation of returns ; is my portfolio risky | mots: volatility, standard deviation, risk, √252, annualisation, dispersion, variability | aller: Analyse du portefeuille/Risque | chiffres: volatilite -->

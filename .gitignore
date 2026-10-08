@@ -23,3 +23,5 @@ build_mac/
 installateur_mac/
 diagnostic_pdf.txt
 data/questions_sans_reponse.csv
+diagnostic_pdf_anonyme.txt
+data/base/modeles_pdf.json

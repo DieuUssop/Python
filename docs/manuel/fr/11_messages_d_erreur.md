@@ -227,25 +227,44 @@ Formulations :
 
 Les causes possibles sont détaillées dans la fiche « Un titre est introuvable : les causes possibles ».
 
-## Messages sur les PDF : scan, image, aucune opération trouvée
-<!-- fiche: erreur-pdf | questions: pdf scanné impossible à lire automatiquement ; aucune opération n'a été reconnue dans mon pdf image ; aucune opération trouvée dans ce pdf ; mon avis d'opéré n'est pas lu ; pdf refusé ; pdf imprimé en pdf ne marche pas ; reconnaissance de caractères échoue | mots: PDF, scan, image, OCR, avis d'opéré, relevé, aucune opération, Format PDF, saisie manuelle -->
+## Messages sur les PDF : scan, texte codé, mot de passe, opération non reconnue
+<!-- fiche: erreur-pdf | questions: pdf scanné impossible à lire automatiquement ; aucune opération n'a été reconnue dans mon pdf image ; opération non reconnue automatiquement dans ce pdf ; le texte de ce pdf est codé ; mon avis d'opéré n'est pas lu ; pdf refusé ; pdf imprimé en pdf ne marche pas ; reconnaissance de caractères échoue ; pdf protégé par un mot de passe saisissez-le ; mot de passe incorrect pour ouvrir le pdf | mots: PDF, scan, image, OCR, texte codé, avis d'opéré, relevé, opération non reconnue, Format PDF, formulaire, saisie manuelle, PDF protégé, mot de passe du PDF -->
 
-### Les trois messages
+### Les messages de lecture
 
-| Message (début) | Cause |
+| Message | Cause |
 |---|---|
+| « Opération non reconnue automatiquement dans ce PDF : complétez-la dans le formulaire « Compléter l'opération » (les valeurs trouvées sont proposées). » | PDF texte lisible, mais ni tableau d'opérations, ni avis d'opéré lu avec certitude (par ses intitulés ou par son contenu) |
+| « Le texte de ce PDF est « codé » (il s'affiche correctement mais ne peut pas être extrait) et aucun moteur de reconnaissance de caractères n'est installé. Complétez l'opération dans le formulaire, ou installez la reconnaissance de caractères (requirements-ocr.txt). » | Texte qui s'extrait en signes incompréhensibles, sans moteur de reconnaissance de caractères |
 | « PDF scanné (image) : impossible à lire automatiquement… » | PDF sans texte et aucun moteur de reconnaissance de caractères installé |
-| « PDF image (scan, photo ou page imprimée avec « Imprimer en PDF ») : le texte a été lu par reconnaissance de caractères, mais aucune opération n'a été reconnue… » | Image lue, mais sans ISIN valide, quantité et date à la fois |
-| « Aucune opération trouvée dans ce PDF (ni tableau d'opérations, ni avis d'opéré lisible). » | PDF texte qui n'est ni un relevé en tableau, ni un avis d'opéré reconnaissable |
+| « PDF image (scan, photo ou page imprimée avec « Imprimer en PDF ») : le texte a été lu par reconnaissance de caractères, mais aucune opération n'a été reconnue… » | Image (ou texte codé) lue, mais aucune opération sûre trouvée |
 
-Un PDF est traité comme une image quand il contient moins de 20 caractères de texte.
+Un PDF est traité comme une image quand il contient moins de 20 caractères de texte ; un texte « codé » est traité de la même façon.
+
+### Les messages de mot de passe
+
+| Message | Cause | Solution |
+|---|---|---|
+| « PDF protégé par un mot de passe : saisissez-le pour l'ouvrir (souvent indiqué dans le courriel de la banque : date de naissance, identifiant client…). Il n'est pas enregistré. » | La banque a chiffré le PDF : il ne s'ouvre pas sans mot de passe | Tapez le mot de passe dans [[Mot de passe du PDF]], puis cliquez sur [[Ouvrir le PDF]] (encadré [[PDF protégé]]) |
+| « Mot de passe incorrect. » | Le mot de passe saisi n'ouvre pas le document | Vérifiez-le dans le courriel ou le règlement de votre banque (souvent une date de naissance ou un identifiant client) et réessayez |
+
+Le mot de passe n'est conservé nulle part ; la copie déchiffrée du PDF reste en mémoire le temps de la session. Dans « Mon compte », rubrique « Ajouter un portefeuille », aucun mot de passe n'est demandé : envoyez le PDF depuis la barre latérale (voir le chapitre sur l'import, fiche « Mon PDF est protégé par un mot de passe »).
+
+### Les points à vérifier dans le résumé
+
+Après la lecture d'un PDF, le résumé de la barre latérale peut contenir des messages qui ne bloquent rien mais demandent une vérification : « … le montant écrit (…) ne correspond pas à quantité × cours ± frais (…) : vérifiez la quantité et le cours. », « … opération datée d'un samedi (…), jour sans bourse : vérifiez la date d'exécution. », « … frais de … pour un montant de … (plus de 3 %) : vérifiez les frais. », « … la même opération apparaît deux fois (…) : avis envoyé en double ? ». Il peut aussi indiquer qu'un cours lu a été remplacé par la lecture qui correspond au cours de clôture du jour. Voir le chapitre sur l'import, fiches « Les contrôles après la lecture d'un PDF » et « Vérification du cours lu avec le cours du marché ».
+
+### Ce qui s'affiche
+
+Ces messages ne bloquent plus l'import d'un PDF : ils apparaissent en tête du formulaire [[Compléter l'opération]], qui propose la date, le code ISIN et les nombres trouvés dans le document. Vérifiez-les, corrigez au besoin, puis cliquez sur [[Ajouter cette opération]] (voir le chapitre sur l'import, fiche « Compléter une opération quand le PDF n'est pas reconnu »).
 
 ### Solution, de la plus sûre à la moins sûre
 
 1. Téléchargez le vrai PDF depuis votre espace bancaire (bouton « Format PDF » ou « Télécharger », pas « Imprimer »).
 2. Exportez les opérations en Excel ou CSV.
-3. Saisissez l'opération à la main : [[Ajouter des opérations]], onglet [[Saisie manuelle]].
-4. Depuis le code source, `python diagnostic_pdf.py` montre ce que le logiciel a lu (voir le chapitre sur l'import).
+3. Complétez l'opération dans le formulaire proposé, ou saisissez-la à la main : [[Ajouter des opérations]], onglet [[Saisie manuelle]].
+4. Pour un scan ou un texte codé, installez la reconnaissance de caractères depuis le code source : `python -m pip install -r requirements-ocr.txt`.
+5. Depuis le code source, `python diagnostic_pdf.py` montre ce que le logiciel a lu ; avec `--anonyme`, le rapport ne contient ni nom, ni adresse, ni numéro de compte. Dans le formulaire, [[Préparer un rapport anonymisé]] produit le même type de rapport (voir le chapitre sur l'import).
 
 ## « Pour lire un PDF, installer pdfplumber… » et autres bibliothèques manquantes
 <!-- fiche: erreur-bibliotheques | questions: installer pdfplumber ; installer openpyxl ; installer reportlab ; no module named ; bibliothèque manquante ; le rapport pdf ne se génère pas installer reportlab ; module not found streamlit | mots: bibliothèque, module, pip install, pdfplumber, openpyxl, reportlab, code source, requirements -->
@@ -315,7 +334,7 @@ Tant qu'un de ces messages est affiché, le bouton [[Enregistrer les opérations
 
 ### Les messages
 
-- Sur la page [[Ajouter des opérations]] : le nom du fichier suivi de la raison (par exemple « releve.pdf : Aucune opération trouvée dans ce PDF… »).
+- Sur la page [[Ajouter des opérations]] : le nom du fichier suivi de la raison (par exemple « export.csv : Colonne(s) non reconnue(s) : … »). Un PDF n'est pas refusé de cette façon : le formulaire [[Compléter l'opération]] s'ouvre à la place, avec la raison en tête (par exemple « Opération non reconnue automatiquement dans ce PDF… »).
 - Dans [[Mon compte]], rubrique « Ajouter un portefeuille » : « Ce fichier n'a pas pu être lu automatiquement. Envoyez-le depuis la barre latérale… ».
 
 ### Cause

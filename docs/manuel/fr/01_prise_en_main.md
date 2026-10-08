@@ -4,9 +4,9 @@
 Ce chapitre explique ce qu'est Portfolio Tracker, comment l'installer sous Windows ou sur Mac, comment le lancer et le fermer, ce qui fonctionne sans Internet, comment le mettre à jour ou le désinstaller, et comment l'utiliser en ligne ou depuis son code source. Commencez par ici si vous découvrez le logiciel.
 
 ## Qu'est-ce que Portfolio Tracker et à qui sert-il ?
-<!-- fiche: demarrage-presentation | questions: c'est quoi ce logiciel ; a quoi sert portfolio tracker ; qu'est-ce que je peux faire avec ce programme ; est-ce que c'est un conseil en investissement ; pour qui est fait cet outil ; est-ce que le logiciel se connecte à ma banque ; que fait l'application exactement ; presentation du logiciel | mots: présentation, objectif, fonctionnalités, Master G2C, outil pédagogique, suivi de portefeuille, tableau de bord | aller: Analyse du portefeuille -->
+<!-- fiche: demarrage-presentation | questions: c'est quoi ce logiciel ; a quoi sert portfolio tracker ; qu'est-ce que je peux faire avec ce programme ; est-ce que c'est un conseil en investissement ; pour qui est fait cet outil ; est-ce que le logiciel se connecte à ma banque ; que fait l'application exactement ; presentation du logiciel ; à qui s'adresse ce logiciel ; c'est fait pour quel master ; c'est le projet de l'iae de caen ; que veut dire g2c | mots: présentation, objectif, fonctionnalités, Master G2C, gestion d'actifs, contrôle des risques, conformité, IAE Caen, Université de Caen Normandie, outil pédagogique, suivi de portefeuille, tableau de bord | aller: Analyse du portefeuille -->
 
-Portfolio Tracker est un outil de suivi et d'analyse de portefeuille boursier, réalisé dans le cadre du Master G2C (gestion de patrimoine). Il lit l'historique des opérations d'un portefeuille (achats, ventes, dividendes), le valorise aux cours de marché et calcule les indicateurs utilisés par les professionnels de la gestion.
+Portfolio Tracker est un outil de suivi et d'analyse de portefeuille boursier, réalisé par un étudiant du Master G2C (Gestion d'actifs, Contrôle des risques et Conformité) de l'IAE Caen (Université de Caen Normandie), dans le cadre de sa formation. Il lit l'historique des opérations d'un portefeuille (achats, ventes, dividendes), le valorise aux cours de marché et calcule les indicateurs utilisés par les professionnels de la gestion.
 
 ### Ce qu'il fait
 
@@ -19,7 +19,7 @@ Portfolio Tracker est un outil de suivi et d'analyse de portefeuille boursier, r
 
 ### À qui il s'adresse
 
-Il s'adresse d'abord aux étudiants de master en gestion de patrimoine et à leurs enseignants, mais aussi à tout particulier qui veut comprendre la performance et le risque de son portefeuille.
+Il a été conçu d'abord pour les étudiants et les enseignants du Master G2C de l'IAE Caen : il met en pratique, sur un vrai portefeuille, les trois volets de la formation : la **gestion d'actifs** (mesure et attribution de la performance, allocation, optimisation de Markowitz, backtest de stratégies), le **contrôle des risques** (volatilité, VaR historique, normale et Cornish-Fisher, CVaR, stress tests, budget de risque, diagnostic des expositions) et la **conformité** (contrôles des opérations saisies, traçabilité des sources, données chiffrées et protection des données personnelles). Il peut aussi servir à tout particulier qui veut comprendre la performance et le risque de son portefeuille.
 
 ### Ce qu'il ne fait pas
 

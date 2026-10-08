@@ -99,7 +99,7 @@ $dossiersExclus = @($Travail, $AncienTravail, $Sortie, (Join-Path $Racine ".git"
                     "__pycache__", ".pytest_cache", ".github", ".vscode")
 $fichiersExclus = @("*.bat", "*.ps1", ".installe", "cache_*.csv", "progression.json", "echecs.csv", "*.tmp",
                     "historique.csv", "transactions_sauvegarde.csv", "graphique_*.png", "rapport_portefeuille*.pdf",
-                    "*.zip", ".gitignore", "pytest.ini", "questions_sans_reponse.csv")
+                    "*.zip", ".gitignore", "pytest.ini", "questions_sans_reponse.csv", "modeles_pdf.json")
 robocopy $Racine $Programme /E /NFL /NDL /NJH /NJS /NP /XD $dossiersExclus /XF $fichiersExclus | Out-Null
 if ($LASTEXITCODE -ge 8) { Echec "copie du projet impossible (code robocopy $LASTEXITCODE)." }
 $global:LASTEXITCODE = 0

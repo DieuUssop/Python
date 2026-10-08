@@ -32,3 +32,7 @@ the app is very slow;erreur-lenteur
 port already in use;erreur-port-occupe
 is this investment advice;faq-conseil,analyse-diagnostic
 the help button at the bottom right;ecran-bulle-aide
+my teacher has a pdf that does not work;import-pdf-formulaire,import-pdf-scan-refuse
+my bank sends me a locked pdf with a password;import-pdf-protege,erreur-pdf
+drop all my trade confirmations in one go;import-plusieurs-fichiers,import-ajouter-operations
+my share was split 4 for 1 how do I adjust my purchases;import-division-actions,sources-dividendes-divisions,faq-divisions

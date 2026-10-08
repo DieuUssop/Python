@@ -44,6 +44,7 @@ Pourquoi ? Pour valoriser votre portefeuille au **vrai cours affiché en bourse*
 |---|---|
 | Historique (valeur jour par jour, performance, risque) | les cours de clôture quotidiens depuis la date de votre première opération |
 | Valeur actuelle | les cours des 5 derniers jours ; le logiciel garde la dernière valeur connue de chaque titre |
+| Vérification à l'import | le cours de clôture du jour de chaque opération : contrôle des devises, départage des lectures d'un avis d'opéré PDF, cours rappelé dans le formulaire « Compléter l'opération » |
 
 Le dernier cours est donc le plus récent que Yahoo Finance fournit : le cours de clôture de la dernière séance, ou une valeur de la séance en cours si la bourse est ouverte. Les 5 jours servent à toujours trouver un cours le week-end et les jours fériés.
 
@@ -74,13 +75,13 @@ Le même principe vaut pour l'indice de référence : un ETF capitalisant donne 
 
 ### Les divisions d'actions
 
-Yahoo Finance corrige rétroactivement ses cours de clôture après une division d'actions (« split »). Le logiciel, lui, ne connaît que les types d'opération ACHAT, VENTE et DIVIDENDE : **il ne gère pas les divisions ni les regroupements d'actions**.
+Yahoo Finance corrige rétroactivement ses cours de clôture après une division d'actions (« split »). Le logiciel, lui, ne connaît que les types d'opération ACHAT, VENTE et DIVIDENDE : il **ne détecte pas** les divisions ni les regroupements d'actions par lui-même, mais il sait ajuster vos opérations à partir de l'avis de votre courtier.
 
 Exemple : vous avez acheté 10 actions à 800 €. La société divise ensuite chaque action en 10. Yahoo affiche désormais un historique d'environ 80 € pour la date de votre achat. Votre fichier, lui, indique toujours 10 actions : le logiciel valoriserait 10 × 80 € = 800 € au lieu de 8 000 €.
 
 À l'import, le contrôle des prix le signale : le prix du fichier est éloigné du cours du jour (ici, écart de +900 %), avec la mention « ticker, devise ou division d'actions à vérifier ».
 
-**La correction** : exprimez l'opération en titres d'après la division, sans changer le montant. Ici, 100 actions à 80 € (100 × 80 = 8 000 €). Vous pouvez le faire dans l'onglet Transactions avec [[Modifier les opérations]]. Le prix de revient total, les frais et les flux restent identiques.
+**La correction** : exprimez l'opération en titres d'après la division, sans changer le montant. Ici, 100 actions à 80 € (100 × 80 = 8 000 €). Le plus simple est de déposer l'avis de division ou de regroupement envoyé par votre courtier sur la page [[Ajouter des opérations]] : l'encadré [[Opération sur titres]] propose [[Appliquer aux opérations antérieures]], qui multiplie la quantité et divise le prix de chaque achat et vente antérieur par le même facteur (voir le chapitre sur l'import, fiche « Division ou regroupement d'actions »). Vous pouvez aussi le faire à la main dans l'onglet Transactions avec [[Modifier les opérations]]. Le prix de revient total, les frais et les flux restent identiques.
 
 ### Autres opérations sur titres
 
@@ -201,7 +202,7 @@ Chaque ligne contient : l'identifiant (en majuscules), le ticker Yahoo Finance t
 
 Pour un identifiant à reconnaître, le logiciel consulte dans cet ordre :
 
-1. la table intégrée des ISIN d'ETF (elle prime sur la mémoire, pour réparer une mauvaise correspondance apprise auparavant) ;
+1. la table intégrée des ISIN d'ETF, puis celle des ISIN d'actions (CAC 40 et grandes valeurs américaines) : elles priment sur la mémoire, pour réparer une mauvaise correspondance apprise auparavant ;
 2. la mémoire ;
 3. la base locale de titres ;
 4. le moteur de recherche de Yahoo Finance, en dernier recours.
@@ -219,10 +220,10 @@ Si un identifiant a été associé au mauvais titre, la mémoire le reproposera 
 
 La mémoire est commune à tous les utilisateurs du logiciel sur l'ordinateur : un titre reconnu par l'un est reconnu pour tous.
 
-## La table intégrée des ISIN d'ETF
-<!-- fiche: sources-isin-etf | questions: quels etf sont reconnus sans internet ; mon etf n'est pas reconnu à l'import ; liste des isin d'etf intégrés ; cw8 isin reconnu hors ligne ; avis d'opéré etf libellé abrégé ; pourquoi mon etf est reconnu avec le mauvais ticker ; table des 31 etf | mots: ETF, ISIN, table intégrée, hors connexion, avis d'opéré, CW8, Amundi, iShares, Vanguard, reconnaissance -->
+## Les tables intégrées des ISIN d'ETF et d'actions
+<!-- fiche: sources-isin-etf | questions: quels etf sont reconnus sans internet ; mon etf n'est pas reconnu à l'import ; liste des isin d'etf intégrés ; cw8 isin reconnu hors ligne ; avis d'opéré etf libellé abrégé ; pourquoi mon etf est reconnu avec le mauvais ticker ; table des 31 etf ; les actions du cac 40 sont elles reconnues sans connexion ; apple microsoft reconnus par leur isin hors ligne | mots: ETF, ISIN, table intégrée, hors connexion, avis d'opéré, CW8, Amundi, iShares, Vanguard, CAC 40, actions américaines, reconnaissance -->
 
-Les avis d'opéré et relevés ne donnent souvent qu'un code ISIN et un libellé abrégé (« AM.C.C.40 UC.ETF C », par exemple). Pour reconnaître les ETF les plus courants **sans Internet**, le logiciel contient une table de **31 ISIN d'ETF**, chacun associé à un ticker Yahoo Finance.
+Les avis d'opéré et relevés ne donnent souvent qu'un code ISIN et un libellé abrégé (« AM.C.C.40 UC.ETF C », par exemple). Pour reconnaître les titres les plus courants **sans Internet**, le logiciel contient deux tables : **31 ISIN d'ETF**, et les ISIN des actions du **CAC 40** et de grandes valeurs américaines, chacun associé à un ticker Yahoo Finance.
 
 ### Les ETF de la table
 
@@ -235,17 +236,24 @@ Les avis d'opéré et relevés ne donnent souvent qu'un code ISIN et un libellé
 | Obligations | iShares Core Euro Govt Bond (EUNH.DE), iShares Euro Inflation Linked Govt Bond (IBCI.DE), iShares Core Euro Corporate Bond (EUN5.DE), iShares Euro High Yield Corp Bond (EUNW.DE), Xtrackers II Eurozone Government Bond 1C (DBXN.DE) |
 | Monétaire et or | Amundi Smart Overnight Return (CSH2.PA), Xtrackers II EUR Overnight Rate Swap (XEON.DE), Xetra-Gold (4GLD.DE) |
 
+### Les actions de la table
+
+| Famille | Actions (ticker) |
+|---|---|
+| CAC 40, avec quelques anciens membres | Air Liquide (AI.PA), Airbus (AIR.PA), AXA (CS.PA), BNP Paribas (BNP.PA), Danone (BN.PA), Hermès (RMS.PA), L'Oréal (OR.PA), LVMH (MC.PA), Michelin (ML.PA), Orange (ORA.PA), Safran (SAF.PA), Sanofi (SAN.PA), Schneider Electric (SU.PA), TotalEnergies (TTE.PA), Vinci (DG.PA)… |
+| Grandes valeurs américaines | Apple (AAPL), Microsoft (MSFT), Amazon (AMZN), Alphabet (GOOGL), Meta (META), NVIDIA (NVDA), Tesla (TSLA) |
+
 ### Priorité
 
-Cette table est consultée **en premier**, avant la mémoire des titres et avant toute recherche en ligne. Elle répare ainsi une éventuelle mauvaise correspondance apprise auparavant.
+La table des ETF est consultée **en premier**, puis celle des actions, avant la mémoire des titres et avant toute recherche en ligne. Elles réparent ainsi une éventuelle mauvaise correspondance apprise auparavant.
 
-### Un ETF absent de la table
+### Un titre absent des tables
 
 Il est cherché dans la mémoire, la base locale, puis, avec Internet, par le moteur de recherche de Yahoo Finance (par son ISIN, puis par son libellé). La réponse est ensuite mémorisée. Hors connexion et inconnu de la mémoire, il ne peut pas être reconnu : l'import le signale comme introuvable.
 
 ### La place de cotation choisie
 
-Un même ETF est souvent coté sur plusieurs places et dans plusieurs devises. La table fixe une cotation précise pour chaque ISIN : si vous avez acheté sur une autre place, le cours retenu peut légèrement différer du vôtre.
+Un même ETF est souvent coté sur plusieurs places et dans plusieurs devises. Les tables fixent une cotation précise pour chaque ISIN : si vous avez acheté sur une autre place, le cours retenu peut légèrement différer du vôtre.
 
 ## Comment un ISIN, un nom ou un code Bloomberg devient un ticker
 <!-- fiche: sources-identifiant-ticker | questions: comment le logiciel trouve le ticker à partir de l'isin ; mon fichier contient des codes bloomberg ; MC FP Equity est-il reconnu ; le logiciel a choisi la mauvaise place de cotation ; ticker sans suffixe MC ou AIR ; reconnaissance du nom de la société ; titre introuvable à l'import ; EPA:MC format google finance | mots: ISIN, ticker, Bloomberg, Google Finance, Reuters, RIC, code MIC, place de cotation, suffixe, recherche Yahoo -->
@@ -272,7 +280,7 @@ Les codes de place MIC (`XPAR`, `XETR`…) et les noms usuels (« Euronext Paris
 
 ### 3. Code ISIN ou nom de société
 
-Le logiciel cherche dans la table des ISIN d'ETF, la mémoire, puis la base locale (par ticker, par ISIN, puis par nom). À défaut, il interroge le moteur de recherche de Yahoo Finance avec l'ISIN, puis avec le libellé du fichier. Parmi les réponses (actions, ETF, fonds, indices), il préfère la place du pays de l'ISIN (Paris pour un ISIN `FR`, Francfort pour `DE`…), puis une cotation en euros (Paris, Francfort, Amsterdam, Milan), puis les États-Unis.
+Le logiciel cherche dans les tables des ISIN d'ETF et d'actions, la mémoire, puis la base locale (par ticker, par ISIN, puis par nom). À défaut, il interroge le moteur de recherche de Yahoo Finance avec l'ISIN, puis avec le libellé du fichier. Parmi les réponses (actions, ETF, fonds, indices), il préfère la place du pays de l'ISIN (Paris pour un ISIN `FR`, Francfort pour `DE`…), puis une cotation en euros (Paris, Francfort, Amsterdam, Milan), puis les États-Unis.
 
 ### 4. Ticker sans place (`MC`, `AIR`, `TSLA`)
 
@@ -479,8 +487,14 @@ Voici, un par un, les contrôles réellement présents.
 - Seuls les types ACHAT, VENTE et DIVIDENDE sont acceptés ; les prix et quantités négatifs sont refusés.
 - **Vente impossible** : vendre plus de titres que ceux détenus à cette date arrête l'analyse, avec un message qui donne la date et les quantités.
 - Les colonnes d'un fichier inconnu ne sont acceptées automatiquement que si leurs noms sont parlants, ou si les chiffres sont cohérents (quantité × prix, plus ou moins les frais, égale le montant à 1 % près sur au moins 80 % des lignes). Sinon, l'assistant d'import s'ouvre.
-- Un **code ISIN** n'est reconnu que si sa clé de contrôle est juste ; dans un PDF, il doit en plus compter au moins 6 chiffres.
+- Un **code ISIN** n'est reconnu que si sa clé de contrôle est juste ; dans un PDF, il doit en plus commencer par un code pays existant et compter au moins 4 chiffres.
 - Les dates ambiguës (jour/mois ou mois/jour) sont détectées et le choix retenu est signalé.
+
+### À la lecture d'un PDF
+
+- Une opération lue par ses intitulés n'est acceptée que si un mot de sens (achat, vente…) est écrit dans le document et si un cours (ou le montant d'un dividende) a été trouvé.
+- Quand plusieurs lectures d'un avis d'opéré sont cohérentes (quantité × cours = montant), le cours de clôture Yahoo Finance du jour départage : une lecture à moins de 5 % de ce cours remplace une lecture qui s'en écarte de plus de 15 %.
+- Le résumé signale un montant écrit qui ne correspond pas à quantité × cours ± frais (à 1 % près), une date tombant un samedi ou un dimanche, des frais supérieurs à 3 % du montant et une même opération présente deux fois.
 
 ### Les prix comparés au marché
 
@@ -515,7 +529,7 @@ Pour être honnête sur la fiabilité, voici ce qui **n'est pas** contrôlé.
 - **Une seule source** : tous les cours viennent de Yahoo Finance. Le logiciel ne les compare à aucune autre source (Euronext, Bloomberg, votre courtier).
 - **Pas de détection des cours aberrants** dans l'historique : un saut anormal d'un jour, une valeur manquante ou un cours figé ne sont pas repérés. Un jour sans cours reprend simplement le dernier cours connu.
 - **Pas de contrôle de fraîcheur par titre** : un titre suspendu ou radié garde son dernier cours connu, sans alerte.
-- **Pas d'ajustement des opérations sur titres** : divisions, regroupements, scissions, fusions et changements de code ne sont pas traités.
+- **Pas de détection des opérations sur titres** : une division ou un regroupement n'est ajusté que si vous déposez l'avis correspondant sur la page [[Ajouter des opérations]] ; scissions, fusions et changements de code ne sont pas traités.
 - **Pas de téléchargement des dividendes** : seuls ceux de votre fichier comptent.
 - Le contrôle des prix à 25 % n'a lieu qu'**à l'import**, avec Internet, et seulement sur les achats et ventes.
 

@@ -27,13 +27,14 @@ from html import escape
 import io
 from pathlib import Path
 
+import pandas as pd
 import streamlit as st
 
 from src import config, langues, lecture, theme
 from src import graphiques_interactifs as gi
 from src import interface as ui
 from src import (expositions, fond_de_carte, import_fichier, indices, vues_compte, vues_conseil, vues_transactions,
-                 vues_expositions, vues_gestion, vues_import, vues_manuel, vues_mouvements)
+                 vues_expositions, vues_gestion, vues_import, vues_manuel, vues_mouvements, vues_pdf)
 from src.analyse import analyse_complete
 from src.interface import euros, nombre, pct, tendance
 from src.langues import t, td
@@ -250,17 +251,19 @@ with st.sidebar:
             (t(NOMS_PORTEFEUILLES[f.name]) if f.name in NOMS_PORTEFEUILLES else f.name),
             help=t("Vos portefeuilles enregistrés, puis les portefeuilles d'exemple du projet"),
         )
-    fichier_envoye = st.file_uploader(
-        t("Envoyer un fichier (CSV, Excel ou PDF)"), type=["csv", "xlsx", "pdf"],
+    fichiers_envoyes = st.file_uploader(
+        t("Envoyer un fichier (CSV, Excel ou PDF)"), type=["csv", "xlsx", "pdf"], accept_multiple_files=True,
         help=t("Colonnes : date, type (ACHAT, VENTE, DIVIDENDE), ticker (code Yahoo Finance), nom, "
                "quantite, prix, frais. CSV à virgules ou à points-virgules, fichier Excel, ou PDF "
-               "(relevé d'opérations, avis d'opéré). "
-               "Prioritaire sur le portefeuille choisi ci-dessus."),
-    )
+               "(relevé d'opérations, avis d'opéré, relevé de portefeuille). Plusieurs fichiers à la fois : "
+               "leurs opérations sont réunies. Prioritaire sur le portefeuille choisi ci-dessus."),
+    ) or []
+    fichier_envoye = fichiers_envoyes[0] if len(fichiers_envoyes) == 1 else None
+    lot_envoye = fichiers_envoyes if len(fichiers_envoyes) > 1 else None
     # Emplacement réservé juste sous l'envoi : le bouton « Enregistrer dans mon espace »
     # y est affiché une fois le fichier lu (plus bas dans le script).
     zone_enregistrement = st.container()
-    if fichier_envoye is not None and session_compte is None:
+    if fichiers_envoyes and session_compte is None:
         zone_enregistrement.caption(t("Pour garder ce fichier, connectez-vous (« Se connecter », en haut de la "
                                       "barre latérale)."))
     lien_a, lien_b = st.columns(2, vertical_alignment="center")
@@ -271,7 +274,7 @@ with st.sidebar:
     if fichier_envoye is not None and st.button(t("Ouvrir l'assistant d'import"), type="tertiary",
                                                 help=t("Pour indiquer vous-même comment lire le fichier envoyé"),
                                                 key="assistant_barre"):
-        st.session_state["assistant_force"] = hashlib.md5(fichier_envoye.getvalue()).hexdigest()[:12]
+        st.session_state["assistant_force"] = hashlib.md5(vues_pdf.version_lisible(fichier_envoye.getvalue())).hexdigest()[:12]
     html(ui.separateur())
 
     # Paramètres d'analyse : repliés, avec un résumé d'une ligne
@@ -279,7 +282,6 @@ with st.sidebar:
     resume_parametres = " · ".join([
         t(NOMS_COURTS.get(indice_choisi, "")) or t(INDICES.get(indice_choisi, "")),
         pct(st.session_state.get("taux_sans_risque_pct", config.TAUX_SANS_RISQUE * 100) / 100, signe=False),
-        "VaR " + pct(st.session_state.get("niveau_var", config.NIVEAU_CONFIANCE_VAR), signe=False, decimales=0),
     ])
     with st.expander(t("Paramètres") + "  ·  " + resume_parametres, expanded=False):
         code_indice = st.selectbox(
@@ -293,10 +295,21 @@ with st.sidebar:
             value=config.TAUX_SANS_RISQUE * 100, step=0.25, format="%.2f",
             help=t("Taux de la facilité de dépôt de la BCE : 2,50 % depuis le 16/09/2026"),
         ) / 100
-        niveau_var = st.select_slider(
-            t("Niveau de confiance de la VaR"), options=[0.90, 0.95, 0.99], key="niveau_var",
-            value=config.NIVEAU_CONFIANCE_VAR, format_func=lambda v: pct(v, signe=False, decimales=0),
-        )
+
+# Niveau de confiance de la VaR : il ne sert que dans l'onglet « Risque » (et le rapport PDF), c'est
+# donc là qu'il se règle ; la valeur est gardée pour la session (clé « niveau_var_choisi »).
+NIVEAUX_VAR = [0.90, 0.95, 0.99]
+niveau_var = st.session_state.get("niveau_var_choisi", config.NIVEAU_CONFIANCE_VAR)
+
+
+def _choix_niveau_var():
+    """Un clic sur le niveau déjà choisi le désélectionnerait : on le garde."""
+    choix = st.session_state.get("choix_niveau_var")
+    if choix is None:
+        st.session_state["choix_niveau_var"] = st.session_state.get("niveau_var_choisi", config.NIVEAU_CONFIANCE_VAR)
+    else:
+        st.session_state["niveau_var_choisi"] = choix
+
 
 # Page « Ajouter des opérations » (nouveaux mouvements d'un portefeuille) : src/vues_mouvements.py
 if st.session_state.get("ajout_operations"):
@@ -317,12 +330,23 @@ if espace == "Manuel et aide":
 # ======================================================================
 # CHARGEMENT DES DONNÉES
 # ======================================================================
-if fichier_envoye is not None:
+if lot_envoye:
+    # Plusieurs fichiers : chacun est lu, puis leurs opérations sont réunies (src/vues_pdf.py)
+    lot = vues_pdf.lot_de_fichiers(lot_envoye, importer_auto)
+    if lot is None:
+        st.stop()
+    contenu, nom_fichier, resume_import = lot
+    with st.sidebar:
+        html(ui.note(vues_import.texte_resume(resume_import)))
+elif fichier_envoye is not None:
     # Fichier envoyé : lu directement s'il est reconnu (format du projet, ou proche),
     # sinon l'assistant d'import s'affiche (src/vues_import.py).
-    brut = fichier_envoye.getvalue()
+    brut = vues_pdf.version_lisible(fichier_envoye.getvalue())      # PDF déchiffré si mot de passe donné
     nom_fichier = fichier_envoye.name
     cle_import = hashlib.md5(brut).hexdigest()[:12]
+    if import_fichier.est_protege(brut):
+        vues_pdf.demander_mot_de_passe(brut, nom_fichier, cle_import)
+        st.stop()
     imports = st.session_state.setdefault("imports", {})
     assistant_demande = st.session_state.get("assistant_force") == cle_import
     erreur_directe = None
@@ -336,6 +360,20 @@ if fichier_envoye is not None:
             st.session_state.setdefault("resumes_import", {})[cle_import] = auto["resume"]
         else:
             erreur_directe = auto["raison"]
+    if cle_import not in imports and not assistant_demande and import_fichier.nature_fichier(brut) == "pdf" \
+            and vues_pdf.formulaire_utile(brut):
+        # PDF dont aucune opération n'a été lue : formulaire pré-rempli (src/vues_pdf.py)
+        operations_pdf = st.session_state.setdefault("operations_pdf", {}).setdefault(cle_import, [])
+        if operations_pdf:
+            html(ui.note(t("{n} opération(s) prête(s) pour ce fichier.", n=len(operations_pdf))))
+            if st.button(t("Analyser ces opérations"), type="primary", key="analyser_pdf"):
+                imports[cle_import] = import_fichier.en_csv(pd.DataFrame(operations_pdf))
+                st.rerun()
+        operation = vues_pdf.formulaire(brut, nom_fichier, cle_import, raison=erreur_directe)
+        if operation is not None:
+            operations_pdf.append(operation)
+            st.rerun()
+        st.stop()
     if assistant_demande or cle_import not in imports:
         vues_import.afficher(brut, nom_fichier, cle_import, erreur_directe)
         st.stop()
@@ -364,7 +402,7 @@ if mis_a_jour:
     contenu = fusion_session["contenu"]
     nom_fichier = t("{nom} (mis à jour)", nom=Path(nom_fichier).stem)
 # Portefeuille modifiable : espace personnel (enregistré, chiffré) ou session (fichier envoyé, exemple)
-if isinstance(fichier_choisi, tuple) and fichier_envoye is None and session_compte is not None:
+if isinstance(fichier_choisi, tuple) and not fichiers_envoyes and session_compte is not None:
     cible_portefeuille = {"type": "perso", "id": fichier_choisi[1], "nom": fichier_choisi[2]}
 else:
     cible_portefeuille = {"type": "session", "origine": origine, "nom": nom_base}
@@ -372,7 +410,7 @@ with zone_operations:
     if st.button(t("Ajouter des opérations"), type="tertiary",
                  help=t("Mettre à jour ce portefeuille avec de nouveaux mouvements : avis d'opéré PDF, export "
                         "Excel / CSV ou saisie manuelle"), key="bouton_ajout_operations"):
-        if isinstance(fichier_choisi, tuple) and fichier_envoye is None and session_compte is not None:
+        if isinstance(fichier_choisi, tuple) and not fichiers_envoyes and session_compte is not None:
             cible = {"type": "perso", "id": fichier_choisi[1], "nom": fichier_choisi[2], "contenu": contenu}
         else:
             cible = {"type": "session", "origine": origine, "nom": nom_base, "contenu": contenu}
@@ -394,7 +432,7 @@ except Exception as erreur:  # message clair plutôt qu'un plantage
         st.rerun()
     st.stop()
 
-if fichier_envoye is not None and session_compte is not None:     # enregistrer le fichier lu dans son espace
+if fichiers_envoyes and session_compte is not None:     # enregistrer le ou les fichiers lus dans son espace
     with zone_enregistrement:
         vues_compte.bouton_enregistrer(session_compte, contenu, Path(nom_fichier).stem)
 
@@ -649,6 +687,13 @@ with onglets[2]:
 # ----------------------------------------------------------------------
 with onglets[3]:
     niveau = pct(niveau_var, signe=False, decimales=0)
+    _, reglage_var = st.columns([3, 1])
+    st.session_state.setdefault("choix_niveau_var", niveau_var)
+    reglage_var.segmented_control(
+        t("Niveau de confiance de la VaR"), NIVEAUX_VAR, key="choix_niveau_var", on_change=_choix_niveau_var,
+        format_func=lambda v: pct(v, signe=False, decimales=0),
+        help=t("VaR à 95 % : perte qu'on ne dépasse pas 95 jours sur 100. Le niveau choisi vaut aussi pour le "
+               "rapport PDF."))
     html(ui.grille([
         ui.carte(t("Ratio de Sharpe"), nombre(av["sharpe"]), detail=f"{nom_court} : {nombre(av['sharpe_indice'])}",
                  aide=t("(Rendement − taux sans risque) / volatilité")),

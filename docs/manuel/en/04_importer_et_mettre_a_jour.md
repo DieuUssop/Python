@@ -1,7 +1,7 @@
 # Importing and updating your portfolio
 <!-- chapitre: import | ordre: 4 -->
 
-This chapter explains how to give your transactions to the software: which files it accepts (CSV, Excel, PDF), the project format and its template, the automatic reading of bank or broker exports, the import assistant, the recognition of securities (ticker, ISIN, name, Bloomberg, Google or Reuters codes) and of currencies. It then describes how to update a portfolio: adding new transactions, duplicates, checks, correcting or deleting a transaction, and undoing a change. It ends with common errors and a full worked example.
+This chapter explains how to give your transactions to the software: which files it accepts (CSV, Excel, PDF), the project format and its template, the automatic reading of bank or broker exports and of PDFs (trade confirmations, statements, scanned or password-protected documents, several files at once), the import assistant, the recognition of securities (ticker, ISIN, name, Bloomberg, Google or Reuters codes) and of currencies. It then describes how to update a portfolio: adding new transactions, stock splits, duplicates, checks, correcting or deleting a transaction, and undoing a change. It ends with common errors and a full worked example.
 
 ## Which files can be imported into the software?
 <!-- fiche: import-fichiers-acceptes | questions: which files can I import ; what file format does the software accept ; can I use an excel file ; does it take the PDFs from my bank ; can I import a csv ; my xls file wont work ; can I import a screenshot or a photo ; import from boursorama or bourse direct ; does the software connect to my broker | mots: import, accepted formats, CSV, Excel, xlsx, PDF, statement, trade confirmation, broker export, file -->
@@ -14,13 +14,13 @@ The software reads your transactions from a file that you send to it. It does no
 |---|---|---|
 | CSV (text) | `.csv` | File in the project format, broker export, file saved from Excel |
 | Excel | `.xlsx` | Personal spreadsheet, bank export |
-| PDF | `.pdf` | Transaction statement presented as a table, trade confirmation (a confirmation of an executed order) |
+| PDF | `.pdf` | Transaction statement presented as a table, trade confirmation (a confirmation of an executed order), portfolio statement (holdings and cost prices), password-protected PDF |
 
-The upload areas accept only these three extensions. The old Excel format `.xls` is not accepted: open the file in Excel and save it as `.xlsx` or as CSV. The software recognises the real nature of a file from its content (a PDF starts with `%PDF-`, an `.xlsx` is a ZIP archive), then reads it accordingly.
+The upload areas accept only these three extensions. They accept several files at once (see the fiche "Uploading several files at once"). The old Excel format `.xls` is not accepted: open the file in Excel and save it as `.xlsx` or as CSV. The software recognises the real nature of a file from its content (a PDF starts with `%PDF-`, an `.xlsx` is a ZIP archive), then reads it accordingly.
 
 ### What the file must contain
 
-It must contain a **history of dated transactions**: purchases, sales, and possibly dividends. A simple list of positions (securities and quantities held today, with no purchase dates) does not allow performance to be calculated. Three pieces of information are essential for each row: the **date**, the **security** and the **quantity**, together with the **unit price or the total amount**.
+It must contain a **history of dated transactions**: purchases, sales, and possibly dividends. A simple list of positions (securities and quantities held today, with no purchase dates) does not allow performance to be calculated over the whole history; the one exception is a PDF portfolio statement, which can serve as a starting portfolio, each holding becoming a purchase on the statement date (see the fiche "Importing a PDF portfolio statement"). Three pieces of information are essential for each row: the **date**, the **security** and the **quantity**, together with the **unit price or the total amount**.
 
 ### The format does not need to be perfect
 
@@ -29,7 +29,7 @@ The file may have its own column names, in French or English, header lines above
 ### What is not possible
 
 - a photo or screenshot in image format (`.png`, `.jpg`) is not accepted;
-- a scanned PDF is read only if a character recognition (OCR) engine is installed, and only for trade confirmations (see the fiche on image PDFs);
+- a scanned PDF (or one whose text is "encoded") is read automatically only if a character recognition (OCR) engine is installed, and only for trade confirmations (see the fiche on image PDFs); otherwise, a form lets you complete the transaction by hand (see the fiche "Completing a transaction when the PDF is not recognised");
 - there is no automatic connection to a bank account.
 
 ## What happens when I upload a file?
@@ -37,7 +37,7 @@ The file may have its own column names, in French or English, header lines above
 
 ### Where to upload the file
 
-In the sidebar, under "Data", use the [[Upload a file (CSV, Excel or PDF)]] area: drag the file onto it or click to choose it. The uploaded file takes **priority** over the portfolio selected in the list just above: as long as it is present in the upload area, it is the one being analysed.
+In the sidebar, under "Data", use the [[Upload a file (CSV, Excel or PDF)]] area: drag the file onto it or click to choose it. You can drop several files at once: their transactions are combined (see the fiche "Uploading several files at once"). The uploaded file takes **priority** over the portfolio selected in the list just above: as long as it is present in the upload area, it is the one being analysed.
 
 ### What the software does
 
@@ -46,7 +46,7 @@ In the sidebar, under "Data", use the [[Upload a file (CSV, Excel or PDF)]] area
 3. **If the result is reliable**, the portfolio is analysed immediately. A box in the sidebar summarises what was understood, for example "File recognised automatically: 12 transaction(s), 5 security(ies).".
 4. **If any doubt remains** (unrecognised column, security not found, unreadable row), the **import assistant** is displayed in place of the dashboard, already pre-filled: you just need to check and confirm.
 
-You can restart the reading manually at any time with the [[Open the import assistant]] button, visible under the upload area as long as a file is present.
+You can restart the reading manually at any time with the [[Open the import assistant]] button, visible under the upload area as long as a single file is present. A password-protected PDF first shows the [[Protected PDF]] box (see the dedicated fiche).
 
 ### The file is not kept automatically
 
@@ -302,7 +302,7 @@ The assistant reminds you: "Without a "Transaction type" column: a negative quan
 
 ### In a PDF trade confirmation
 
-The direction is searched for in the text (achat, vente, souscription, rachat, buy, sell, dividende, coupon…). If no word is recognised, the transaction is read as a purchase: check it.
+The direction is searched for in the text (achat, vente, souscription, rachat, buy, sell, dividende, coupon…). A reading by headings is accepted only if one of these words is written in the document. For a confirmation read by its content, the direction must also be found (a word, or a quantity preceded by + or −). A confirmation whose direction is only written as a code ("Sens : S") can be read thanks to a learned model. Otherwise, the [[Complete the transaction]] form lets you choose the direction.
 
 ## My statement gives the total amount and not the unit price
 <!-- fiche: import-montant-prix | questions: my file has no unit price only the amount ; how is the price calculated from the amount ; net amount or gross amount which to choose ; does the total amount include fees ; the calculated price is wrong ; debit credit instead of price ; the unit price doesnt come out right | mots: total amount, net amount, gross amount, unit price, fees included, price derivation, debit, credit -->
@@ -387,7 +387,7 @@ A 12-character code starting with two letters and ending with a digit is treated
 
 ### The search order for an ISIN or a name
 
-1. **Offline first**: the built-in table of common ETF ISINs, then the memory of securities already recognised, then the local securities database (by ticker, by ISIN, or by name).
+1. **Offline first**: the built-in table of common ETF ISINs, then the one for CAC 40 shares and large US stocks, then the memory of securities already recognised, then the local securities database (by ticker, by ISIN, or by name).
 2. **Otherwise, the Yahoo Finance search engine** (Internet required), with the ISIN and then, if the file contains one, the name of the security.
 
 Among the answers, only equities, ETFs, funds and indices are kept, and the preferred listing is that of the **stock exchange of the ISIN's country**: FR → Paris, DE → Xetra then Frankfurt, NL → Amsterdam, IT → Milan, ES → Madrid, GB → London, CH → Switzerland, US → New York, etc. For an Irish (IE) or Luxembourg (LU) ISIN, typical of ETFs, a euro listing is preferred (Paris, Xetra, Amsterdam, Milan), then London and New York.
@@ -457,8 +457,8 @@ Example: `MC` bought at €740 in January 2024 matches the LVMH price in Paris, 
 - The summary says "… ticker(s) without an exchange identified from market prices.".
 - If your file also contains an exchange column (XPAR, Euronext Paris…), it is used first.
 
-## Securities recognised without Internet: the ETF table and the memory
-<!-- fiche: import-memoire-etf | questions: does the import work without internet ; is an isin recognised offline ; is my amundi etf recognised without a connection ; what is the securities memory ; does the software remember isins ; which etfs are recognised automatically ; does the memory contain my data ; it recognised a wrong ticker last time | mots: offline, securities memory, memoire.csv, ISIN table, ETF, local database, Amundi, iShares, Vanguard, learning -->
+## Securities recognised without Internet: the ISIN tables and the memory
+<!-- fiche: import-memoire-etf | questions: does the import work without internet ; is an isin recognised offline ; is my amundi etf recognised without a connection ; what is the securities memory ; does the software remember isins ; which etfs are recognised automatically ; does the memory contain my data ; it recognised a wrong ticker last time ; are cac 40 shares recognised offline | mots: offline, securities memory, memoire.csv, ISIN table, ETF, local database, Amundi, iShares, Vanguard, CAC 40, US stocks, learning -->
 
 ### The ETF ISIN table
 
@@ -478,6 +478,10 @@ Trade confirmations and statements often give only an ISIN code and an abbreviat
 
 The table also covers Amundi ETFs (Euro Stoxx 50, Nasdaq-100, emerging markets, Stoxx Europe 600, money market), iShares, Vanguard, SPDR, Invesco and Xtrackers, equity as well as bond funds. It is consulted **first**, before the memory: it thus corrects a wrong match that might have been learned earlier.
 
+### The share ISIN table
+
+A second table, consulted just after the ETF one, recognises without Internet the shares of the **CAC 40** (with a few former members) and seven large US stocks: Apple (AAPL), Microsoft (MSFT), Amazon (AMZN), Alphabet (GOOGL), Meta (META), NVIDIA (NVDA) and Tesla (TSLA). Examples: FR0000121014 becomes `MC.PA` (LVMH), FR0000120578 `SAN.PA` (Sanofi), US0378331005 `AAPL`. A trade confirmation for one of these shares is therefore read entirely offline.
+
 ### The memory of recognised securities
 
 Whenever an ISIN, a name or a code is found through the Yahoo Finance search engine, the match is recorded in a memory file (`memoire.csv`, in the securities database folder). Next time, it is found instantly, even offline.
@@ -491,7 +495,7 @@ After the table and the memory, the software searches the local securities datab
 
 ### Without Internet, in practice
 
-An ETF ISIN from the table, a security already encountered or a security in the local database are recognised. A completely new security cannot be: the assistant opens and you can enter its ticker by hand.
+An ETF or share ISIN from the two tables, a security already encountered or a security in the local database are recognised. A completely new security cannot be: the assistant opens and you can enter its ticker by hand.
 
 ## A security is not found: what should I do?
 <!-- fiche: import-titre-introuvable | questions: security not found on import ; the software doesnt find my isin ; how do I enter the ticker by hand ; not found status in the assistant ; my fund doesnt exist on yahoo ; no prices for my security ; sicav or unlisted fund ; the proposed ticker is wrong | mots: not found, manual ticker, unknown ISIN, unlisted fund, UCITS, Yahoo Finance, ticker correction, search -->
@@ -510,7 +514,7 @@ Without a ticker, the rows of an ISIN that is not found are ignored (reason "a m
 
 ### Frequent causes
 
-- **No connection**: online search is impossible; only securities from the ETF table, the memory and the local database are recognised.
+- **No connection**: online search is impossible; only securities from the ISIN tables (ETFs, CAC 40, large US stocks), the memory and the local database are recognised.
 - **Unlisted fund** (some UCITS funds, euro funds, structured products): with no price on Yahoo Finance, it cannot be tracked by the software.
 - **Name too vague or abbreviated**: a label such as "AM.C.C.40 UC.ETF C" yields nothing; it is the ISIN that allows recognition.
 
@@ -584,13 +588,13 @@ The value `GBX` is read as `GBP`. It rules out the euro reading, but leaves the 
 A London row valued 100 times too high or too low betrays a confusion between pounds and pence. Correct the price in the Transactions tab ([[Price (trading currency)]] column, in pence), or re-import with automatic detection.
 
 ## Importing a PDF statement of transactions
-<!-- fiche: import-pdf-releve | questions: how do I import a pdf from my bank ; is my pdf statement read ; does the software read tables in pdfs ; securities account statement pdf ; multi-page pdf ; no transaction found in this pdf ; pdf with a table of transactions | mots: PDF, transaction statement, table, pdfplumber, extraction, multiple pages, securities account statement -->
+<!-- fiche: import-pdf-releve | questions: how do I import a pdf from my bank ; is my pdf statement read ; does the software read tables in pdfs ; securities account statement pdf ; multi-page pdf ; no transaction found in this pdf ; pdf with a table of transactions ; in which order does the software try to read a pdf | mots: PDF, transaction statement, table, pdfplumber, extraction, multiple pages, securities account statement, order of readings -->
 
 ### How the PDF is read
 
 The software reads the text and tables of the PDF (pdfplumber library), page by page.
 
-- A table is kept if it has at least two rows, three columns, and dates on at least two rows: that is the mark of a genuine transaction table.
+- A table is kept if it has at least two rows, three columns, and dates on at least two rows: that is the mark of a genuine transaction table. If the page has no table lines, the software also tries to rebuild the columns from the alignment of the text.
 - Tables of the same width are joined end to end (statement over several pages); the header repeated at the top of each page is kept only once.
 - The resulting table then follows exactly the same path as an Excel file: header row, column recognition, ISIN, dates, numbers, currencies.
 
@@ -598,9 +602,20 @@ The software reads the text and tables of the PDF (pdfplumber library), page by 
 
 If the text contains "avis d'opéré", "avis d'exécution", "confirmation d'exécution", "confirmation d'ordre" or "trade confirmation", the software first reads the document as a trade confirmation (one transaction per page). If there is no usable transaction table, it also tries this reading.
 
-### If nothing is found
+### The order of the readings
 
-The message "No transaction found in this PDF (no transaction table and no readable trade confirmation)." is displayed. In that case:
+1. No text, or "encoded" text (it displays correctly but extracts as unintelligible characters): the PDF is treated as a scan (see the fiche on image PDFs).
+2. Portfolio statement (holdings and cost prices): each holding becomes a purchase on the statement date (see the fiche "Importing a PDF portfolio statement").
+3. Reading of the trade confirmation by its headings, and reading of the statement's tables. A transaction read by its headings is accepted only if a direction word (achat, vente, buy, sell, dividende…) is written in the document and a price (or, for a dividend, an amount) was found; otherwise the software moves on to the next reading.
+4. Reading **by content**, whatever the broker: ISIN code, execution date and the relation `quantity × price = amount` (see the fiche "A trade confirmation from another bank or broker").
+5. Reading with a **learned model**: this type of document has already been completed once in the form (see the fiche "The software learns your trade confirmations").
+6. If nothing is certain: "Transaction not recognised automatically in this PDF: complete it in the "Complete the transaction" form (the values found are suggested).".
+
+A password-protected PDF first asks for that password (see the fiche "My PDF is password-protected").
+
+### If nothing is recognised
+
+Instead of a plain refusal, the [[Complete the transaction]] form opens with the dates, codes and numbers found in the document (see the fiche "Completing a transaction when the PDF is not recognised"). For a long statement in table form, it is often quicker to:
 
 - download the Excel or CSV export of the transactions from your online banking instead;
 - or use the diagnostic tool to see what the software reads (see the fiche on `diagnostic_pdf.py`).
@@ -614,20 +629,24 @@ On your bank's website, prefer the document's download button ("PDF format", "Do
 
 A **trade confirmation** (avis d'opéré) is the confirmation your broker sends after each executed order. The software extracts one transaction per page from it.
 
+The confirmation can come from **any bank or broker**: Bourse Direct is only an example. The software first reads the usual headings (table below); if that fails, it reads the confirmation by its content (see the fiche "A trade confirmation from another bank or broker").
+
 ### What is read
 
 | Information | Where the software looks for it |
 |---|---|
-| ISIN code | First 12-character code whose check digit is correct and which contains at least 6 digits |
+| ISIN code | First 12-character code whose check digit is correct, which starts with an existing country code and contains at least 4 digits |
 | Date | Execution, transaction or trade date, "exécuté le", "trade date"; failing that a date close to the word exécution or followed by "achat"/"vente"; issue, settlement, value or delivery dates are discarded |
-| Direction | Achat, vente, souscription, rachat, buy, sell, dividende, coupon… (purchase by default) |
+| Direction | Achat, vente, souscription, rachat, buy, sell, dividende, coupon…: one of these words must be written in the document |
 | Quantity | "Quantité", "Qté", "Nombre de titres", "Quantity", "Nominal" |
 | Price and currency | "Cours", "Prix unitaire", "Price", with EUR, USD, GBP, €, $, £… |
 | Fees | Sum of all the "Courtage", "Commission", "Frais", "TTF" (financial transaction tax), "Fees" lines |
 | Amount | "Montant net", "Net à débiter/créditer", otherwise "Montant" or "Brut" |
 | Label | After "Libellé :" or "Valeur :", otherwise the name written just after the ISIN |
 
-Headings and values may be presented as text ("Quantité : 15") or arranged in a table. A transaction is kept only if the ISIN, quantity and date are found.
+Headings and values may be presented as text ("Quantité : 15"), arranged in a table, or set out in columns without lines, with the heading above the value: the software then pairs each value with the heading placed above it, from the position of the words on the page ("Quantité" above "12" gives "Quantité : 12").
+
+A transaction is kept by this reading only if the ISIN, quantity and date are found, if a direction word is written in the document, and if the price (or, for a dividend, the amount) is found. Otherwise, the software moves on to the reading by content.
 
 ### Example: a Bourse Direct confirmation downloaded with "PDF format"
 
@@ -644,18 +663,158 @@ The software reads: date 28/09/2026, direction VENTE (sale), ISIN FR0013380607, 
 
 ### Several confirmations
 
-A multi-page PDF containing one confirmation per page gives one transaction per page. To add several separate confirmations to an existing portfolio, the [[Add transactions]] page accepts several files at once.
+A multi-page PDF containing one confirmation per page gives one transaction per page. Several confirmations in separate files can be dropped together, in the sidebar upload area as well as on the [[Add transactions]] page (see the fiche "Uploading several files at once").
 
 ### After reading
 
-The sidebar summary says "PDF trade confirmation read.". Always check the transaction: an unusual confirmation can be misinterpreted.
+The sidebar summary says "PDF trade confirmation read." (or, for a reading by content, "PDF trade confirmation read from its content (quantity × price = amount): please check the transaction ("Transactions" tab)."). It also reports a price replaced thanks to the market price (see the fiche "Checking the price read against the market price") and the points to check found after reading (see the fiche "Checks after reading a PDF"). Always check the transaction: an unusual confirmation can be misinterpreted.
+
+## A trade confirmation from another bank or broker
+<!-- fiche: import-pdf-tout-courtier | questions: my trade confirmation is not from bourse direct will it work ; does the software read confirmations from degiro trade republic or interactive brokers ; trade confirmation from another bank ; my broker is not recognised ; is an english trade confirmation read ; my bank's contract note has a different layout ; how does the software read a pdf without headings ; what does read from its content mean ; does it work with every broker | mots: trade confirmation, contract note, any broker, other bank, reading by content, quantity × price, ISIN, layout, pdf_contenu | aller: Analyse du portefeuille/Transactions -->
+
+Every broker lays out its trade confirmations in its own way ("Quantité :", "Nombre de titres", "Qty", "Buy 15 … at 85.12"…). When the usual headings are not enough, the software reads the confirmation **by its content**, without relying on the layout.
+
+### What the software looks for
+
+Every trade confirmation contains the same elements:
+
+- an **ISIN code**, recognised by its check digit, with an existing country code and at least 4 digits;
+- an **execution date**, written in digits or with the month in letters, in French or English; issue, settlement or value dates are set aside, and when two words compete for a date, the closest one wins;
+- **three linked numbers**: `quantity × price = gross amount`, to the cent, or failing that `quantity × price ± fees = net amount`;
+- the **fees**: the numbers that follow "courtage", "commission", "frais", "costs", "TTF"…;
+- the **direction**: achat, vente, buy, sell, bought, sold, dividende…;
+- the **currency** written next to the price.
+
+Several transactions on the same page are read separately: one per ISIN code.
+
+### Example
+
+An English confirmation contains:
+
+```
+Date 07-05-2024 14:32
+Buy 15 VANGUARD S&P 500 UCITS ETF IE00B3XXRP09 at 85.12 EUR
+Value EUR 1,276.80
+Transaction costs EUR 2.00
+Total EUR 1,278.80
+```
+
+There is no "Quantity" or "Price" heading. The software tries the numbers in pairs and finds `15 × 85.12 = 1,276.80`, which appears in the text. It keeps: date 07/05/2024, purchase ("Buy"), ISIN IE00B3XXRP09, 15 securities at EUR 85.12, fees 2.00 (the number after "costs"), and checks that `1,276.80 + 2.00 = 1,278.80`, the total written.
+
+### When several readings fit
+
+Sometimes two pairs of numbers give the same amount. The software keeps the most likely reading (whole quantity, numbers placed near their headings), but also remembers the others: with Internet, the day's closing price then decides between them (see the fiche "Checking the price read against the market price").
+
+### After reading
+
+The summary says "PDF trade confirmation read from its content (quantity × price = amount): please check the transaction ("Transactions" tab).". Check the date, quantity and price in the [[Transactions]] tab.
+
+### Limits
+
+The transaction is kept automatically only if the ISIN, the date, a consistent trio of numbers and the direction are all found (the direction may also come from a quantity preceded by + or −). No reader can guarantee to understand 100% of existing documents: if one of these elements is missing, the software still tries a learned model (see the fiche "The software learns your trade confirmations"), then the [[Complete the transaction]] form takes over with the values found (see the next fiche).
+
+## Checking the price read against the market price
+<!-- fiche: import-pdf-verification-marche | questions: does the software check the price read in my confirmation ; price read replaced by why ; the software changed my quantity and price ; how does it choose between two readings of the pdf ; closing price shown in the form ; the unit price should be close to it what does it mean ; check of my confirmation price with yahoo finance ; why are the numbers in the list in this order | mots: market check, closing price, Yahoo Finance, tie-break, arbitration, alternative reading, 15%, 5%, price read replaced | aller: Analyse du portefeuille/Transactions -->
+
+In a trade confirmation, several pairs of numbers can satisfy `quantity × price = amount`. To choose the right reading, the software compares the price read with the **security's closing price on the day of the transaction**, downloaded from Yahoo Finance.
+
+### The rule
+
+For a purchase or sale read in a trade confirmation:
+
+- if the price kept differs by **more than 15%** from the day's closing price,
+- and another consistent reading of the same document gives a price **within 5%** of that closing price,
+
+then that other reading replaces the first: the quantity, the price and, if known, the fees of that reading are used. Otherwise, nothing changes.
+
+### Example
+
+Two readings fit: `10 × 65.02 = 650.20` and `5 × 130.04 = 650.20`. The day's closing price is €130.50. The first reading is 50% away from it (more than 15%), the second 0.4% (less than 5%): the software keeps 5 securities at €130.04.
+
+The sidebar summary reports it, in the form: "[ticker] ([date]): price read [old] replaced by [new], the reading that matches the day's closing price ([price]).".
+
+### In the "Complete the transaction" form
+
+When the [[Complete the transaction]] form opens and the security and date are known, a line gives that day's closing price, for example "Closing price of MC.PA on 04/03/2024: … (Yahoo Finance) — the unit price should be close to it.". If no price suggestion was found, the [[Unit price]] list puts the numbers closest to that closing price first.
+
+### Limits
+
+- The day's price is needed, so usually an Internet connection: without it, the reading is neither checked nor changed.
+- Only purchases and sales are concerned, not dividends.
+- The tie-break only chooses between readings already present in the document: it never invents a price.
+- The closing price is not your execution price: a gap of a few per cent is normal.
+
+## Completing a transaction when the PDF is not recognised
+<!-- fiche: import-pdf-formulaire | questions: my trade confirmation is not recognised ; no transaction found in this pdf ; my teacher has a pdf that won't go through ; my bank's pdf doesn't work what do I do ; transaction not recognised automatically in this pdf ; what is the complete the transaction form ; how do I pick the quantity and price from the list ; the software suggests numbers which one do I take ; enter my trade confirmation by hand from the pdf | mots: form, complete the transaction, unrecognised PDF, assisted entry, suggested values, quantity, price, fees, safety net -->
+
+When a PDF gives no certain transaction, the software does not just show an error message: it opens the [[Complete the transaction]] form, prefilled with what it found in the document.
+
+### When the form appears
+
+- On the [[Add transactions]] page, [[From a file]] tab: for any PDF whose automatic import is not certain (no transaction read, security not found…).
+- After an upload with [[Upload a file (CSV, Excel or PDF)]] in the sidebar: when the PDF gives no transaction, whether the file is sent alone or with others.
+
+The reason is shown under the form's title, for example "Transaction not recognised automatically in this PDF…".
+
+### Filling in the form, step by step
+
+1. **[[Type]]** (above the form): BUY, SELL or DIVIDEND, with the direction found in the document selected in advance. For a dividend, the quantity and price are replaced by the [[Total amount received]] field.
+2. **[[Execution date]]**: prefilled with the probable execution date; the field's help lists the dates found in the document.
+3. **[[Security]]**: the ISIN code found, followed by the name; you can also type a ticker (e.g. MC.PA), an ISIN or a name.
+4. **[[Quantity]]**, **[[Unit price]]** and **[[Fees (€)]]**: each list contains the numbers of the document, each followed by the words around it (for example "Quantity: [60]"). The best suggestion is already selected; you can choose another or type a value.
+5. With Internet, a line gives the security's closing price on that day: the unit price should be close to it (see the fiche "Checking the price read against the market price").
+6. Check the control line, for example "Check: 60 × 41.295 = 2477.7": it must match the gross amount of your confirmation.
+7. Click [[Add this transaction]].
+
+The [[Text read in the document]] box shows the extracted text, so you can check a value. It also contains the [[Prepare an anonymised report]] button (see the fiche "Sending a misread PDF without personal data").
+
+### The software learns from it
+
+When you confirm a purchase or a sale, you teach the software to read this type of document: it remembers, on the computer, the heading placed before each value you chose. The next confirmation with the same layout will be read automatically (see the fiche "The software learns your trade confirmations").
+
+### Next
+
+- [[Add transactions]] page: the transaction joins the [[Check before saving]] table. There, the form adds one transaction per file; for a second transaction from the same PDF, use the [[Manual entry]] tab.
+- Sidebar, file sent alone: the number of transactions ready is displayed; add others if the PDF contains several, then click [[Analyse these transactions]].
+
+### Nothing is invented
+
+Every suggested value appears in the document. If the PDF contains no readable text (a scan with no character recognition engine), the form says so: "No readable text in this document: enter the transaction by hand.".
+
+## The software learns your trade confirmations: learned models
+<!-- fiche: import-pdf-modeles-appris | questions: does the software learn my trade confirmations ; do I have to fill in the form every time for the same broker ; what is a learned model ; confirmation read with the model learned from a previous entry ; where is modeles_pdf.json stored ; does the model keep my amounts ; direction S or A on my confirmation ; why does the form come back when I already filled in this type of confirmation ; forget a learned model | mots: learned model, learning, modeles_pdf.json, headings, fingerprint, hashing, direction code, pdf_modele, layout -->
+
+Some trade confirmations use headings the software does not know ("Nominal exécuté", "Px moyen", "Sens : S"…). The first time, the [[Complete the transaction]] form asks you to complete the transaction. The software takes the opportunity to **learn the layout** of the document.
+
+### What is remembered
+
+When you click [[Add this transaction]] for a purchase or a sale, the software saves a "model" of this type of document:
+
+- for the quantity, the price, the fees and the amount (quantity × price, if it is written): the **heading** written just before the value you chose (at most three words) and its position on the line;
+- the heading written just before the date kept;
+- if the direction is only written as a code ("Sens : S", "Op. : A") and no word such as achat or vente appears in the document: the link between this code and the type chosen (for example "s" for SELL);
+- the document's **vocabulary**, but only as fingerprints (hashing): the words themselves cannot be read in the file.
+
+No amount, no quantity and no name is stored in clear. The model is kept only if the headings of the quantity and the price were found. Dividends are not learned.
+
+### The next time
+
+If no other reading succeeds, the software compares the vocabulary of the new document with that of the models. If the similarity reaches **0.6** (60% of words in common, measured over all the words of both documents), it reads the values placed after the learned headings. The transaction is accepted only if an ISIN, a quantity, a price and a date are found; if the model knows the amount's heading, quantity × price must also match that amount (within 1%, or within a few cents once the fees are added or subtracted). The summary then says: "PDF trade confirmation read with the model learned from a previous entry: please check the transaction ("Transactions" tab).".
+
+The direction is read in the document (achat, vente…); failing that, in the learned direction code; if the document has neither a direction word nor a code, the type chosen when learning is used. If the document carries a direction code never seen before (for example "Sens : R" when only "A" and "S" have been learned), the form appears again: you choose the type, and the new code is learned in turn.
+
+### Where the models are
+
+In the `modeles_pdf.json` file of the securities database folder (`data/base`). The last 50 models are kept; a document very similar to an existing model replaces it, keeping the direction codes already learned. The file is shared by all users of the computer. The software offers no screen to erase it: to forget all models, delete this file.
 
 ## A scanned or "printed" PDF: character recognition
-<!-- fiche: import-pdf-image | questions: my pdf is an image ; is a scanned pdf read ; what is ocr ; I printed the page to pdf with microsoft print to pdf ; how does character recognition work ; my pdf is rotated to landscape ; the isin is misread ; rapidocr or tesseract ; reading the pdf takes a long time | mots: OCR, character recognition, image PDF, scan, RapidOCR, Tesseract, rotation, misread ISIN, Microsoft Print to PDF -->
+<!-- fiche: import-pdf-image | questions: my pdf is an image ; is a scanned pdf read ; what is ocr ; I printed the page to pdf with microsoft print to pdf ; how does character recognition work ; my pdf is rotated to landscape ; the isin is misread ; rapidocr or tesseract ; reading the pdf takes a long time ; my scan is pale and crooked | mots: OCR, character recognition, image PDF, scan, RapidOCR, Tesseract, rotation, deskewing, contrast, misread ISIN, misread digits, Microsoft Print to PDF -->
 
 ### Text PDFs and image PDFs
 
 A PDF may contain **real text** (each character is stored, as in a PDF downloaded from the bank) or only an **image** of the page (scan, photo, or web page printed with "Microsoft Print to PDF"). The software considers a PDF to be an image when it contains fewer than 20 characters of text.
+
+There are also PDFs with **"encoded"** text: the page displays correctly on screen, but the extracted text is only a string of unintelligible signs (for example `(cid:12)`). The software recognises them (strange characters, very few letters or no common word) and treats them exactly like a scan.
 
 ### Character recognition
 
@@ -664,46 +823,174 @@ For an image PDF, the software "looks at" each page and recognises the letters a
 1. **RapidOCR**, a library that works offline, installed with the `requirements-ocr.txt` file and built into the installers when their build succeeded in installing it;
 2. failing that, **Tesseract**, if it is installed on the computer (in French and English if the French language is available).
 
+### Two attempts
+
+1. A quick **first reading** of the image of each page.
+2. If it gives no certain transaction, a slower **second reading** on a cleaned image at a higher resolution (scale 4 instead of 3): conversion to greyscale, stretched contrast, page straightened (the tilt is searched between −3° and +3°, in half-degree steps), then conversion to pure black and white (Otsu threshold, which automatically separates the ink from the background). A pale, grainy or slightly crooked scan thus becomes readable.
+
 ### The precautions taken
 
 - **Rotation**: each page is tried in all four orientations (0°, 90°, 270°, 180°). The orientation kept is the one that brings out the most valid ISIN codes and useful words (quantité, cours, courtage, achat, vente, date, montant…). As soon as an orientation is clearly right, the others are not tried.
-- **Repair of misread ISINs**: the letter O read in place of the digit 0 (`FRO013380607`), an I or an l in place of 1, S for 5, B for 8, Z for 2, or a character read twice (`FRO0013380607`). A correction is kept only if the corrected ISIN has a correct check digit and at least 6 digits: the software never invents a code. A word like "EURONEXTPARIS" is never mistaken for an ISIN.
+- **Repair of misread ISINs**: the letter O read in place of the digit 0 (`FRO013380607`), an I or an l in place of 1, S for 5, B for 8, Z for 2, or a character read twice (`FRO0013380607`). A correction is kept only if the corrected ISIN has a correct check digit, an existing country code and at least 4 digits: the software never invents a code. A word like "EURONEXTPARIS" is never mistaken for an ISIN.
+- **Repair of numbers**: in a number, a letter read in place of a digit is corrected (O or o to 0, I, l or | to 1, S to 5, B to 8): "65O,2O" becomes "650,20". The correction only happens in a group that already contains at least two real digits and a decimal comma or point, with no other letter: words are never changed.
 - **Run-together words**: reading tolerates words stuck together ("VENTECOMPTANT").
 
-The recognised text is then read as a trade confirmation. Recognition reads only trade confirmations: a scanned statement in table form is generally unusable.
+The recognised text is then read as a trade confirmation: first by its headings, then by its content (ISIN, date, `quantity × price = amount`), then with a learned model. Recognition reads only trade confirmations: a scanned statement in table form or a scanned portfolio statement is generally unusable. If no transaction is recognised, the [[Complete the transaction]] form suggests the values read.
 
 ### Always check
 
-Reading an image takes several seconds and remains less reliable than a text PDF. The summary says so: "Image PDF read by character recognition: please check the transactions ("Transactions" tab).". Check the date, quantity and price.
+Reading an image takes several seconds (more if the second attempt is needed) and remains less reliable than a text PDF. The summary says so: "Image PDF read by character recognition: please check the transactions ("Transactions" tab).". Check the date, quantity and price.
 
 ## Why is my scanned PDF rejected?
 <!-- fiche: import-pdf-scan-refuse | questions: scanned pdf rejected ; message cannot be read automatically ; no transaction was recognised in my image pdf ; why wont my scan work ; the software rejects my photo of a trade confirmation ; what should I do if my pdf is an image ; install character recognition | mots: scanned PDF, rejection, image PDF, OCR not installed, error message, PDF format, manual entry, requirements-ocr -->
 
-Two messages may appear for an image PDF.
+An image PDF is no longer simply refused: when it is not read automatically, one of the messages below is shown at the top of the [[Complete the transaction]] form (see the fiche "Completing a transaction when the PDF is not recognised").
 
 ### "Scanned PDF (image): it cannot be read automatically…"
 
-No character recognition engine is installed: the PDF contains no text to read. The message offers three solutions: export the statement as a PDF from your online banking, or as Excel / CSV, or enter the transaction by hand.
+No character recognition engine is installed: the PDF contains no text to read. The form then says "No readable text in this document: enter the transaction by hand.": you have to type the values yourself.
 
 If you launch the software from the source code, you can install the engine with the command `python -m pip install -r requirements-ocr.txt`.
 
+### "The text of this PDF is "encoded"…"
+
+The PDF contains text, but it extracts as unintelligible signs, and no character recognition engine is installed. Same solution: install the engine, or complete the transaction by hand in the form.
+
 ### "Image PDF (scan, photo or page printed with "Print to PDF"): the text was read by character recognition, but no transaction was recognised…"
 
-The engine did read the page, but did not find a valid ISIN code, a quantity and a date all together. Possible causes: blurred or low-resolution image, unreadable ISIN, a document that is not a trade confirmation (statement in table form, portfolio summary).
+The engine did read the page, twice (the second time on a cleaned and straightened image), but no reading found a certain transaction. Possible causes: blurred or very low-resolution image, unreadable ISIN, a document that is not a trade confirmation (statement in table form, portfolio summary). The form then suggests the dates, codes and numbers read on the image.
 
-### Why the software refuses rather than guesses
+### Why the software does not guess
 
-A misread transaction (a quantity of 60 read as 80, a price shifted by one decimal place) would distort all the calculations without you noticing. The software therefore prefers to clearly refuse a document it does not understand.
+A misread transaction (a quantity of 60 read as 80, a price shifted by one decimal place) would distort all the calculations without you noticing. The software therefore adds automatically only what it is sure of; for the rest, you confirm the values in the form.
 
 ### The solutions, from the most reliable to the least
 
 1. **Download the real PDF** from your online banking, with the "PDF format" or "Download" button rather than "Print": the text is then read exactly.
 2. **Export the transactions as Excel or CSV**, if your bank offers it.
-3. **Enter the transaction by hand**: [[Add transactions]] page, [[Manual entry]] tab.
-4. Run the PDF diagnostic to understand what was read (see the next fiche).
+3. **Complete the transaction** in the suggested form, or enter it by hand: [[Add transactions]] page, [[Manual entry]] tab.
+4. Run the PDF diagnostic to understand what was read, or prepare an anonymised report to send (see the following fiches).
+
+## Checks after reading a PDF
+<!-- fiche: import-pdf-controles | questions: the amount written does not match quantity × price ; transaction dated on a saturday non-trading day ; fees of more than 3% check the fees ; the same transaction appears twice confirmation sent twice ; what checks after reading a pdf ; messages in the sidebar summary after a pdf ; does the software check my trade confirmation ; execution date on a sunday | mots: checks, verification, amount written, quantity × price, weekend, non-trading day, high fees, 3%, duplicate, confirmation sent twice, summary -->
+
+After reading a PDF uploaded from the sidebar, the software runs each transaction through four checks. They block nothing: each point found is added to the sidebar summary, so that you can check it in the [[Transactions]] tab.
+
+### The four checks
+
+| Check | Message shown in the summary |
+|---|---|
+| The amount written in the confirmation does not match `quantity × price`, with the fees added or subtracted, within 1% | "[ISIN]: the amount written ([amount]) does not match quantity × price ± fees ([calculation]): check the quantity and the price." |
+| Purchase or sale dated on a Saturday or a Sunday | "[ticker]: transaction dated on a Saturday ([date]), a non-trading day: check the execution date." |
+| Fees above 3% of the amount `quantity × price` | "[ticker]: fees of [fees] for an amount of [amount] (more than 3%): check the fees." |
+| Same transaction twice (same date, type, security, quantity and price) | "[ticker]: the same transaction appears twice ([date]): confirmation sent twice?" |
+
+### What each message most often points to
+
+- **Inconsistent amount**: a misread quantity or price (a misplaced decimal comma, a digit misrecognised on a scan). This check applies to trade confirmations, not to statements in table form, and ignores dividends.
+- **Non-trading day**: the issue or settlement date was taken for the execution date.
+- **High fees**: an amount taken for fees, or genuinely high fees on a small order. Example: 2 securities at €50 (€100) with €4.90 of brokerage: 4.9% of the amount, the message appears. For 30 securities at €172.46 (€5,173.80) with €20.69 of fees, i.e. 0.4%, nothing is reported.
+- **Duplicate**: the same confirmation present twice in the PDF.
+
+### Several files
+
+When several files are uploaded together, the checks of each file are combined, and a transaction present in two files is counted only once; the summary says so: "… transaction(s) found in two files counted only once.".
+
+### What to do
+
+Open the [[Transactions]] tab and compare the transaction with your confirmation. An error is corrected with [[Edit transactions]].
+
+These checks are not shown on the [[Add transactions]] page, which has its own checks before saving (see the fiche "Which checks block saving?").
+
+## Importing a PDF portfolio statement (holdings and cost price)
+<!-- fiche: import-releve-portefeuille-pdf | questions: import my pdf portfolio statement ; I only have the list of my holdings with the cost price ; securities account statement with valuation and cost price ; is a portfolio valuation pdf accepted ; portfolio statement pdf ; why does my performance start on the statement date ; my holdings became purchases ; how do I start from my current portfolio without the history | mots: portfolio statement, holdings, positions, PRU, cost price, valuation, starting portfolio, pdf_positions, statement of holdings | aller: Analyse du portefeuille/Positions -->
+
+A **portfolio statement** (or "portfolio valuation", "relevé de portefeuille") lists the securities held on a date, with their quantity, price, valuation and often the average cost price (PRU). The software can use it as a **starting portfolio**.
+
+### How it is recognised
+
+The PDF must contain a title such as "Relevé de portefeuille", "Relevé de compte-titres", "Portefeuille titres", "État du portefeuille", "Valorisation du portefeuille", "Inventaire du portefeuille", "Estimation du portefeuille", "Positions au", "Portfolio statement" or "Statement of holdings", and at least one ISIN code.
+
+For each security line, the software looks for:
+
+- `quantity × price = valuation`, to the cent;
+- the **cost price (PRU)**: the number preceded by "PRU", "prix de revient", "prix moyen", "PAM" or "cost price"; otherwise, a number on the line between a third and three times the price, confirmed if `quantity × (price − PRU)` equals the unrealised gain written;
+- the **statement date**: a date preceded by "au", "arrêté au", "en date du", "situation", "as of"…, otherwise the first date in the document.
+
+If a single line is not certain, or the date is missing, the document is not read as a portfolio statement: the software moves on to the other readings.
+
+### What each holding becomes
+
+Each holding becomes a **purchase** of the quantity held, at the PRU (or, without a PRU, at the statement price), dated on the statement day, with no fees.
+
+Example: the line `LVMH FR0000121014 10 650,20 731,00 7 310,00 808,00` of a statement "Positions au 31/12/2023" reads: 10 × 731.00 = 7,310.00 (valuation); PRU 650.20, confirmed because 10 × (731.00 − 650.20) = 808.00, the unrealised gain written. It becomes: `2023-12-31, ACHAT, MC.PA, 10 securities at €650.20`.
+
+### What you should know
+
+The sidebar summary reminds you: "PDF portfolio statement: each holding is entered as a purchase at its cost price (PRU), on the statement date; performance is therefore measured from that date.".
+
+- The earlier history (real purchase dates, sales, past dividends) is not known.
+- As the PRU may be far from that day's price, a "price(s) far from that day's market price" note may appear: that is normal here.
+- The reading only works for a text PDF, not for a scanned statement.
+- Then add your new transactions with [[Add transactions]].
+
+## My PDF is password-protected
+<!-- fiche: import-pdf-protege | questions: my pdf is password protected ; my bank sends me pdfs with a password ; which password opens my statement ; where do I enter the pdf password ; incorrect password for my pdf ; is the pdf password stored ; encrypted pdf ; open a locked pdf | mots: protected PDF, password, encrypted PDF, locked, decryption, date of birth, customer ID, pypdfium2 -->
+
+Some banks send their statements and trade confirmations as password-protected PDFs. The software can open them, provided you give it the password.
+
+### What is displayed
+
+When you upload such a PDF ([[Upload a file (CSV, Excel or PDF)]] area of the sidebar, or [[Add transactions]] page), a [[Protected PDF]] box appears with the file name and the message:
+
+"Password-protected PDF: enter the password to open it (often given in the bank's e-mail: date of birth, customer ID…). It is not stored."
+
+1. Type the password in the [[PDF password]] field.
+2. Click [[Open the PDF]].
+3. The document is decrypted, then read normally (automatic reading, otherwise the [[Complete the transaction]] form).
+
+If the password is wrong, the message "Incorrect password." is shown: try again.
+
+### What happens to the password?
+
+- The **password** is kept nowhere: it is used once, to produce an unprotected copy of the document.
+- This **decrypted copy** is kept in memory during the session, so you are not asked for the password at every action. It is not written to disk and disappears when the software is closed.
+- If you then save the portfolio to your space, it is the transactions read that are saved, encrypted, not the PDF.
+
+### In "My account"
+
+The [[Add a portfolio]] section of [[My account]] does not ask for a password: upload a protected PDF from the sidebar.
+
+## Uploading several files at once
+<!-- fiche: import-plusieurs-fichiers | questions: upload several files at the same time ; import all my trade confirmations at once ; I have 10 pdfs how do I put them together ; several files in the sidebar ; analyse the transactions already read ; files sent waiting ; a confirmation is in two files is it counted twice ; combine several statements in one portfolio ; drop all my pdfs in one go | mots: several files, batch, multiple upload, Files sent, trade confirmations, merge, waiting, duplicates, sidebar, in one go, at once -->
+
+The [[Upload a file (CSV, Excel or PDF)]] area of the sidebar accepts several files at once: for example all the trade confirmations of a year, or a CSV export and a few PDF confirmations. Their transactions are combined into one portfolio.
+
+### What happens
+
+A [[Files sent]] box is displayed in place of the dashboard and processes each file:
+
+- a file read automatically shows "[name]: [n] transaction(s) read.";
+- a protected PDF shows the [[Protected PDF]] box to enter its password (see the dedicated fiche);
+- an unrecognised PDF opens the [[Complete the transaction]] form; once confirmed, its transaction joins the others;
+- an unrecognised CSV or Excel file shows its reason and the advice "Send this file on its own to open the import assistant.": the import assistant does not open for a batch.
+
+When all the files have been read, the analysis starts. While some are waiting, the "Waiting: …" list names them, and the "Analyse the [n] transaction(s) already read" button lets you analyse without them.
+
+### Duplicates between files
+
+A transaction present in several files (same date, same type, same security, same quantity, same price) is counted only **once**. The sidebar summary says so: "… transaction(s) found in two files counted only once.". It also includes the checks of each file (see the fiche "Checks after reading a PDF").
+
+### Keeping the result
+
+As for a single file, when signed in, the [[Save to my space]] block appears under the upload area; the suggested name is of the form "3 files". Without an account, the result only holds for the session.
+
+### To complete an existing portfolio
+
+To add confirmations to a portfolio already saved, use the [[Add transactions]] page instead: its [[Files (CSV, Excel or PDF)]] area also accepts several files and spots the transactions already in the portfolio.
 
 ## Diagnosing a misread PDF with diagnostic_pdf.py
-<!-- fiche: import-diagnostic-pdf | questions: how can I see what the software reads in my pdf ; what is diagnostic_pdf.py for ; my trade confirmation is misread how do I report it ; see the text extracted from the pdf ; send a pdf reading report ; diagnostic_pdf.txt ; debug pdf | mots: diagnostic, diagnostic_pdf.py, diagnostic_pdf.txt, debugging, extracted text, misread PDF, report, terminal -->
+<!-- fiche: import-diagnostic-pdf | questions: how can I see what the software reads in my pdf ; what is diagnostic_pdf.py for ; my trade confirmation is misread how do I report it ; see the text extracted from the pdf ; send a pdf reading report ; diagnostic_pdf.txt ; debug pdf | mots: diagnostic, diagnostic_pdf.py, diagnostic_pdf.txt, diagnostic_pdf_anonyme.txt, debugging, extracted text, misread PDF, report, terminal, anonymous -->
 
 The `diagnostic_pdf.py` script, at the root of the project, shows exactly what the software reads in a PDF. It is mainly aimed at those who have the source code (students, developers) and is used to understand, or to get corrected, a faulty reading.
 
@@ -713,20 +1000,71 @@ In a terminal opened in the project folder (for example the VS Code terminal):
 
 ```
 python diagnostic_pdf.py "C:\path\to\confirmation.pdf"
+python diagnostic_pdf.py "C:\path\to\confirmation.pdf" --anonyme
 ```
+
+The second form produces a report without personal data (see below).
 
 ### What it displays
 
 - the file name and size, the number of pages and the number of characters of embedded text;
 - **text PDF** (at least 20 characters): the mention "PDF TEXTE (lecture exacte)", then the text of each page and each detected table, with cells separated by `|`;
-- **image PDF**: the recognition engine used (RapidOCR, Tesseract or AUCUN, meaning none), then, for the first page, the text read in each of the four orientations with its score, and the text finally kept after ISIN correction;
-- finally the **result**: the table of transactions obtained and its nature (`pdf_tableau` for a statement, `pdf_avis` for a trade confirmation, `pdf_ocr` for a reading by character recognition), or the error message.
+- **image PDF** or "encoded" text: the recognition engine used (RapidOCR, Tesseract or AUCUN, meaning none), then, for the first page, the text read in each of the four orientations with its score, and the text finally kept after correction of the ISINs and numbers;
+- the **reading by content**: ISIN codes, dates, suggested date, suggested transaction and numbers found with their context (what the form would suggest);
+- finally the **result**: the table of transactions obtained and its nature, or the error message.
+
+| Nature | Reading |
+|---|---|
+| `pdf_tableau` | statement of transactions in table form |
+| `pdf_avis` | trade confirmation read by its headings |
+| `pdf_contenu` | trade confirmation read by its content |
+| `pdf_modele` | trade confirmation read with a learned model |
+| `pdf_positions` | portfolio statement (holdings and PRU) |
+| `pdf_ocr` | reading by character recognition |
+
+A password-protected PDF cannot be diagnosed this way: the script stops on the protected-PDF message.
 
 ### The report
 
-The result is also saved in the `diagnostic_pdf.txt` file, next to the script. This is the file to send in order to get a faulty reading corrected.
+The result is also saved in the `diagnostic_pdf.txt` file, next to the script. Note: this file contains all the text of your document.
 
-Note: it contains the text of your document. Hide your name and account number before sending it.
+With `--anonyme`, the report is saved in `diagnostic_pdf_anonyme.txt`: names, address lines, e-mail addresses, IBANs, phone numbers and account or reference numbers are masked; ISIN codes, dates and amounts are kept. This is the file to send in order to get a faulty reading corrected (see the fiche "Sending a misread PDF without personal data").
+
+## Sending a misread PDF without personal data: the anonymised report
+<!-- fiche: import-rapport-anonymise | questions: how do I report a misread pdf without giving my personal details ; what does prepare an anonymised report do ; rapport_lecture_pdf_anonymise.txt ; are my name and iban removed ; send my trade confirmation to the developer ; anonymous diagnostic ; add a real confirmation to the test bench ; vrais_avis folder and attendus.csv | mots: anonymised report, anonymisation, personal data, masking, IBAN, account number, vrais_avis, attendus.csv, test bench, reporting, diagnostic -->
+
+For a misread type of confirmation to be better recognised in a future version, the software's creator needs its text, not your personal data. The software therefore prepares an **anonymised report**.
+
+### From the software
+
+In the [[Complete the transaction]] form, open the [[Text read in the document]] box and click [[Prepare an anonymised report]]. The file `rapport_lecture_pdf_anonymise.txt` is downloaded. It contains: the file name, whether the text is "encoded", the ISIN codes and dates found, the suggested date and transaction, then the text read, anonymised.
+
+Nothing is sent automatically: you send this file yourself, if you wish.
+
+### From the source code
+
+`python diagnostic_pdf.py file.pdf --anonyme` produces the same report, followed by the result of the reading, in `diagnostic_pdf_anonyme.txt`.
+
+### What is masked, what is kept
+
+| Masked | Kept |
+|---|---|
+| lines containing a name or an address (Monsieur, Madame, titulaire, client, address, street number and name, postcode followed by a town) | ISIN codes |
+| e-mail addresses, replaced by "[e-mail]" | dates |
+| IBANs, replaced by "[IBAN]" | amounts, prices, quantities |
+| phone numbers, replaced by "[téléphone]" | headings ("Quantité", "Cours", "Courtage"…) |
+| account, reference, order, SIREN… numbers, and long strings of digits, replaced by "[numéro]" | |
+
+Masking is automatic: read the file again before sending it, as data written in an unusual way may slip through.
+
+### The test bench of real confirmations
+
+The project checks its PDF reading on 20 fictitious confirmations with very different layouts (various headings, English, columns without lines, pale, grainy and crooked scans, "encoded" text, portfolio statement…), in `tests/avis_fictifs.py` and `tests/test_pdf_universel.py`. The `tests/donnees/vrais_avis/` folder can also hold **real** anonymised confirmations. Its `README.md` file explains the procedure:
+
+1. mask the personal data (anonymised report above; for the PDF itself, black it out with PDF software);
+2. copy the PDF into this folder;
+3. add one line per transaction to `attendus.csv`, in the format `fichier;date;sens;isin;quantite;cours;frais` (date DD/MM/YYYY, numbers with a decimal point, fees empty if unknown);
+4. run `python -m pytest tests/test_pdf_universel.py`: each document must be read exactly as stated.
 
 ## How do I check what the software has read?
 <!-- fiche: import-verifier | questions: how do I check my import ; were all my transactions imported ; where do I see the imported transactions ; price far from the day's price is that serious ; the summary in the sidebar ; how many transactions were read ; import quality check ; stock split detected | mots: verification, import summary, Transactions tab, price alert, gap, quality check, number of transactions, split, stock split | aller: Analyse du portefeuille/Transactions | chiffres: nb_operations -->
@@ -735,7 +1073,7 @@ After an import, take a minute to check the result. The software helps you in th
 
 ### 1. The sidebar summary
 
-After an automatic import, a box summarises what was understood: number of transactions and securities, PDF read, columns identified without a header row, tickers and ISINs converted, order of the dates, ignored rows, currency conversions. At the bottom of the sidebar, the "Transactions" line reminds you of the number of transactions analysed. Compare it with the number of rows in your statement.
+After an automatic import, a box summarises what was understood: number of transactions and securities, PDF read (and how), prices replaced thanks to the market price, points to check after reading a PDF, columns identified without a header row, tickers and ISINs converted, order of the dates, ignored rows, currency conversions. At the bottom of the sidebar, the "Transactions" line reminds you of the number of transactions analysed. Compare it with the number of rows in your statement.
 
 ### 2. The price alerts
 
@@ -744,7 +1082,7 @@ Each purchase and sale price is compared with the closing price of the day. If p
 Possible causes:
 - **wrong ticker** (namesake on another exchange);
 - **wrong currency** (euros read as dollars, pounds instead of pence);
-- **stock split**: after a split, the price history may no longer match the price paid at the time;
+- **stock split**: after a split, the price history may no longer match the price paid at the time (see the fiche "Stock split or reverse split");
 - a simple data entry error in the file.
 
 An alert does not stop the analysis: it is up to you to judge.
@@ -798,11 +1136,11 @@ The page shows which portfolio it concerns. [[Back to the dashboard]] closes it 
 
 ### Three ways to add
 
-- **[[From a file]] tab**: the [[Files (CSV, Excel or PDF)]] area, which accepts several files at once (several trade confirmations, an export of the latest transactions…). Each file goes through the same automatic reading as the main upload; the message gives the number of transactions read, for example "avis.pdf: 1 transaction(s) read.". A file already read on the page is not read again.
+- **[[From a file]] tab**: the [[Files (CSV, Excel or PDF)]] area, which accepts several files at once (several trade confirmations, an export of the latest transactions…). Each file goes through the same automatic reading as the main upload; the message gives the number of transactions read, for example "avis.pdf: 1 transaction(s) read.". A file already read on the page is not read again. A protected PDF first asks for its password ([[Protected PDF]] box). A split or reverse split notice opens the [[Corporate action]] box (see the fiche "Stock split or reverse split").
 - **[[Manual entry]] tab**: an order typed in by hand (see the dedicated fiche).
 - The two can be combined: all the transactions accumulate in the same list.
 
-If a file is not understood automatically, the reason is displayed. This page has no import assistant: for an unusual format, first upload the file from the sidebar, download the converted file, then add it here.
+If a file is not understood automatically, the reason is displayed; for a PDF, the [[Complete the transaction]] form opens with the values found (see the dedicated fiche). This page has no import assistant: for an unusual format, first upload the file from the sidebar, download the converted file, then add it here.
 
 ### The check before saving
 
@@ -815,6 +1153,49 @@ Click [[Save transactions]]. The selected transactions are merged with the exist
 - Uploaded file or example portfolio: the addition holds for the session; download the updated file to keep it.
 
 [[Clear all]] empties the current list without saving anything.
+
+## Stock split or reverse split: adjusting earlier transactions
+<!-- fiche: import-division-actions | questions: my share had a split how do I enter it ; 4 for 1 stock split what do I do ; 10 to 1 reverse split ; corporate action notice pdf ; what does apply to earlier transactions do ; after a split my value is wrong ; reverse split ; ratio 1 old for 4 new ; how do I correct my quantities after a split | mots: stock split, split, reverse split, share consolidation, corporate action, ratio, par value, adjustment, Apply to earlier transactions -->
+
+After a **stock split** or a **reverse split** (share consolidation), Yahoo Finance corrects its prices retroactively. Your old transactions, however, are still expressed in the old units: they must be adjusted. The software does it from the corporate action notice sent by your broker.
+
+### How to do it
+
+1. Open the portfolio's [[Add transactions]] page, [[From a file]] tab.
+2. Drop the split or reverse split notice (text PDF) into the [[Files (CSV, Excel or PDF)]] area.
+3. The [[Corporate action]] box summarises what was read, for example "Split of Michelin (ML.PA) on 16/06/2023: 1 old → 4 new.", then the number of transactions that will be converted.
+4. Click [[Apply to earlier transactions]].
+
+### What the software recognises
+
+- the words "division" (du nominal, d'actions), "split", "fractionnement", "regroupement", "reverse split";
+- an ISIN code;
+- the ratio: "divisé par 4", "1 action ancienne pour 4 actions nouvelles", "10 actions anciennes pour 1 action nouvelle", "parité : 1 pour 4", "1 old for 4 new";
+- the effective date: "date d'effet", "ex-date", "détachement", "à compter du", "effective"…, otherwise the execution date.
+
+### The calculation
+
+The factor is the number of new shares for one old share: 4 for a 4-for-1 split, 0.1 for a 10-to-1 reverse split. For each **purchase or sale of this security dated before the effective date**:
+
+```
+new quantity = quantity × factor
+new price    = price ÷ factor
+```
+
+The amount (quantity × price) does not change, and Yahoo Finance prices, already adjusted, match your prices again. **Dividends** (total amounts) do not change, nor do transactions after the effective date.
+
+Example: 10 Michelin shares bought at €120 on 01/03/2022, 4-for-1 split on 16/06/2023. The purchase becomes 40 shares at €30 (10 × 120 = 40 × 30 = €1,200). A €45 dividend received in 2023 and a purchase on 01/09/2023 stay as they are.
+
+### Saving
+
+The adjustment is saved like other changes: the message "… transaction(s) of … adjusted." confirms it.
+
+- Portfolio in your space: saved again, encrypted, the previous version can still be recovered with [[Undo last change]].
+- Uploaded file or example portfolio: the adjustment holds for the session; download the updated file.
+
+### If the notice is not recognised
+
+With no transaction of the security before the effective date, the box says there is nothing to adjust. If the notice is not read (scan, ratio missing), correct it yourself in the Transactions tab with [[Edit transactions]]: quantity multiplied and price divided by the same factor. Other corporate actions (mergers, spin-offs, free share allotments) are not handled automatically.
 
 ## Entering an order by hand
 <!-- fiche: import-saisie-manuelle | questions: how do I enter a purchase by hand ; add a transaction manually ; manual entry of a dividend ; I have no file I want to type my order ; which price do I put in manual entry ; security not found in manual entry ; enter an order with the isin ; is the price in euros or dollars in the entry form | mots: manual entry, form, order, manual addition, ticker, ISIN, Bloomberg code, Add to the list -->
@@ -883,7 +1264,7 @@ If you really placed two identical orders on the same day at the same price, the
 
 ### Outside the add page
 
-This detection applies only to the [[Add transactions]] page. A complete file uploaded from the sidebar is read as it is: if it contains the same row twice, it will be counted twice. Then delete the extra row in the Transactions tab.
+This detection applies only to the [[Add transactions]] page. A complete file uploaded alone from the sidebar is read as it is: if it contains the same row twice, it will be counted twice (for a PDF, the summary reports it: "… the same transaction appears twice …"). Then delete the extra row in the Transactions tab. When several files are uploaded together, an identical transaction (same date, type, security, quantity and price) is counted only once.
 
 ## Which checks block saving?
 <!-- fiche: import-controles | questions: why cant I save ; the save button is greyed out ; sale of securities but only 0 held ; transaction dated in the future ; zero quantity or price message ; short sale refused ; red message in the check ; the portfolio cannot be empty | mots: checks, blocking, short sale, future date, zero quantity, zero price, consistency, validation, blocking error -->
@@ -1039,7 +1420,11 @@ The list does not offer a way to hide them; they remain available, after your pe
 | "Unable to analyse the portfolio: Sale impossible on …" | Sale of more securities than held (missing purchase in the history) | Add the missing purchase or correct the quantity |
 | "Prices not checked against market data (no connection)." | No Internet during the import | Normal when offline; check the foreign securities |
 | "… price(s) far from that day's market price …" | Wrong ticker, currency or stock split | See the fiche on checking the import |
-| Messages about scanned PDFs | Image PDF | See the fiches on image PDFs and rejected scans |
+| Messages about scanned PDFs or PDFs with "encoded" text | Image PDF, or text that cannot be extracted | See the fiches on image PDFs and rejected scans |
+| "Transaction not recognised automatically in this PDF: complete it…" | Readable PDF, but no certain transaction | Complete the transaction in the [[Complete the transaction]] form |
+| "Password-protected PDF: enter the password to open it…" | PDF encrypted by the bank | Enter the password in [[PDF password]], then [[Open the PDF]] |
+| "Incorrect password." | Wrong PDF password | Check it in the bank's e-mail (date of birth, customer ID…) |
+| "… the amount written (…) does not match quantity × price ± fees …", "… a non-trading day …", "… (more than 3%) …", "… appears twice …" | Points found after reading a PDF | See the fiche "Checks after reading a PDF" |
 | Values 1,000 times too small | Thousands separator read as a decimal (`1.234`) | Remove the thousands separator in the file |
 | London shares 100 times too expensive | Confusion between pounds and pence | See the fiche on pence |
 

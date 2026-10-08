@@ -23,7 +23,7 @@ Il est géré **depuis le 16 janvier 2017**, soit près de 10 ans. Les étapes d
    python generer_portefeuille_diversifie.py
    ```
    Le fichier `data/transactions_diversifie.csv` est créé. Environ 900 opérations sont attendues : achats, ventes de rééquilibrage, dividendes et coupons.
-3. Lance les tests avec `python -m pytest`. Résultat attendu : **161 passed**.
+3. Lance les tests avec `python -m pytest`. Résultat attendu : **211 passed**.
 4. Choisis **« Portefeuille diversifié (multi-actifs) »** dans la barre latérale du tableau de bord, ou lance :
    ```
    python main.py data/transactions_diversifie.csv

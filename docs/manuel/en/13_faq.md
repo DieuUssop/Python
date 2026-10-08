@@ -248,7 +248,7 @@ One portfolio per client works the same way, but the software has no client reco
 ### How to get your transactions into it
 
 1. **An export** from your bank or broker, as CSV or Excel: upload it with [[Upload a file (CSV, Excel or PDF)]]; the automatic import recognises most formats, otherwise the import wizard guides you.
-2. **A PDF statement or trade confirmation**: it is read automatically (text PDF, or image if character recognition is installed).
+2. **A PDF statement or trade confirmation** (several at once if you wish, even password-protected): it is read automatically, whatever the broker (text PDF, or image if character recognition is installed); if it is not recognised, the [[Complete the transaction]] form suggests the values found in the document.
 3. **Manual entry**: [[Add transactions]], [[Manual entry]] tab.
 
 ### Updating afterwards
@@ -414,7 +414,7 @@ Each analysis with Internet downloads recent prices and adds them to the local d
 
 - a single price source (Yahoo Finance), with no cross-checking or outlier detection;
 - dividends not downloaded: only those entered count;
-- stock splits, mergers and other corporate actions not handled;
+- stock splits and reverse splits adjusted only from the broker's notice; mergers and other corporate actions not handled;
 - ETF composition, classification of securities and risk-free rate fixed and dated;
 - country of a stock in the local database deduced from its listing venue.
 
@@ -583,7 +583,7 @@ The language is kept during the session. The "The screen and navigation" chapter
 ## Are stock splits and corporate actions handled?
 <!-- fiche: faq-divisions | questions: are stock splits handled ; stock split ; my stock did a split ; reverse split ; company merger ; bonus share allocation ; 90% loss after a split | mots: stock split, split, reverse split, merger, spin-off, corporate action, bonus shares -->
 
-**No, not automatically.** The software only knows three transaction types: buy, sell and dividend.
+**Partly.** The software only knows three transaction types: buy, sell and dividend, and it does not detect a split by itself. But it can adjust your transactions from the split or reverse split notice sent by your broker.
 
 ### The problem
 
@@ -595,7 +595,7 @@ At import, the price check flags the gap ("check the ticker, currency or stock s
 
 ### The fix
 
-Express the transaction in securities as they are after the split, **without changing the amount**: here, 100 shares at €80. Do this in the Transactions tab with [[Edit transactions]].
+Express the transaction in securities as they are after the split, **without changing the amount**: here, 100 shares at €80. The simplest way: drop the split notice (PDF) on the [[Add transactions]] page, then click [[Apply to earlier transactions]] (see the chapter on import, fiche "Stock split or reverse split"). Otherwise, do it by hand in the Transactions tab with [[Edit transactions]].
 
 ### Other corporate actions
 

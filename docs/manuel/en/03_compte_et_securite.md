@@ -416,11 +416,15 @@ Your saved portfolios are encrypted with a key derived from your password. The c
 
 ### What is readable without a password
 
-A few local files, shared by all the computer's users, are not encrypted: the list of account usernames, the price cache (codes of recently analysed securities and their prices), the memory of recognised securities and the log of unanswered questions. They contain no quantity or amount, but they reveal which securities have been analysed.
+A few local files, shared by all the computer's users, are not encrypted: the list of account usernames, the price cache (codes of recently analysed securities and their prices), the memory of recognised securities, the learned trade confirmation models (`modeles_pdf.json`) and the log of unanswered questions. They contain no quantity or amount, but they reveal which securities have been analysed. The learned models only keep the headings of the values ("Quantité", "Cours"…) and the document's vocabulary as fingerprints (hashing): no amount, no name in clear.
 
 ### The case of a teacher
 
 Your teacher only sees your portfolios if you pass them a file yourself (CSV export, PDF report) or if you show them your screen.
+
+### Reporting a misread PDF
+
+To help the creator improve the reading of a type of trade confirmation, you can send them yourself the report produced by [[Prepare an anonymised report]] ("Complete the transaction" form): names, address lines, e-mail addresses, IBANs, phone numbers and account numbers are masked in it. Nothing is sent without your action.
 
 ### The online version is different
 
@@ -444,6 +448,7 @@ Some files serve everyone and are not encrypted. They contain no quantity or amo
 
 - the local securities database and the memory of recognised securities (matches between ISIN codes, names and tickers, with their date);
 - the price cache files (codes and prices of the latest securities analysed);
+- the learned trade confirmation models (`modeles_pdf.json`): headings of the values and fingerprints of the vocabulary, with no amount or name in clear;
 - the assistant's log of unanswered questions: **all unanswered questions are visible to all users**, in the Manual and help workspace. Do not type any personal information there.
 
 A user who opens the accounts folder also sees the list of existing usernames.
@@ -504,6 +509,9 @@ The software was designed taking into account three articles of the General Data
 - No password is stored, only a fingerprint.
 - No portfolio data is saved in clear in the personal space; even portfolio names are encrypted.
 - Minimisation: only security codes are sent to Yahoo Finance, never quantities or amounts.
+- The password of a protected PDF is stored nowhere: the decrypted copy of the document stays in memory for the session.
+- The trade confirmation models learned on the computer contain no amount or name in clear (headings and fingerprints only).
+- To report a misread PDF, an anonymised report masks names, addresses, IBANs, phone numbers and account numbers before you decide to send it.
 - Data stays on the user's computer; it is not passed to any third party.
 
 ### Article 32: security of processing

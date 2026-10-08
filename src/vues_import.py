@@ -52,6 +52,11 @@ def texte_devises(rapport):
     return messages
 
 
+def _nb(x):
+    from .interface import nombre
+    return nombre(x, 2)
+
+
 def texte_resume(resume):
     """Résumé de l'import automatique, affiché dans la barre latérale."""
     parties = [t("Fichier reconnu automatiquement : {n} opération(s), {titres} titre(s).",
@@ -61,6 +66,22 @@ def texte_resume(resume):
                          "(onglet « Transactions »)."))
     elif resume.get("source_pdf") == "pdf_avis":
         parties.append(t("Avis d'opéré PDF lu."))
+    elif resume.get("source_pdf") == "pdf_positions":
+        parties.append(t("Relevé de portefeuille PDF : chaque position est reprise comme un achat au prix de revient "
+                         "(PRU), à la date du relevé ; la performance est donc mesurée à partir de cette date."))
+    elif resume.get("source_pdf") == "pdf_modele":
+        parties.append(t("Avis d'opéré PDF lu avec le modèle appris lors d'une saisie précédente : vérifiez "
+                         "l'opération (onglet « Transactions »)."))
+    elif resume.get("source_pdf") == "pdf_contenu":
+        parties.append(t("Avis d'opéré PDF lu d'après son contenu (quantité × cours = montant) : vérifiez "
+                         "l'opération (onglet « Transactions »)."))
+    for a in resume.get("arbitrages", []):
+        parties.append(t("{ticker} ({date}) : cours lu {ancien} remplacé par {nouveau}, la lecture qui correspond au "
+                         "cours de clôture du jour ({marche}).", ticker=a["ticker"], date=a["date"],
+                         ancien=_nb(a["ancien"]), nouveau=_nb(a["nouveau"]), marche=_nb(a["marche"])))
+    for message in resume.get("controles_pdf", []):
+        valeurs = {k: (t(v) if k == "jour" else v) for k, v in message.get("valeurs", {}).items()}
+        parties.append(t(message["texte"], **valeurs))
     if resume.get("sans_entete"):
         parties.append(t("Colonnes identifiées d'après leur contenu (pas de ligne de titres)."))
     if resume.get("tickers_reconnus"):
