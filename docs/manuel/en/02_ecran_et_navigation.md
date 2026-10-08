@@ -10,15 +10,17 @@ The screen is split into two parts: the **sidebar**, on the left, which groups a
 
 ### The sidebar, from top to bottom
 
-1. **The header**: the "PT" monogram, the name "Portfolio Tracker" and the label "Master G2C". On the right, two small selectors: language (FR or EN) and display (Light or Dark).
+1. **The header**: the "PT" monogram, the name "Portfolio Tracker" and the label "Master G2C". Just below, on a single line, two small selectors: language (FR · EN) on the left and display (Light · Dark) on the right; the active option is in bold.
 2. **The personal space**: the label "Encrypted personal space" and the [[Sign in]] link. Once signed in, your initials, your username and the [[My account]] and [[Sign out]] links.
-3. **Workspace**: the menu of the four workspaces (Portfolio analysis, Wealth advisory, Asset management, Manual and help), each with a line of description.
-4. **Data**: the list of portfolios, the [[Upload a file (CSV, Excel or PDF)]] area, then the [[Add transactions]] and [[File template]] links.
+3. **Workspace**: the menu of the four workspaces (Portfolio analysis, Wealth advisory, Asset management, Manual and help), each with a grey line of description. The workspace on screen is highlighted in light blue, with a blue bar on the left.
+4. **Data**: the list of portfolios, the [[Upload a file (CSV, Excel or PDF)]] area ([[Browse]] button, or drag and drop the file), then the [[Add transactions]] and [[File template]] links.
 5. **Settings**: a collapsed panel that contains the benchmark index, the risk-free rate and the VaR confidence level. Its title summarises the current settings.
-6. **Information** about the portfolio being analysed: file, period, number of transactions, source of prices and exchange rates.
+6. **Information** about the portfolio being analysed: file, period, number of transactions, source of prices, and the exchange rates folded under "Exchange rates".
 7. **The buttons** [[PDF report]] and [[Refresh prices]].
 
 Blocks 6 and 7 only appear once a portfolio has been analysed: they are absent in the "Manual and help" space and on the "My account" and "Add transactions" pages.
+
+At the bottom right of the screen, on every page, the [[Help]] button opens a small panel to ask the manual a question (see the article on the help bubble).
 
 ### The main area
 
@@ -31,7 +33,7 @@ On a narrow screen, the sidebar may be collapsed. The small arrow-shaped button 
 ## Switching the software to English (or back to French)
 <!-- fiche: ecran-langue | questions: how do I put the software in english ; change the language ; switch to english ; the dashboard is in english how do I put it back in french ; where is the FR EN button ; is there an english version ; can the pdf report be in english ; why do some texts stay in french | mots: language, English, French, translation, FR, EN, bilingual -->
 
-The language selector is at the top of the sidebar, to the right of the software's name: click **EN** for English, **FR** for French. The change is immediate, without losing the current portfolio or settings. French is the starting language.
+The language selector is at the top of the sidebar, under the software's name, on the left: click **EN** for English, **FR** for French. The change is immediate, without losing the current portfolio or settings. French is the starting language.
 
 ### What changes
 
@@ -55,7 +57,7 @@ The language is kept for the whole session. It is not saved in your account: the
 ## Turning on night mode (dark background)
 <!-- fiche: ecran-mode-nuit | questions: how do I turn on dark mode ; dark mode ; the screen is too white it hurts my eyes ; switch to night mode ; go back to light mode ; night mode is not remembered ; why is the pdf white when I'm in night mode ; make the background black | mots: night mode, dark mode, theme, black background, midnight blue, light, display -->
 
-The display selector is at the top of the sidebar, under the language selector: click **Dark** for a midnight-blue background, **Light** to return to the white background. Light mode is the starting mode.
+The display selector is at the top of the sidebar, under the software's name, on the right (on the same line as the language): click **Dark** for a midnight-blue background, **Light** to return to the white background. Light mode is the starting mode.
 
 ### What changes
 
@@ -426,11 +428,11 @@ Once the portfolio has been analysed, a small block of information appears at th
 | Period | First and last date of the valued history |
 | Transactions | The number of transactions read (purchases, sales, dividends) |
 | Prices | The source of the latest prices: "Yahoo Finance (live)", or "local cache of" followed by the date, with the note "Yahoo Finance unreachable" |
-| €1 in USD, €1 in GBP… | One line per foreign currency in the portfolio: the day's exchange rate used to convert securities into euros, to four decimal places |
+| Exchange rates (n) | Folded by default: click it to show one line per foreign currency in the portfolio ("€1 in USD", "€1 in GBP"…), the day's exchange rate used to convert securities into euros, to four decimal places. The number in brackets is the number of currencies |
 
 ### Reading an exchange rate
 
-"€1 in USD · 1.0850" means that one euro is worth 1.0850 dollars. A share quoted at 200 USD is therefore worth `200 / 1.0850 ≈ €184.33`. A portfolio entirely in euros has no rate line.
+"€1 in USD · 1.0850" means that one euro is worth 1.0850 dollars. A share quoted at 200 USD is therefore worth `200 / 1.0850 ≈ €184.33`. A portfolio entirely in euros has no rate line, and "Exchange rates" does not appear.
 
 ### After uploading a file
 
@@ -462,6 +464,30 @@ The assistant writes nothing: it searches the manual for the entry closest to yo
 ### If it does not find anything
 
 It says so and offers the closest entries. Try other words, simpler or more technical. Your question is then recorded on the computer to complete the manual (see the entry on unanswered questions).
+
+## The help bubble at the bottom right of the screen
+<!-- fiche: ecran-bulle-aide | questions: what is the help button at the bottom right ; ask a question without leaving my tab ; where is the help bubble ; how do i close the small help window ; the bubble does not find my answer ; see my previous questions again ; the help button hides part of the screen ; quick help while looking at my charts | mots: bubble, help, chat, help window, floating button, quick question, assistant, popup, panel | aller: Manuel et aide -->
+
+The [[Help]] button, fixed at the bottom right of the screen, is visible on every page: the three analysis workspaces, "Manual and help", "My account" and "Add transactions". It lets you ask the manual a question without leaving the current tab.
+
+### How to do it
+
+1. Click [[Help]]: a small panel opens above the button.
+2. Type your question in your own words, then press Enter or click [[Send]].
+3. The panel shows the title of the article that answers, its beginning (with the formula if there is a short one) and, where the article allows, your own figures.
+4. Click outside the panel, or on [[Help]] again, to close it.
+
+### The links under the answer
+
+- [[Read the full article]]: opens the "Manual and help" space on the whole article.
+- [[Go to the screen]]: opens the workspace concerned; if the article is about a specific tab, a message in the sidebar tells you which tab to open.
+- **See also**: up to three related articles; a click shows their beginning in the panel.
+- [[This is not the answer I was looking for]]: records the question on the computer to improve the manual.
+- **Your previous questions**: the last five questions of the session; a click shows the answer again. They are forgotten when the software is closed.
+
+### Same engine as the manual's assistant
+
+The bubble uses exactly the same search as the [[Ask a question]] field in the "Manual and help" space: offline, without artificial intelligence, tolerant of typing errors. A question without a reliable answer is recorded in the same way (see the article on unanswered questions). The button does not appear in the PDF report or when printing.
 
 ## Browsing the manual's contents
 <!-- fiche: ecran-sommaire-manuel | questions: where is the manual ; read the whole manual ; help contents ; download the manual as pdf ; manual in word ; how do I move from one chapter to another ; user guide for the software ; full documentation | mots: manual, contents, chapters, user guide, documentation, entries, Word, PDF | aller: Manuel et aide -->

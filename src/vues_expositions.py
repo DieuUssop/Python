@@ -159,7 +159,9 @@ def afficher(res, cle, code_indice):
         with gauche, st.container(border=True):
             html(ui.titre_section(t("Exposition réelle aux devises"),
                                   t("Tout le portefeuille, ETF répartis selon les pays de leur indice")))
-            graphique(gi.fig_anneau(devises, positions["valeur"].sum()))
+            parts = gi.parts_anneau(devises, positions["valeur"].sum())
+            graphique(gi.fig_anneau(devises, positions["valeur"].sum(), parts=parts))
+            html(ui.legende_parts(parts))
             html(ui.note(t("Un ETF coté en euros reste exposé aux devises des actions qu'il contient, sauf s'il "
                            "est couvert (« EUR Hedged »). L'or, coté en dollars, est compté à part.")))
         with droite, st.container(border=True):

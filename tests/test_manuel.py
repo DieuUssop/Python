@@ -117,3 +117,14 @@ def test_banc_d_essai_anglais():
         banc = [(l["question"], set(l["fiches_acceptees"].split(","))) for l in csv.DictReader(f, delimiter=";")]
     bons = sum(1 for q, ok in banc if (r := index.chercher(q, 1)) and r[0][1].ident in ok)
     assert bons / len(banc) >= 0.85, f"bonne fiche en premier (anglais) : {bons / len(banc):.0%}"
+
+
+# ----------------------------------------------------------------------
+# Bulle d'aide : résumé court de chaque fiche
+# ----------------------------------------------------------------------
+def test_resume_des_fiches_pour_la_bulle():
+    for fiche in _fiches():
+        resume, _ = manuel.resume_fiche(fiche)
+        assert resume.strip(), f"{fiche.ident} : résumé vide"
+        assert resume.count("```") % 2 == 0, f"{fiche.ident} : bloc de code coupé"
+        assert "[[" not in resume

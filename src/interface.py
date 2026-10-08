@@ -149,10 +149,57 @@ def bloc_titre(texte):
     return f'<div class="bloc-titre">{escape(texte)}</div>'
 
 
-def infos(lignes):
-    """Liste "intitulé : valeur" en petits caractères (barre latérale)."""
+def infos(lignes, replie=None):
+    """Liste "intitulé : valeur" en petits caractères (barre latérale).
+
+    replie : (titre, lignes) facultatif, affiché replié sous la liste (ex. les taux de change)."""
     contenu = "<br>".join(f"<b>{escape(k)}</b> · {escape(v)}" for k, v in lignes)
+    if replie and replie[1]:
+        titre, details = replie
+        corps = "<br>".join(f"<b>{escape(k)}</b> · {escape(v)}" for k, v in details)
+        contenu += f'<details class="infos-replie"><summary>{escape(titre)}</summary>{corps}</details>'
     return f'<div class="infos">{contenu}</div>'
+
+
+def legende_parts(parts):
+    """Légende d'un anneau, sous le graphique : pastille de couleur, nom, pourcentage aligné à droite.
+    parts : liste de dict(nom, poids, couleur) (graphiques_interactifs.parts_anneau)."""
+    lignes = "".join(
+        f'<div class="legende-ligne"><span class="legende-pastille" style="background:{escape(p["couleur"])}"></span>'
+        f'<span class="legende-nom">{escape(p["nom"])}</span>'
+        f'<span class="legende-pct">{escape(pct(p["poids"], signe=False, decimales=1))}</span>'
+        f'</div>' for p in parts)
+    return f'<div class="legende-parts">{lignes}</div>'
+
+
+def _texte_css(texte):
+    """Texte utilisable dans une propriété CSS content: "..." (sans guillemet ni barre oblique inverse,
+    que le Markdown de Streamlit pourrait réinterpréter)."""
+    return (str(texte).replace("\\", "/").replace('"', "”").replace("<", "‹").replace(">", "›")
+            .replace("\n", " "))
+
+
+def style_menu(legendes, actif):
+    """Feuille de style du menu des espaces : la légende grise sous chaque titre (le bouton
+    n° i porte la clé « menu_i »), et le repère de l'espace actif (aucun si actif est None)."""
+    regles = [f'section[data-testid="stSidebar"] .st-key-menu_{i} button p::after {{ content: "{_texte_css(l)}"; }}'
+              for i, l in enumerate(legendes)]
+    if actif is not None:
+        regles.append(f'section[data-testid="stSidebar"] .st-key-menu_{actif} button {{ '
+                      f'background: var(--fond-actif) !important; border-left-color: var(--primaire) !important; }}')
+        regles.append(f'section[data-testid="stSidebar"] .st-key-menu_{actif} button p {{ '
+                      f'font-weight: 600 !important; color: var(--primaire-fonce) !important; }}')
+    return "<style>" + "\n".join(regles) + "</style>"
+
+
+def style_depot(bouton, consigne):
+    """Textes de la zone d'envoi de fichier (ceux de Streamlit sont en anglais et ne se traduisent pas)."""
+    return ("<style>"
+            f'section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button::after '
+            f'{{ content: "{_texte_css(bouton)}"; }}'
+            f'section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"]::after '
+            f'{{ content: "{_texte_css(consigne)}"; }}'
+            "</style>")
 
 
 def pied_de_page(texte):

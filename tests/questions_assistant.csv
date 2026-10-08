@@ -166,3 +166,5 @@ mode sombre;ecran-mode-nuit
 passer en english;ecran-langue,faq-anglais
 mettre a jour mes prix;ecran-actualiser-cours,erreur-cours-pas-a-jour,sources-cache
 frontiere eficiente;optim-frontiere-efficiente,formule-frontiere-efficiente
+le petit bouton aide en bas de l'ecran;ecran-bulle-aide
+poser une question sans changer d'onglet;ecran-bulle-aide,ecran-assistant

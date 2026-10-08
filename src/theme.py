@@ -153,5 +153,7 @@ button[data-testid="stBaseButton-tertiary"], button[data-testid="stBaseButton-te
 .constat.attention { background: rgba(240, 169, 91, 0.07); }
 .kpi, [data-testid="stVerticalBlockBorderWrapper"] { box-shadow: none !important; }
 section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] { border-color: #3a5273 !important; }
+[data-testid="stPopoverBody"] { background-color: #16243a !important; border-color: var(--bordure) !important; color: var(--texte); }
+.st-key-bulle_aide button:not(.st-key-bulle_contenu *) { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45) !important; }
 </style>
 """

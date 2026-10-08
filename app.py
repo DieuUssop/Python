@@ -95,6 +95,9 @@ if FEUILLE_DE_STYLE.exists():
 if theme.nuit():
     st.markdown(theme.CSS_NUIT, unsafe_allow_html=True)
 
+# Bulle d'aide fixée en bas à droite, sur toutes les pages (src/vues_manuel.py)
+vues_manuel.bulle()
+
 
 def html(morceau):
     """Affiche un morceau de HTML produit par src/interface.py."""
@@ -188,23 +191,30 @@ def _choix_theme():
             pass                                        # préférence non enregistrée : sans gravité
 
 
-def _choix_espace():
-    """Un clic sur un espace de travail ferme les pages « Mon compte » et « Ajouter des opérations »."""
-    choix = st.session_state.get("espace_menu")
-    if choix is not None:
-        st.session_state["espace_actif"] = choix
+LEGENDES_ESPACES = {
+    "Analyse du portefeuille": "Performance, risque, optimisation",
+    "Conseil patrimonial": "Fiscalité, stress tests",
+    "Gestion d'actifs": "Attribution, budget de risque, backtest",
+    "Manuel et aide": "Mode d'emploi, formules, questions",
+}
+
+
+def _aller_espace(espace_choisi):
+    """Un clic sur un espace de travail (même celui en cours) l'affiche et ferme les pages
+    « Mon compte » et « Ajouter des opérations »."""
+    st.session_state["espace_actif"] = espace_choisi
     st.session_state.pop("page_compte", None)
     st.session_state.pop("ajout_operations", None)
 
 
 with st.sidebar:
-    # En-tête : monogramme, nom, et langue en petit à droite
-    tete, reglages_affichage = st.columns([5, 2], vertical_alignment="center")
-    with tete:
-        html(ui.marque("Portfolio Tracker", "Master G2C"))
-    with reglages_affichage:
+    # En-tête : monogramme et nom, puis une ligne discrète « FR · EN » à gauche et « Clair · Nuit » à droite
+    html(ui.marque("Portfolio Tracker", "Master G2C"))
+    reglage_langue, reglage_theme = st.columns(2, vertical_alignment="center")
+    with reglage_langue:
         st.segmented_control("Langue / Language", list(langues.LANGUES), format_func=langues.LANGUES.get,
                              default="fr", key="langue", label_visibility="collapsed", on_change=_choix_langue)
+    with reglage_theme:
         st.segmented_control(t("Affichage"), list(theme.THEMES), format_func=lambda c: t(theme.THEMES[c]),
                              default="clair", key="theme", label_visibility="collapsed", on_change=_choix_theme)
     html(ui.separateur())
@@ -213,23 +223,22 @@ with st.sidebar:
     session_compte = vues_compte.barre_laterale()
     html(ui.separateur())
 
-    # Navigation entre les trois espaces. Quand une page « Mon compte » ou « Ajouter des
-    # opérations » est ouverte, aucun espace n'est coché : un clic sur n'importe lequel
-    # (même celui en cours) ferme la page et affiche l'espace.
-    html(ui.bloc_titre(t("Espace de travail")))
+    # Navigation : un bouton par espace (titre + légende grise). Un bouton réagit à chaque clic, même
+    # sur l'espace en cours : c'est ce qui ferme les pages « Mon compte » et « Ajouter des opérations ».
     page_ouverte = bool(st.session_state.get("ajout_operations")
                         or (session_compte is not None and st.session_state.get("page_compte")))
-    st.session_state["espace_menu"] = None if page_ouverte else st.session_state.get("espace_actif", ESPACES[0])
-    st.radio(
-        "Espace de travail", ESPACES, format_func=t, label_visibility="collapsed", key="espace_menu",
-        on_change=_choix_espace,
-        captions=[t("Performance, risque, optimisation"), t("Fiscalité, stress tests"),
-                  t("Attribution, budget de risque, backtest"), t("Mode d'emploi, formules, questions")],
-    )
     espace = st.session_state.get("espace_actif", ESPACES[0])
+    if espace not in ESPACES:
+        espace = st.session_state["espace_actif"] = ESPACES[0]
+    html(ui.bloc_titre(t("Espace de travail"))
+         + ui.style_menu([t(LEGENDES_ESPACES[e]) for e in ESPACES],
+                         None if page_ouverte else ESPACES.index(espace)))
+    for numero, nom_espace in enumerate(ESPACES):
+        st.button(t(nom_espace), key=f"menu_{numero}", type="tertiary", width="stretch",
+                  on_click=_aller_espace, args=(nom_espace,))
     html(ui.separateur())
 
-    html(ui.bloc_titre(t("Données")))
+    html(ui.bloc_titre(t("Données")) + ui.style_depot(t("Parcourir"), t("ou glisser un fichier ici")))
     fichier_choisi = None
     # Les portefeuilles personnels (chiffrés) de l'utilisateur connecté, puis ceux du projet
     personnels = [("perso", p["id"], p["nom"]) for p in session_compte.lister()] if session_compte else []
@@ -254,7 +263,7 @@ with st.sidebar:
     if fichier_envoye is not None and session_compte is None:
         zone_enregistrement.caption(t("Pour garder ce fichier, connectez-vous (« Se connecter », en haut de la "
                                       "barre latérale)."))
-    lien_a, lien_b = st.columns(2)
+    lien_a, lien_b = st.columns(2, vertical_alignment="center")
     zone_operations = lien_a.container()        # « Ajouter des opérations » (affiché une fois le portefeuille lu)
     lien_b.download_button(t("Modèle de fichier"), data=MODELE_CSV.encode("utf-8-sig"),
                            file_name="modele_transactions.csv", mime="text/csv", type="tertiary",
@@ -407,7 +416,9 @@ with st.sidebar:
         (t("Opérations"), str(len(res["transactions"]))),
         (t("Cours"), res["source_cours"] if not langues.anglais()
          else ("Yahoo Finance (live)" if en_direct else "Local cache (Yahoo Finance unavailable)")),
-    ] + [(t("1 € en {devise}", devise=devise), nombre(taux, 4)) for devise, taux in res["taux_actuels"].items()]))
+    ], replie=(t("Taux de change ({n})", n=len(res["taux_actuels"])),
+               [(t("1 € en {devise}", devise=devise), nombre(taux, 4))
+                for devise, taux in res["taux_actuels"].items()])))
 
     cle_rapport = (hash(contenu), code_indice, taux_sans_risque, niveau_var)
     rapport_pret = st.session_state.get("rapport", (None,))[0] == cle_rapport
@@ -529,7 +540,10 @@ with onglets[0]:
                 total = resume["valeur_actuelle"] * (1 if libelle == t("Par classe d'actifs")
                                                      else transparence.loc[transparence["classe"] == "Actions",
                                                                            "poids"].sum())
-                graphique(gi.fig_anneau(poids, total))
+                parts = gi.parts_anneau(poids, total, couleurs=gi.COULEURS_CLASSES
+                                        if libelle == t("Par classe d'actifs") else None)
+                graphique(gi.fig_anneau(poids, total, parts=parts))
+                html(ui.legende_parts(parts))
 
     html(ui.grille([
         ui.carte(t("Plus-values latentes"), euros(resume["pv_latentes"], signe=True),

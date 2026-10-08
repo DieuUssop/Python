@@ -26,7 +26,7 @@ L'espace « Analyse du portefeuille » compte huit onglets, affichés en haut de
 - Les corrélations entre les lignes ne sont pas dans l'onglet Risque : elles se trouvent dans l'onglet [[Expositions]], sous-onglet [[Corrélations]].
 
 ## Que montre l'onglet Vue d'ensemble ?
-<!-- fiche: analyse-vue-ensemble | questions: que montre la vue d'ensemble ; à quoi servent les anneaux de couleur ; répartition par classe d'actifs ou la voir ; pourquoi la répartition par région est en pourcentage de la poche actions ; c'est quoi la part autres dans le camembert ; les quatre cartes en bas de la vue d'ensemble ; je ne vois pas l'anneau par secteur ; graphique répartition par ligne | mots: vue d'ensemble, répartition, anneau, camembert, classe d'actifs, région, secteur, poche actions, synthèse, donut | aller: Analyse du portefeuille/Vue d'ensemble | chiffres: valeur_actuelle, gain_total, dividendes, frais_totaux -->
+<!-- fiche: analyse-vue-ensemble | questions: que montre la vue d'ensemble ; à quoi servent les anneaux de couleur ; répartition par classe d'actifs ou la voir ; pourquoi la répartition par région est en pourcentage de la poche actions ; c'est quoi la part autres dans le camembert ; ou voir les pourcentages des anneaux ; les quatre cartes en bas de la vue d'ensemble ; je ne vois pas l'anneau par secteur ; graphique répartition par ligne | mots: vue d'ensemble, répartition, anneau, camembert, classe d'actifs, région, secteur, poche actions, synthèse, donut | aller: Analyse du portefeuille/Vue d'ensemble | chiffres: valeur_actuelle, gain_total, dividendes, frais_totaux -->
 
 L'onglet [[Vue d'ensemble]] donne une photographie du portefeuille en quatre blocs, de haut en bas.
 
@@ -47,7 +47,9 @@ La carte colore chaque pays selon son poids dans la **poche actions** (fiche dé
 | Par région | En % de la **poche actions** seulement |
 | Par secteur | En % de la **poche actions** seulement |
 
-Les trois anneaux sont calculés **en transparence** : un ETF est réparti entre les pays et les secteurs de l'indice qu'il suit. Les parts inférieures à 3 % sont regroupées dans « Autres », et chaque anneau montre au plus huit parts nommées. Le survol donne le pourcentage et le montant en euros. Un anneau qui ne compterait qu'un seul groupe (par exemple un portefeuille 100 % actions pour les classes d'actifs) n'est pas affiché.
+Les trois anneaux sont calculés **en transparence** : un ETF est réparti entre les pays et les secteurs de l'indice qu'il suit. Ils ont tous la même taille ; sous chacun, une légende donne chaque part avec son pourcentage (une décimale), de la plus grande à la plus petite, et le centre de l'anneau rappelle la plus grande part. Le survol donne aussi le montant en euros.
+
+Les parts inférieures à 3 % sont regroupées dans « Autres (n) », n étant le nombre de groupes réunis ; une seule petite part garde son nom (il n'y a jamais « Autres (1) »). Chaque anneau montre au plus huit parts nommées. Les classes d'actifs ont toujours les mêmes couleurs dans le logiciel : actions en bleu, obligations en vert, or en doré, monétaire en bleu clair, comme dans les « Répartitions comparées » de l'onglet [[Optimisation]]. Un anneau qui ne compterait qu'un seul groupe (par exemple un portefeuille 100 % actions pour les classes d'actifs) n'est pas affiché.
 
 ### 4. Quatre cartes
 

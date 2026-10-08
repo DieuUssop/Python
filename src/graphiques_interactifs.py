@@ -140,6 +140,12 @@ def theme_figure(fig):
             contour = _lire(element, "line")
             if contour is not None and _lire(contour, "color") is not None:
                 _ecrire(contour, "color", _couleur_nuit(_lire(contour, "color")))
+    for trace in fig.data:                      # anneaux : séparation des parts couleur du fond de la page
+        if getattr(trace, "type", None) == "pie":
+            try:
+                trace.marker.line.color = c["fond"]
+            except Exception:
+                pass
     if hasattr(fig, "layout"):
         try:
             for annotation in fig.layout.annotations or ():
@@ -237,49 +243,67 @@ def fig_repartition(positions, max_lignes=15):
     return fig
 
 
-# Palette des anneaux : bleus du thème, puis couleurs bien distinctes
-PALETTE_ANNEAU = ["#1c5cab", "#6ea3e0", "#0f2a4a", "#e8a33d", "#3aa17e", "#c4543a", "#8e7cc3", "#4fb3bf",
-                  "#d4b483", "#b8c4d6", "#9aa5b1"]
+# Palette des anneaux : couleurs bien distinctes, lisibles sur fond clair comme sur fond bleu nuit
+# (pas de bleu marine, qui se confondait avec le fond en mode nuit)
+PALETTE_ANNEAU = ["#2a78d6", "#8fb6e6", "#1baf7a", "#e8a33d", "#8e7cc3", "#c4543a", "#4fb3bf", "#d4b483",
+                  "#9aa5b1"]
 GRIS_CLAIR = "#c9cdd3"
 
 
-def fig_anneau(poids, valeur_totale=None, seuil_autres=0.03, max_parts=8, hauteur=330):
-    """Répartition en anneau (camembert évidé).
+def parts_anneau(poids, valeur_totale=None, seuil_autres=0.03, max_parts=8, couleurs=None):
+    """Parts d'un anneau : liste de dict(nom, poids, montant, couleur), de la plus grande à la plus petite.
 
-    poids : Series groupe -> fraction (total ≈ 1). Les parts sous `seuil_autres`
-    (ou au-delà de `max_parts`) sont regroupées dans « Autres »."""
+    poids : Series groupe -> fraction (total ≈ 1). Les parts sous `seuil_autres` (ou au-delà de
+    `max_parts`) sont regroupées dans « Autres (n) », seulement s'il y en a au moins deux ; une seule
+    petite part garde son nom. couleurs : dict facultatif groupe -> couleur (ex. classes d'actifs,
+    pour garder les mêmes couleurs dans tout le logiciel)."""
     poids = poids[poids > 0].sort_values(ascending=False)
     grandes = poids[poids >= seuil_autres].head(max_parts)
     petites = poids.drop(grandes.index)
-    etiquettes = [td(g) for g in grandes.index]
-    valeurs = list(grandes.values)
-    couleurs = PALETTE_ANNEAU[:len(grandes)]
+    if len(petites) == 1:                         # « Autres (1) » n'aurait pas de sens
+        grandes, petites = poids, petites.iloc[0:0]
+    couleurs = couleurs or {}
+    libres = iter([c for c in PALETTE_ANNEAU if c not in couleurs.values()] + PALETTE_ANNEAU * 3)
+    parts = [{"nom": td(g), "poids": float(v), "couleur": couleurs.get(g) or next(libres)}
+             for g, v in grandes.items()]
     if petites.sum() > 0:
-        etiquettes.append(t("Autres ({n})", n=len(petites)))
-        valeurs.append(float(petites.sum()))
-        couleurs.append(GRIS_CLAIR)
-    montants = [eur(f"{v * valeur_totale:,.0f}").replace(",", " " if not anglais() else ",")
-                if valeur_totale else "" for v in valeurs]
+        parts.append({"nom": t("Autres ({n})", n=len(petites)), "poids": float(petites.sum()), "couleur": GRIS_CLAIR})
+    for part in parts:
+        part["montant"] = part["poids"] * valeur_totale if valeur_totale else None
+    return parts
+
+
+def fig_anneau(poids, valeur_totale=None, seuil_autres=0.03, max_parts=8, hauteur=230, couleurs=None, parts=None):
+    """Répartition en anneau (camembert évidé), toujours à la même taille : la légende (avec les
+    pourcentages) est affichée À PART, sous le graphique (interface.legende_parts), pour que
+    plusieurs anneaux côte à côte aient exactement le même diamètre. Au centre : la plus grande part."""
+    parts = parts or parts_anneau(poids, valeur_totale, seuil_autres, max_parts, couleurs)
+    montants = [eur(f"{p['montant']:,.0f}").replace(",", " " if not anglais() else ",")
+                if p["montant"] is not None else "" for p in parts]
     fig = go.Figure(go.Pie(
-        labels=etiquettes, values=valeurs, hole=0.58, sort=False, direction="clockwise", rotation=90,
-        marker=dict(colors=couleurs, line=dict(color="white", width=2)),
-        textinfo="percent", textposition="inside", insidetextorientation="horizontal",
-        texttemplate="%{percent:.0%}", textfont=dict(color="white", size=12),
-        customdata=montants,
+        labels=[p["nom"] for p in parts], values=[p["poids"] for p in parts], hole=0.64, sort=False,
+        direction="clockwise", rotation=90,
+        marker=dict(colors=[p["couleur"] for p in parts], line=dict(color="white", width=1.5)),
+        textinfo="none", customdata=montants,
         hovertemplate="<b>%{label}</b><br>%{percent:.1%}" + (" · %{customdata}" if valeur_totale else "")
                       + "<extra></extra>",
     ))
-    _style(fig, hauteur=hauteur)
-    fig.update_layout(uniformtext=dict(minsize=10, mode="hide"), margin=dict(l=4, r=4, t=8, b=8),
-                      legend=dict(orientation="v", y=0.5, yanchor="middle", x=1.02, xanchor="left",
-                                  font=dict(size=12, color="#5f5e5a")))
+    _style(fig, hauteur=hauteur, legende=False)
+    fig.update_layout(margin=dict(l=8, r=8, t=8, b=8))
+    if parts:
+        premiere = parts[0]
+        fig.add_annotation(
+            text=f"<b>{premiere['poids'] * 100:.0f}{espace_pct()}%</b><br>"
+                 f"<span style='font-size:11px'>{premiere['nom']}</span>",
+            x=0.5, y=0.5, xref="paper", yref="paper", showarrow=False, font=dict(size=20, color=TEXTE))
     return fig
 
 
 def fig_repartition_groupes(positions, colonne):
     """Poids par groupe (classe d'actifs, région, secteur), en anneau."""
     groupes = positions.groupby(colonne)["valeur"].sum()
-    return fig_anneau(groupes / groupes.sum(), positions["valeur"].sum())
+    return fig_anneau(groupes / groupes.sum(), positions["valeur"].sum(),
+                      couleurs=COULEURS_CLASSES if colonne == "classe" else None)
 
 
 # Bleus de la carte : du plus clair (faible poids) au plus foncé (fort poids)

@@ -362,6 +362,42 @@ def texte_affiche(fiche):
     return MOTIF_LIEN_ECRAN.sub(lambda m: f"**{m.group(1)}**", fiche.texte)
 
 
+def resume_fiche(fiche, mots=80):
+    """Début d'une fiche pour la bulle d'aide : les premiers paragraphes de texte (sans sous-titres,
+    tableaux ni blocs de code), coupés à la fin d'un paragraphe ou d'une liste dès ~`mots` mots.
+    Renvoie (markdown, tronque)."""
+    morceaux, total, dans_code = [], 0, False
+    paragraphes = [p.strip() for p in re.split(r"\n\s*\n", texte_affiche(fiche)) if p.strip()]
+    for i, paragraphe in enumerate(paragraphes):
+        if (paragraphe.startswith("```") and paragraphe.rstrip().endswith("```") and paragraphe.count("```") == 2
+                and paragraphe.count("\n") <= 6 and not dans_code):     # formule courte : gardée
+            morceaux.append(paragraphe)
+            continue
+        if paragraphe.startswith("```") or dans_code:
+            if paragraphe.count("```") % 2:
+                dans_code = not dans_code
+            if total >= mots // 2:
+                break
+            continue
+        if dans_code or paragraphe.startswith("|"):
+            if total >= mots // 2:
+                break
+            continue
+        if paragraphe.startswith("#"):                     # sous-titre : gardé en gras si on continue
+            if total >= mots // 2:
+                break
+            titre, _, reste = paragraphe.partition("\n")
+            paragraphe = "**" + titre.lstrip("# ").strip() + "**" + ("\n\n" + reste if reste.strip() else "")
+            if not reste.strip():
+                morceaux.append(paragraphe)
+                continue
+        morceaux.append(paragraphe)
+        total += len(paragraphe.split())
+        if total >= mots:
+            return "\n\n".join(morceaux), i < len(paragraphes) - 1
+    return "\n\n".join(morceaux), len(morceaux) < len(paragraphes)
+
+
 def elements_ecran(chapitres):
     """Tous les [[éléments d'écran]] cités dans le manuel : {libellé: [identifiants de fiches]}."""
     trouves = {}

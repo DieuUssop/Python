@@ -2,7 +2,7 @@
 
 ## 1. Le code
 
-- [ ] `python -m pytest` affiche **156 passed**
+- [ ] `python -m pytest` affiche **161 passed**
 - [ ] `python main.py` fonctionne et crée `rapport_portefeuille.pdf`
 - [ ] `python main.py data/transactions_mondial.csv` fonctionne
 - [ ] `python main.py data/transactions_diversifie.csv` fonctionne

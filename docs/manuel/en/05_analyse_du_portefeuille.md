@@ -26,7 +26,7 @@ The "Portfolio analysis" workspace has eight tabs, displayed at the top of the m
 - Correlations between holdings are not in the Risk tab: they are in the [[Exposures]] tab, [[Correlations]] sub-tab.
 
 ## What does the Overview tab show?
-<!-- fiche: analyse-vue-ensemble | questions: what does the overview show ; what are the coloured rings for ; where do i see the breakdown by asset class ; why is the region breakdown a percentage of the equity portion ; what is the others slice in the pie chart ; the four cards at the bottom of the overview ; i dont see the sector ring ; allocation by holding chart | mots: overview, allocation, ring, pie chart, asset class, region, sector, equity portion, summary, donut | aller: Analyse du portefeuille/Vue d'ensemble | chiffres: valeur_actuelle, gain_total, dividendes, frais_totaux -->
+<!-- fiche: analyse-vue-ensemble | questions: what does the overview show ; what are the coloured rings for ; where do i see the breakdown by asset class ; why is the region breakdown a percentage of the equity portion ; what is the others slice in the pie chart ; where do i see the percentages of the rings ; the four cards at the bottom of the overview ; i dont see the sector ring ; allocation by holding chart | mots: overview, allocation, ring, pie chart, asset class, region, sector, equity portion, summary, donut | aller: Analyse du portefeuille/Vue d'ensemble | chiffres: valeur_actuelle, gain_total, dividendes, frais_totaux -->
 
 The [[Overview]] tab gives a snapshot of the portfolio in four blocks, from top to bottom.
 
@@ -47,7 +47,9 @@ The map colours each country according to its weight in the **equity portion** (
 | By region | As a % of the **equity portion** only |
 | By sector | As a % of the **equity portion** only |
 
-The three rings are calculated **on a look-through basis**: an ETF is split between the countries and sectors of the index it tracks. Shares below 3% are grouped into "Others", and each ring shows at most eight named shares. Hovering gives the percentage and the amount in euros. A ring that would contain only one group (for example a 100% equity portfolio for asset classes) is not displayed.
+The three rings are calculated **on a look-through basis**: an ETF is split between the countries and sectors of the index it tracks. They are all the same size; under each one, a legend gives every share with its percentage (one decimal place), from largest to smallest, and the centre of the ring shows the largest share. Hovering also gives the amount in euros.
+
+Shares below 3% are grouped into "Other (n)", n being the number of groups combined; a single small share keeps its own name (there is never "Other (1)"). Each ring shows at most eight named shares. Asset classes always have the same colours throughout the software: equities in blue, bonds in green, gold in golden yellow, money market in light blue, as in the "Allocations compared" chart of the [[Optimisation]] tab. A ring that would contain only one group (for example a 100% equity portfolio for asset classes) is not displayed.
 
 ### 4. Four cards
 

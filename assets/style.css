@@ -147,73 +147,118 @@ section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 0.55rem;
 .marque-nom { font-size: 0.98rem; font-weight: 700; color: var(--primaire-fonce); line-height: 1.15; }
 .marque-sous-titre { font-size: 0.72rem; color: var(--texte-3); }
 
-/* Sélecteurs FR | EN et Clair | Nuit : simple texte, l'option active en gras */
-section[data-testid="stSidebar"] .st-key-langue [data-testid="stButtonGroup"],
+/* Nos blocs HTML de la barre (st.markdown) : Streamlit retire 1rem sous chaque texte Markdown pour
+   compenser la marge des paragraphes ; nos blocs n'en ont pas, l'élément suivant les recouvrait
+   (titres « ESPACE DE TRAVAIL » / « DONNÉES » coupés, « Se connecter » décalé). On annule ce retrait. */
+section[data-testid="stSidebar"] [data-testid="stMarkdown"]:has(.marque, .separateur, .bloc-titre, .compte, .compte-invite, .infos),
+section[data-testid="stSidebar"] .stMarkdown:has(.marque, .separateur, .bloc-titre, .compte, .compte-invite, .infos),
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"]:has(.marque, .separateur, .bloc-titre, .compte, .compte-invite, .infos) {
+    margin-bottom: 0 !important; margin-top: 0 !important;
+}
+section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has(style):not(:has(.bloc-titre, .separateur)) {
+    display: none;                       /* feuilles de style seules : aucun espace vide */
+}
+
+/* Sélecteurs FR · EN (à gauche) et Clair · Nuit (à droite) : simple texte, l'option active en gras */
+section[data-testid="stSidebar"] .st-key-langue [data-testid="stButtonGroup"] { justify-content: flex-start; }
 section[data-testid="stSidebar"] .st-key-theme [data-testid="stButtonGroup"] { justify-content: flex-end; }
+section[data-testid="stSidebar"] .st-key-langue [data-testid="stButtonGroup"],
+section[data-testid="stSidebar"] .st-key-theme [data-testid="stButtonGroup"] { flex-wrap: nowrap; gap: 0; }
 section[data-testid="stSidebar"] .st-key-langue button,
 section[data-testid="stSidebar"] .st-key-theme button {
     background: transparent !important; border: none !important; box-shadow: none !important;
-    min-height: 1.5rem; padding: 0 0.3rem; color: var(--texte-3);
+    min-height: 1.4rem; height: 1.4rem; padding: 0 0.35rem; color: var(--texte-3); position: relative;
+}
+section[data-testid="stSidebar"] .st-key-langue button:first-child { padding-left: 0; }
+section[data-testid="stSidebar"] .st-key-theme button:last-child { padding-right: 0; }
+section[data-testid="stSidebar"] .st-key-langue button + button::before,
+section[data-testid="stSidebar"] .st-key-theme button + button::before {
+    content: "·"; position: absolute; left: -0.1rem; color: var(--texte-3); font-size: 0.72rem;
 }
 section[data-testid="stSidebar"] .st-key-langue button p,
-section[data-testid="stSidebar"] .st-key-theme button p { font-size: 0.72rem; font-weight: 500; }
+section[data-testid="stSidebar"] .st-key-theme button p { font-size: 0.72rem; font-weight: 500; color: var(--texte-3); }
 section[data-testid="stSidebar"] .st-key-langue button[data-testid="stBaseButton-segmented_controlActive"] p,
 section[data-testid="stSidebar"] .st-key-theme button[data-testid="stBaseButton-segmented_controlActive"] p {
-    color: var(--texte); font-weight: 700;
+    color: var(--texte) !important; font-weight: 700;
 }
 
 /* Séparateurs et titres de section */
-.separateur { height: 1px; background: var(--bordure); margin: 0.35rem 0; }
+.separateur { height: 1px; background: var(--bordure); margin: 0.3rem 0; }
 .bloc-titre {
-    font-size: 0.66rem; font-weight: 600; color: var(--texte-3);
-    text-transform: uppercase; letter-spacing: 0.11em; margin: 0.2rem 0 0;
+    font-size: 0.66rem; font-weight: 600; color: var(--texte-3); line-height: 1.3;
+    text-transform: uppercase; letter-spacing: 0.11em; margin: 0.15rem 0 0.1rem; padding: 0;
 }
 
 /* Compte : ligne d'invitation, pastille aux initiales */
-.compte-invite { font-size: 0.82rem; color: var(--texte-2); }
+.compte-invite { font-size: 0.8rem; color: var(--texte-2); line-height: 1.6rem; }
 .compte { display: flex; align-items: center; gap: 0.6rem; }
 .compte-avatar {
     width: 30px; height: 30px; border-radius: 50%; background: var(--fond-actif); color: var(--primaire);
     font-weight: 600; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; flex: none;
 }
 .compte-ident { font-size: 0.86rem; font-weight: 600; color: var(--texte); }
+section[data-testid="stSidebar"] .st-key-lien_connexion { display: flex; justify-content: flex-end; }
 
-/* Boutons « lien » (tertiaires) : petits, bleus, alignés à gauche */
+/* Boutons « lien » (tertiaires) et bouton de téléchargement en lien : petits, bleus, alignés à gauche,
+   tous à la même hauteur */
 section[data-testid="stSidebar"] button[data-testid="stBaseButton-tertiary"] {
-    padding: 0.05rem 0; min-height: 0; justify-content: flex-start; color: var(--primaire);
+    padding: 0; min-height: 1.6rem; height: 1.6rem; justify-content: flex-start; color: var(--primaire);
 }
-section[data-testid="stSidebar"] button[data-testid="stBaseButton-tertiary"] p { font-size: 0.78rem; font-weight: 500; }
+section[data-testid="stSidebar"] button[data-testid="stBaseButton-tertiary"] p {
+    font-size: 0.78rem; font-weight: 500; line-height: 1.6rem; margin: 0;
+}
 section[data-testid="stSidebar"] button[data-testid="stBaseButton-tertiary"]:hover p { text-decoration: underline; }
 
-/* Navigation : les espaces de travail comme un menu (pas de cercles de bouton radio) */
-section[data-testid="stSidebar"] .st-key-espace_menu div[role="radiogroup"] { gap: 2px; width: 100%; }
-section[data-testid="stSidebar"] .st-key-espace_menu label[data-baseweb="radio"] {
-    width: 100%; margin: 0; padding: 0.5rem 0.7rem; border-radius: 8px; border-left: 3px solid transparent;
-    cursor: pointer; transition: background 0.15s;
+/* Navigation : un bouton par espace, titre + légende grise, repère bleu à gauche pour l'espace actif
+   (la légende et le repère sont ajoutés par interface.style_menu) */
+section[data-testid="stSidebar"] [class*="st-key-menu_"] button,
+section[data-testid="stSidebar"] [class*="st-key-menu_"] button[data-testid="stBaseButton-tertiary"] {
+    width: 100%; height: auto; min-height: 0; padding: 0.42rem 0.7rem; border-radius: 8px;
+    border-left: 3px solid transparent; justify-content: flex-start; text-align: left;
+    color: var(--texte) !important; transition: background 0.15s;
 }
-/* Le cercle du bouton radio : le seul enfant qui ne contient aucun texte (double garde-fou :
-   ni bloc Markdown, ni paragraphe), pour ne jamais masquer l'intitulé. */
-section[data-testid="stSidebar"] .st-key-espace_menu label[data-baseweb="radio"] > div:not(:has([data-testid="stMarkdownContainer"])):not(:has(p)) {
-    display: none;
+section[data-testid="stSidebar"] [class*="st-key-menu_"] button > div,
+section[data-testid="stSidebar"] [class*="st-key-menu_"] button [data-testid="stMarkdownContainer"] {
+    width: 100%; justify-content: flex-start; text-align: left;
 }
-section[data-testid="stSidebar"] .st-key-espace_menu label[data-baseweb="radio"]:hover { background: var(--fond-survol); }
-section[data-testid="stSidebar"] .st-key-espace_menu label[data-baseweb="radio"]:has(input:checked) {
-    background: var(--fond-actif); border-left-color: var(--primaire);
+section[data-testid="stSidebar"] [class*="st-key-menu_"] button:hover { background: var(--fond-survol); }
+section[data-testid="stSidebar"] [class*="st-key-menu_"] button:focus:not(:focus-visible) { box-shadow: none; }
+section[data-testid="stSidebar"] [class*="st-key-menu_"] button p,
+section[data-testid="stSidebar"] [class*="st-key-menu_"] button[data-testid="stBaseButton-tertiary"] p {
+    font-size: 0.85rem; font-weight: 500; line-height: 1.3; color: var(--texte) !important; text-align: left;
 }
-section[data-testid="stSidebar"] .st-key-espace_menu label[data-baseweb="radio"] p { font-size: 0.86rem; font-weight: 500; }
-section[data-testid="stSidebar"] .st-key-espace_menu label[data-baseweb="radio"]:has(input:checked) p {
-    font-weight: 600; color: var(--primaire-fonce);
+section[data-testid="stSidebar"] [class*="st-key-menu_"] button:hover p { text-decoration: none; }
+section[data-testid="stSidebar"] [class*="st-key-menu_"] button p::after {
+    display: block; margin-top: 0.1rem; font-size: 0.72rem; font-weight: 400; color: var(--texte-3);
 }
-section[data-testid="stSidebar"] .st-key-espace_menu [data-testid="stCaptionContainer"] p,
-section[data-testid="stSidebar"] .st-key-espace_menu label small {
-    font-size: 0.72rem !important; font-weight: 400 !important; color: var(--texte-3) !important;
-}
+/* les 4 boutons du menu, serrés */
+section[data-testid="stSidebar"] [data-testid="stElementContainer"]:has([class*="st-key-menu_"]) + [data-testid="stElementContainer"]:has([class*="st-key-menu_"]),
+section[data-testid="stSidebar"] [class*="st-key-menu_"] + [class*="st-key-menu_"] { margin-top: -0.4rem; }
 
-/* Données : champs et zone de dépôt compacts */
-section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
-    padding: 0.55rem 0.7rem; border: 1px dashed #c9d0da; background: var(--fond-carte); border-radius: 8px;
-}
+/* Données : liste des portefeuilles et zone de dépôt compactes, à la taille des autres textes */
+section[data-testid="stSidebar"] [data-baseweb="select"] > div { min-height: 2.1rem; font-size: 0.84rem; }
+section[data-testid="stSidebar"] [data-baseweb="select"] div { font-size: 0.84rem; }
 section[data-testid="stSidebar"] [data-testid="stFileUploader"] label p { font-size: 0.78rem; color: var(--texte-2); }
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
+    display: flex; flex-direction: row; align-items: center; gap: 0.6rem; min-height: 0;
+    padding: 0.45rem 0.6rem; border: 1px dashed #c9d0da; background: var(--fond-carte); border-radius: 8px;
+}
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"] { display: none !important; }
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button {
+    order: 1; flex: none; min-height: 0; height: 1.75rem; padding: 0 0.7rem; margin: 0; font-size: 0 !important;
+}
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button > *,
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button svg { display: none !important; }
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button::after {
+    font-size: 0.76rem; font-weight: 500; color: var(--texte);
+}
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"]::after {
+    order: 2; font-size: 0.72rem; color: var(--texte-3); line-height: 1.3;
+}
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] > :not(button):not(:has(button)) { display: none; }
+
+/* « Ajouter des opérations » et « Modèle de fichier » sur la même ligne */
+section[data-testid="stSidebar"] [data-testid="stDownloadButton"] { display: flex; }
 
 /* Paramètres repliés */
 section[data-testid="stSidebar"] [data-testid="stExpander"] details {
@@ -224,9 +269,13 @@ section[data-testid="stSidebar"] [data-testid="stExpander"] summary p {
     font-size: 0.78rem; color: var(--texte-2); font-weight: 500;
 }
 
-/* Informations en bas de la barre */
+/* Informations en bas de la barre ; taux de change repliés */
 .infos { font-size: 0.72rem; color: var(--texte-3); line-height: 1.75; }
 .infos b { color: var(--texte-2); font-weight: 500; }
+.infos-replie summary { cursor: pointer; color: var(--texte-2); font-weight: 500; list-style: none; }
+.infos-replie summary::-webkit-details-marker { display: none; }
+.infos-replie summary::before { content: "+ "; color: var(--texte-3); }
+.infos-replie[open] summary::before { content: "\2212  "; }
 
 /* ---- Pied de page ---- */
 .pied {
@@ -260,3 +309,41 @@ table.tableau-simple th { text-align: left; font-size: 0.7rem; text-transform: u
 table.tableau-simple td { border-bottom: 1px solid var(--bordure); padding: 0.42rem 0.3rem; color: var(--texte); }
 table.tableau-simple .num { text-align: right; font-variant-numeric: tabular-nums; }
 table.tableau-simple tr:last-child td { border-bottom: none; }
+
+/* ---------- Légende des anneaux (sous le graphique, avec les pourcentages) ---------- */
+.legende-parts { display: flex; flex-direction: column; gap: 0.18rem; margin: 0.1rem 0.2rem 0.2rem; }
+.legende-ligne { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; line-height: 1.35; }
+.legende-pastille { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.legende-nom { color: var(--texte-2); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.legende-pct { color: var(--texte); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------- Bulle d'aide : bouton fixe en bas à droite, petit panneau de questions ---------- */
+.st-key-bulle_aide {
+    position: fixed !important; right: 24px; bottom: 24px; z-index: 999990;
+    width: auto !important; min-width: 0 !important; gap: 0 !important;
+}
+.st-key-bulle_aide button:not(.st-key-bulle_contenu *) {
+    border-radius: 999px !important; padding: 0.45rem 1.05rem !important; min-height: 0 !important;
+    background: var(--mono-fond) !important; border: none !important; color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(15, 42, 74, 0.28) !important;
+}
+.st-key-bulle_aide button:not(.st-key-bulle_contenu *) p { color: #ffffff !important; font-weight: 600; font-size: 0.88rem; }
+.st-key-bulle_aide button:not(.st-key-bulle_contenu *) svg, .st-key-bulle_aide button:not(.st-key-bulle_contenu *) [data-testid="stIconMaterial"] { color: #ffffff !important; fill: #ffffff !important; }
+.st-key-bulle_aide button:not(.st-key-bulle_contenu *):hover { filter: brightness(1.12); }
+[data-testid="stPopoverBody"]:has(.st-key-bulle_contenu) {
+    width: 380px !important; max-width: calc(100vw - 32px) !important; max-height: 70vh; overflow-y: auto;
+    border-radius: 14px !important;
+}
+.st-key-bulle_contenu { gap: 0.5rem; }
+.st-key-bulle_contenu p, .st-key-bulle_contenu li { font-size: 0.86rem; }
+.st-key-bulle_contenu button[data-testid="stBaseButton-tertiary"] { min-height: 0; padding: 0.05rem 0; text-align: left; }
+.st-key-bulle_contenu button[data-testid="stBaseButton-tertiary"] p { font-size: 0.82rem; }
+.bulle-titre { font-weight: 700; font-size: 1rem; color: var(--texte); }
+.bulle-sous-titre { font-size: 0.74rem; color: var(--texte-3); margin-bottom: 0.2rem; }
+.bulle-question {
+    align-self: flex-end; margin-left: auto; max-width: 85%; width: fit-content;
+    background: var(--fond-actif); color: var(--texte); border-radius: 12px 12px 2px 12px;
+    padding: 0.4rem 0.7rem; font-size: 0.85rem;
+}
+.bulle-fiche { font-weight: 600; font-size: 0.92rem; color: var(--primaire-fonce); margin-top: 0.2rem; }
+@media print { .st-key-bulle_aide { display: none !important; } }

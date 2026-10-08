@@ -208,3 +208,118 @@ def _telechargements(langue):
     for colonne, (f, nom, mime) in zip(colonnes, disponibles):
         colonne.download_button(t("Manuel complet ({format})", format=nom), data=f.read_bytes(), file_name=f.name,
                                 mime=mime, key=f"manuel_{nom}")
+
+
+# ----------------------------------------------------------------------
+# Bulle d'aide : bouton fixe en bas à droite de l'écran, sur toutes les pages
+# ----------------------------------------------------------------------
+HISTORIQUE_MAX = 5
+
+
+def _ouvrir_dans_le_manuel(ident):
+    st.session_state["espace_actif"] = "Manuel et aide"
+    st.session_state["fiche_ouverte"] = ident
+    st.session_state["question_a_appliquer"] = ""
+    st.session_state.pop("page_compte", None)
+    st.session_state.pop("ajout_operations", None)
+
+
+def _aller_ecran(espace, onglet):
+    st.session_state["espace_actif"] = espace
+    st.session_state.pop("page_compte", None)
+    st.session_state.pop("ajout_operations", None)
+    if onglet:
+        st.session_state["message_compte"] = t("Ouvrez l'onglet « {onglet} ».", onglet=t(onglet))
+
+
+def _choisir_dans_la_bulle(question=None, ident=None):
+    """Clic sur une question précédente (question) ou sur une fiche proche (ident)."""
+    st.session_state["bulle_courante"] = {"question": question, "fiche": ident}
+
+
+def _pas_la_reponse(question):
+    manuel.noter_sans_reponse(question)
+    st.session_state["bulle_notee"] = question
+
+
+def bulle():
+    """Bouton « Aide » fixé en bas à droite (CSS : .st-key-bulle_aide) ; au clic, un petit panneau
+    pour poser une question au manuel, sans quitter la page en cours."""
+    langue = langues.langue()
+    with st.container(key="bulle_aide"):
+        with st.popover(t("Aide"), help=t("Poser une question sur le logiciel")):
+            with st.container(key="bulle_contenu"):
+                _contenu_bulle(langue)
+
+
+def _contenu_bulle(langue):
+    html(f'<div class="bulle-titre">{ui.escape(t("Une question ?"))}</div>'
+         f'<div class="bulle-sous-titre">{ui.escape(t("Réponses tirées du manuel · hors connexion"))}</div>')
+    with st.form("bulle_formulaire", clear_on_submit=True, border=False):
+        saisie = st.text_input(t("Votre question"), key="bulle_question", label_visibility="collapsed",
+                               placeholder=t("Par exemple : comment supprimer une opération ?"))
+        envoyer = st.form_submit_button(t("Envoyer"), type="primary", width="stretch")
+    historique = st.session_state.setdefault("bulle_historique", [])
+    if envoyer and saisie and saisie.strip():
+        question = saisie.strip()
+        if question in historique:
+            historique.remove(question)
+        historique.insert(0, question)
+        del historique[HISTORIQUE_MAX:]
+        st.session_state["bulle_courante"] = {"question": question, "fiche": None}
+
+    courante = st.session_state.get("bulle_courante")
+    if courante:
+        fiches = {f.ident: f for f in manuel.toutes_les_fiches(manuel.charger(langue))}
+        if courante.get("fiche") in fiches:
+            _reponse_bulle(fiches[courante["fiche"]], [], question=None)
+        elif courante.get("question"):
+            question = courante["question"]
+            html(f'<div class="bulle-question">{ui.escape(question)}</div>')
+            resultat = manuel.repondre(question, langue)
+            if resultat["reponse"] is not None:
+                _reponse_bulle(resultat["reponse"], resultat["proches"], question)
+            else:
+                st.caption(t("Je n'ai pas trouvé de réponse sûre dans le manuel. Essayez d'autres mots ou une "
+                             "des fiches proches. Votre question est notée (sur cet ordinateur uniquement)."))
+                if st.session_state.get("bulle_notee") != question:
+                    _pas_la_reponse(question)
+                _proches_bulle(resultat["proches"], t("Fiches les plus proches"))
+
+    autres = [q for q in historique if not courante or q != courante.get("question")]
+    if autres:
+        st.caption(t("Vos questions précédentes"))
+        for i, question in enumerate(autres):
+            st.button(question, key=f"bulle_hist_{i}", type="tertiary", on_click=_choisir_dans_la_bulle,
+                      args=(question, None))
+
+
+def _reponse_bulle(fiche, proches, question):
+    html(f'<div class="bulle-fiche">{ui.escape(fiche.titre)}</div>')
+    resume, _ = manuel.resume_fiche(fiche)
+    st.markdown(resume)
+    _chiffres(fiche)
+    gauche, droite = st.columns(2)
+    gauche.button(t("Lire la fiche complète"), key=f"bulle_lire_{fiche.ident}", type="tertiary",
+                  on_click=_ouvrir_dans_le_manuel, args=(fiche.ident,))
+    cible = manuel.destination(fiche)
+    if cible and cible[0] in ESPACES_ONGLETS and cible[0] != "Manuel et aide":
+        droite.button(t("Aller à l'écran"), key=f"bulle_aller_{fiche.ident}", type="tertiary",
+                      help=t(cible[0]) + (" · " + t(cible[1]) if cible[1] else ""),
+                      on_click=_aller_ecran, args=cible)
+    _proches_bulle(proches, t("Voir aussi"))
+    if question and st.session_state.get("bulle_notee") != question:
+        st.button(t("Ce n'est pas la réponse que je cherchais"), key="bulle_pas_la_reponse", type="tertiary",
+                  help=t("Note la question (sur cet ordinateur) pour améliorer le manuel"),
+                  on_click=_pas_la_reponse, args=(question,))
+    elif question:
+        st.caption(t("Merci : la question est notée pour compléter le manuel."))
+
+
+def _proches_bulle(proches, titre):
+    if not proches:
+        return
+    st.caption(titre)
+    for fiche in proches[:3]:
+        st.button(fiche.titre, key=f"bulle_voir_{fiche.ident}", type="tertiary",
+                  on_click=_choisir_dans_la_bulle, args=(None, fiche.ident))

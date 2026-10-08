@@ -10,15 +10,17 @@ L'écran est divisé en deux parties : la **barre latérale**, à gauche, qui re
 
 ### La barre latérale, de haut en bas
 
-1. **L'en-tête** : le monogramme « PT », le nom « Portfolio Tracker » et la mention « Master G2C ». À droite, deux petits sélecteurs : la langue (FR ou EN) et l'affichage (Clair ou Nuit).
+1. **L'en-tête** : le monogramme « PT », le nom « Portfolio Tracker » et la mention « Master G2C ». Juste dessous, sur une même ligne, deux petits sélecteurs : la langue (FR · EN) à gauche et l'affichage (Clair · Nuit) à droite ; l'option active est en gras.
 2. **L'espace personnel** : la mention « Espace personnel chiffré » et le lien [[Se connecter]]. Une fois connecté, vos initiales, votre identifiant et les liens [[Mon compte]] et [[Déconnexion]].
-3. **Espace de travail** : le menu des quatre espaces (Analyse du portefeuille, Conseil patrimonial, Gestion d'actifs, Manuel et aide), chacun avec une ligne de description.
-4. **Données** : la liste des portefeuilles, la zone [[Envoyer un fichier (CSV, Excel ou PDF)]], puis les liens [[Ajouter des opérations]] et [[Modèle de fichier]].
+3. **Espace de travail** : le menu des quatre espaces (Analyse du portefeuille, Conseil patrimonial, Gestion d'actifs, Manuel et aide), chacun avec une ligne de description grise. L'espace affiché est surligné en bleu clair, avec un trait bleu à gauche.
+4. **Données** : la liste des portefeuilles, la zone [[Envoyer un fichier (CSV, Excel ou PDF)]] (bouton [[Parcourir]], ou glisser-déposer le fichier), puis les liens [[Ajouter des opérations]] et [[Modèle de fichier]].
 5. **Paramètres** : un panneau replié qui contient l'indice de référence, le taux sans risque et le niveau de confiance de la VaR. Son titre résume les réglages en cours.
-6. **Les informations** sur le portefeuille analysé : fichier, période, nombre d'opérations, provenance des cours et taux de change.
+6. **Les informations** sur le portefeuille analysé : fichier, période, nombre d'opérations, provenance des cours, et les taux de change repliés sous « Taux de change ».
 7. **Les boutons** [[Rapport PDF]] et [[Actualiser les cours]].
 
 Les blocs 6 et 7 n'apparaissent qu'une fois un portefeuille analysé : ils sont absents dans l'espace « Manuel et aide » et sur les pages « Mon compte » et « Ajouter des opérations ».
+
+En bas à droite de l'écran, sur toutes les pages, le bouton [[Aide]] ouvre un petit panneau pour poser une question au manuel (voir la fiche sur la bulle d'aide).
 
 ### La zone principale
 
@@ -31,7 +33,7 @@ Sur un écran étroit, la barre latérale peut être repliée. Le petit bouton e
 ## Passer le logiciel en anglais (ou revenir au français)
 <!-- fiche: ecran-langue | questions: comment mettre le logiciel en anglais ; changer la langue ; switch to english ; le tableau de bord est en anglais comment remettre en francais ; ou est le bouton FR EN ; is there an english version ; le rapport pdf peut il etre en anglais ; pourquoi certains textes restent en français | mots: langue, anglais, français, English, traduction, language, FR, EN, bilingue -->
 
-Le sélecteur de langue se trouve en haut de la barre latérale, à droite du nom du logiciel : cliquez sur **EN** pour l'anglais, sur **FR** pour le français. Le changement est immédiat, sans perdre le portefeuille ni les réglages en cours. Le français est la langue de départ.
+Le sélecteur de langue se trouve en haut de la barre latérale, sous le nom du logiciel, à gauche : cliquez sur **EN** pour l'anglais, sur **FR** pour le français. Le changement est immédiat, sans perdre le portefeuille ni les réglages en cours. Le français est la langue de départ.
 
 ### Ce qui change
 
@@ -55,7 +57,7 @@ La langue est gardée pendant toute la session. Elle n'est pas enregistrée dans
 ## Activer le mode nuit (fond sombre)
 <!-- fiche: ecran-mode-nuit | questions: comment mettre le mode sombre ; dark mode ; l'écran est trop blanc ça fait mal aux yeux ; passer en mode nuit ; revenir en mode clair ; le mode nuit n'est pas gardé ; pourquoi le pdf est blanc alors que je suis en mode nuit ; mettre le fond en noir | mots: mode nuit, mode sombre, dark mode, thème, fond noir, bleu nuit, clair, affichage -->
 
-Le sélecteur d'affichage se trouve en haut de la barre latérale, sous le sélecteur de langue : cliquez sur **Nuit** pour un fond bleu nuit, sur **Clair** pour revenir au fond blanc. Le mode clair est celui de départ.
+Le sélecteur d'affichage se trouve en haut de la barre latérale, sous le nom du logiciel, à droite (sur la même ligne que la langue) : cliquez sur **Nuit** pour un fond bleu nuit, sur **Clair** pour revenir au fond blanc. Le mode clair est celui de départ.
 
 ### Ce qui change
 
@@ -426,11 +428,11 @@ Une fois le portefeuille analysé, un petit bloc d'informations apparaît en bas
 | Période | Première et dernière date de l'historique valorisé |
 | Opérations | Le nombre d'opérations lues (achats, ventes, dividendes) |
 | Cours | La provenance des derniers cours : « Yahoo Finance (en direct) », ou « cache local du » suivi de la date, avec la mention « Yahoo Finance injoignable » |
-| 1 € en USD, 1 € en GBP… | Une ligne par devise étrangère du portefeuille : le taux de change du jour utilisé pour convertir les titres en euros, avec quatre décimales |
+| Taux de change (n) | Replié par défaut : cliquez dessus pour afficher une ligne par devise étrangère du portefeuille (« 1 € en USD », « 1 € en GBP »…), le taux de change du jour utilisé pour convertir les titres en euros, avec quatre décimales. Le nombre entre parenthèses est le nombre de devises |
 
 ### Lire un taux de change
 
-« 1 € en USD · 1,0850 » signifie qu'un euro vaut 1,0850 dollar. Une action cotée 200 USD vaut donc `200 / 1,0850 ≈ 184,33 €`. Un portefeuille entièrement en euros n'a aucune ligne de taux.
+« 1 € en USD · 1,0850 » signifie qu'un euro vaut 1,0850 dollar. Une action cotée 200 USD vaut donc `200 / 1,0850 ≈ 184,33 €`. Un portefeuille entièrement en euros n'a aucune ligne de taux, et la mention « Taux de change » n'apparaît pas.
 
 ### Après l'envoi d'un fichier
 
@@ -462,6 +464,30 @@ L'assistant ne rédige rien : il cherche dans le manuel la fiche la plus proche 
 ### S'il ne trouve pas
 
 Il l'indique et propose les fiches les plus proches. Essayez d'autres mots, plus simples ou plus techniques. Votre question est alors notée sur l'ordinateur pour compléter le manuel (voir la fiche sur les questions restées sans réponse).
+
+## La bulle d'aide en bas à droite de l'écran
+<!-- fiche: ecran-bulle-aide | questions: c'est quoi le bouton aide en bas à droite ; poser une question sans quitter mon onglet ; ou est la bulle d'aide ; comment fermer la petite fenêtre d'aide ; la bulle ne trouve pas ma réponse ; retrouver mes questions precedentes ; le bouton aide cache une partie de l'écran ; aide rapide pendant que je regarde mes graphiques | mots: bulle, aide, chat, fenêtre d'aide, bouton flottant, question rapide, assistant, popup, panneau | aller: Manuel et aide -->
+
+Le bouton [[Aide]], fixé en bas à droite de l'écran, est visible sur toutes les pages : les trois espaces d'analyse, « Manuel et aide », « Mon compte » et « Ajouter des opérations ». Il permet de poser une question au manuel sans quitter l'onglet en cours.
+
+### Comment faire
+
+1. Cliquez sur [[Aide]] : un petit panneau s'ouvre au-dessus du bouton.
+2. Tapez votre question avec vos propres mots, puis appuyez sur Entrée ou cliquez sur [[Envoyer]].
+3. Le panneau affiche le titre de la fiche qui répond, son début (avec la formule s'il y en a une courte), et, si la fiche s'y prête, vos propres chiffres.
+4. Cliquez à côté du panneau, ou de nouveau sur [[Aide]], pour le refermer.
+
+### Les liens sous la réponse
+
+- [[Lire la fiche complète]] : ouvre l'espace « Manuel et aide » sur la fiche entière.
+- [[Aller à l'écran]] : ouvre l'espace concerné ; si la fiche porte sur un onglet précis, un message dans la barre latérale indique l'onglet à ouvrir.
+- **Voir aussi** : jusqu'à trois fiches proches ; un clic affiche leur début dans le panneau.
+- [[Ce n'est pas la réponse que je cherchais]] : note la question sur l'ordinateur pour compléter le manuel.
+- **Vos questions précédentes** : les cinq dernières questions de la session ; un clic affiche de nouveau la réponse. Elles sont oubliées à la fermeture du logiciel.
+
+### Même moteur que l'assistant du manuel
+
+La bulle utilise exactement la même recherche que le champ [[Poser une question]] de l'espace « Manuel et aide » : hors connexion, sans intelligence artificielle, tolérante aux fautes de frappe. Une question sans réponse sûre est notée de la même façon (voir la fiche sur les questions restées sans réponse). Le bouton n'apparaît pas dans le rapport PDF ni à l'impression.
 
 ## Parcourir le sommaire du manuel
 <!-- fiche: ecran-sommaire-manuel | questions: ou est le manuel ; lire tout le manuel ; sommaire de l'aide ; telecharger le manuel en pdf ; manuel en word ; comment passer d'un chapitre à l'autre ; mode d'emploi du logiciel ; documentation complète | mots: manuel, sommaire, chapitres, mode d'emploi, documentation, guide utilisateur, fiches, Word, PDF | aller: Manuel et aide -->
