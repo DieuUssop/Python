@@ -290,3 +290,44 @@ def test_isin_hors_connexion():
         assert imp.isin_valide(isin), isin
     assert base_titres.chercher_localement("FR0000120578")[0]["symbol"] == "SAN.PA"
     assert base_titres.chercher_localement("US0378331005")[0]["symbol"] == "AAPL"
+
+
+# ----------------------------------------------------------------------
+# Vrai relevé Interactive Brokers imprimé en « mode sombre » (texte lu par la reconnaissance de
+# caractères, numéro de compte masqué) : une ligne par opération, symboles sans ISIN, virgules
+# parfois perdues par la reconnaissance (« -23418 » pour -234,18 ; « 72712714286 » pour 72,712714286)
+# ----------------------------------------------------------------------
+def test_releve_interactive_brokers_lu_ligne_par_ligne():
+    from pathlib import Path
+    texte = (Path(__file__).resolve().parent / "donnees" / "vrais_avis" / "interactive_brokers_ocr.txt").read_text(
+        encoding="utf-8")
+    operations = lp.lire_lignes_operations(texte)
+    assert len(operations) == 17 and all(o["sur"] for o in operations)
+    attendu = [("13/07/2026", "ACHAT", "ESE", 7, 33.454), ("03/08/2026", "ACHAT", "ESE", 15, 33.08),
+               ("19/08/2026", "ACHAT", "ESE", 14, 33.608), ("07/09/2026", "ACHAT", "ESE", 28, 33.626),
+               ("09/09/2026", "ACHAT", "ESE", 1, 33.3142), ("18/09/2026", "VENTE", "ESE", 11, 33.765),
+               ("18/09/2026", "VENTE", "ESE", 2, 33.761), ("02/10/2025", "ACHAT", "ESE", 34, 28.8068),
+               ("10/10/2025", "ACHAT", "LYSX", 8, 62.52), ("19/08/2026", "ACHAT", "MSE", 7, 73.67),
+               ("07/09/2026", "ACHAT", "MSE", 7, 72.712714286), ("18/09/2026", "VENTE", "MSE", 6, 70.99),
+               ("10/10/2025", "ACHAT", "PAEJ", 23, 21.551), ("19/08/2026", "ACHAT", "PAEJ", 19, 26.7353),
+               ("07/09/2026", "ACHAT", "PAEJ", 19, 27.74), ("18/09/2026", "VENTE", "PAEJ", 20, 27.125),
+               ("18/09/2026", "ACHAT", "RMS", 1, 1339.0)]
+    for o, (date, sens, titre, q, p) in zip(operations, attendu):
+        assert (o["date"], o["sens"], o["isin"]) == (date, sens, titre)
+        assert o["quantite"] == q and o["cours"] == pytest.approx(p)
+    assert all(abs(o["quantite"] * o["cours"] - o["montant"]) <= 0.011 for o in operations)
+
+
+def test_page_en_mode_sombre_remise_en_noir_sur_blanc():
+    from PIL import Image, ImageDraw
+    image = Image.new("L", (900, 200), 30)                    # fond sombre, texte clair, une bordure claire
+    dessin = ImageDraw.Draw(image)
+    dessin.rectangle([10, 10, 890, 190], outline=230, width=3)
+    dessin.text((40, 80), "BUY 7 33.4540 -234.18", fill=230)
+    assert ocr.fond_sombre(image)
+    propre = ocr.normaliser_polarite(image)
+    import numpy as np
+    pixels = np.asarray(propre)
+    assert pixels.mean() > 200                                # fond devenu blanc
+    assert (pixels[60:110, 30:400] < 128).any()               # le texte est resté (en noir)
+    assert (pixels[10:14, 100:800] > 128).all()               # la bordure a été effacée

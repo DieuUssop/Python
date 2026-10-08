@@ -116,7 +116,8 @@ def page(session_compte, importer):
             if ost is not None:                                     # division ou regroupement d'actions
                 _proposer_ost(ost, f.name, empreinte, cible, session_compte)
                 continue
-            with st.spinner(t("Lecture de {nom}...", nom=f.name)):
+            attente, valeurs = import_fichier.message_attente(brut)
+            with st.spinner(f.name + " · " + t(attente, **valeurs)):
                 resultat = importer(brut)
             if resultat["sur"]:
                 tableau = resultat["transactions"][mouvements.COLONNES].copy()

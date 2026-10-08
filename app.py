@@ -353,7 +353,8 @@ elif fichier_envoye is not None:
     if cle_import not in imports and not assistant_demande:
         # Détection automatique : colonnes (noms, contenu, cohérence des chiffres), codes ISIN,
         # dates, devises vérifiées avec les vrais cours (src/import_fichier.py)
-        with st.spinner(t("Lecture du fichier et vérification des prix avec les cours du marché...")):
+        attente, valeurs = import_fichier.message_attente(brut)
+        with st.spinner(t(attente, **valeurs)):
             auto = importer_auto(brut)
         if auto["sur"]:
             imports[cle_import] = import_fichier.en_csv(auto["transactions"])

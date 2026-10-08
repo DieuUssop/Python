@@ -965,3 +965,118 @@ def lire_ost(texte):
     libelle = " ".join(avant.split()[-4:]).strip(" :-(") or _libelle(texte, isin)
     return {"nature": "division" if facteur > 1 else "regroupement", "isin": isin,
             "libelle": libelle[:60], "date": date, "facteur": facteur}
+
+
+# ----------------------------------------------------------------------
+# 13. Relevé d'opérations « une ligne par opération » (export ou impression d'un courtier)
+# ----------------------------------------------------------------------
+# Ex. Interactive Brokers : « U1234 ESE 2026-07-13, 07:05:17 2026-07-15 - BUY 7 33.4540 -234.18 -1.17 0.00 MKT »
+MOTS_LIGNE_TOTAL = re.compile(r"\b(?:total|sous-total|subtotal|solde|report)\b", re.IGNORECASE)
+MOTS_NON_TITRES = {"BUY", "SELL", "ACHAT", "VENTE", "MKT", "LMT", "LIMIT", "TOTAL", "EUR", "USD", "GBP", "CHF",
+                   "ID", "ISIN", "BOT", "SLD", "STK", "ETF", "LE", "DU", "AU", "THE"}
+
+
+def _lectures_ocr(ecrit):
+    """Lectures possibles d'un nombre dont la reconnaissance a pu perdre la virgule :
+    « -23418 » peut être 234,18 ; « 72712714286 » peut être 72,712714286. Pour un nombre écrit
+    sans séparateur, on propose aussi chaque position possible de la virgule ; seule la
+    cohérence quantité × cours = montant décidera."""
+    lectures = set(_valeurs(ecrit))
+    nu = ecrit.lstrip("+-")
+    if re.fullmatch(r"\d{3,12}", nu):
+        lectures |= {int(nu) / 10 ** k for k in range(1, len(nu))}
+    return lectures
+
+
+def _titre_de_la_ligne(avant):
+    """Le code du titre écrit avant la date : un ISIN, sinon un symbole boursier (« ESE »,
+    « PAEJ », « RMS », « LYSXd » -> « LYSX »)."""
+    trouves = isins(avant)
+    if trouves:
+        return trouves[0][0]
+    jetons = re.findall(r"[A-Za-z][A-Za-z0-9.]{1,9}", avant)
+    candidats = [j for j in jetons if j.upper() not in MOTS_NON_TITRES and not re.fullmatch(r"[uU]\d+.*|[a-z]+", j)
+                 and sum(c.isupper() for c in j) >= max(2, len(j) - 1)]
+    if not candidats:
+        return None
+    symbole = candidats[-1]
+    if re.fullmatch(r"[A-Z0-9]{2,8}[a-z]", symbole):           # suffixe de place du courtier (« LYSXd »)
+        symbole = symbole[:-1]
+    return symbole
+
+
+def lire_lignes_operations(texte, minimum=2):
+    """Opérations d'un relevé où chaque ligne porte une opération complète : un code (ISIN ou
+    symbole), une date, un sens (achat / vente / buy / sell), puis quantité, cours et montant
+    (quantité × cours = montant au centime près), et éventuellement commission et taxe.
+    Les lignes « Total » sont ignorées. Renvoie une liste de dict (comme lire_par_le_contenu),
+    chacun avec « sur » ; [] s'il y a moins de `minimum` lignes d'opération."""
+    operations = []
+    # la ligne de titres dit s'il y a, après la commission, une colonne de taxe (« Fee », « TTF »…)
+    a_une_taxe = bool(re.search(r"\b(?:comm\w*|courtage)\b.{0,40}\b(?:fees?|tax\w*|ttf|taxe)\b", texte or "",
+                                re.IGNORECASE))
+    for ligne in (texte or "").split("\n"):
+        propre = re.sub(r"[|\[\]{}“”‘’\"—]", " ", ligne)
+        if MOTS_LIGNE_TOTAL.search(propre):
+            continue
+        sens = MOTIF_SENS.search(propre)
+        les_dates = dates(propre)
+        if not sens or not les_dates:
+            continue
+        titre = _titre_de_la_ligne(propre[:les_dates[0][1]]) or _titre_de_la_ligne(propre[:sens.start()])
+        if not titre:
+            continue
+        reste = propre[sens.end():]
+        # nombres après le sens, dans l'ordre, avec toutes leurs lectures possibles
+        morceaux = [m for m in MOTIF_MORCEAU.finditer(reste)]
+        jetons = [(m.group(1) + m.group(2), _lectures_ocr(m.group(1) + m.group(2))) for m in morceaux]
+        trouve = None
+        for i in range(len(jetons)):
+            for j in range(i + 1, len(jetons)):
+                for k in range(j + 1, min(len(jetons), j + 3)):
+                    for q in jetons[i][1]:
+                        for p in jetons[j][1]:
+                            for b in jetons[k][1]:
+                                if q > 0 and p > 0 and abs(q * p - b) <= 0.0101 and q < 1e6:
+                                    entier = float(q).is_integer()
+                                    score = (2 if entier else 0) - i - (j - i - 1) - (k - j - 1)
+                                    if not trouve or score > trouve[0]:
+                                        trouve = (score, q, p, b, k, jetons[i][0])
+        if not trouve:
+            # quantité illisible : cours et montant lisibles, et montant / cours entier
+            for j in range(len(jetons)):
+                for k in range(j + 1, min(len(jetons), j + 2)):
+                    for p in jetons[j][1]:
+                        for b in jetons[k][1]:
+                            if p > 0 and b > 0 and abs(round(b / p) * p - b) <= 0.0101 and round(b / p) >= 1 \
+                                    and "." in jetons[j][0] + jetons[k][0] or "," in jetons[j][0] + jetons[k][0]:
+                                q = round(b / p)
+                                if abs(q * p - b) <= 0.0101 and (not trouve or j < trouve[4]):
+                                    trouve = (0, float(q), p, b, k, "")
+        if not trouve:
+            operations.append({"date": les_dates[0][0], "sens": sens.group(1), "isin": titre, "libelle": titre,
+                               "quantite": None, "cours": None, "devise": "", "frais": None, "montant": None,
+                               "sur": False, "net": None, "alternatives": []})
+            continue
+        _, q, p, b, k, ecrit_q = trouve
+        # commission (et taxe) : les petits nombres décimaux qui suivent le montant (moins de 5 % du
+        # montant) ; les chiffres isolés sans virgule (« 1 », restes de bordures de tableau) sont ignorés
+        frais = 0.0
+        suivants = [e for e, _ in jetons[k + 1:k + 4] if re.search(r"\d[.,]\d", e)][:2 if a_une_taxe else 1]
+        for ecrit in suivants:
+            valeur = next(iter(_valeurs(ecrit)), None)
+            if valeur is not None and abs(valeur) < 0.05 * b:
+                frais += abs(valeur)
+        mot = sens.group(1).lower()
+        vente = mot in ("vente", "sell", "sold", "verkauf") or ecrit_q.startswith("-")
+        operations.append({"date": les_dates[0][0], "sens": "VENTE" if vente else "ACHAT", "isin": titre,
+                           "libelle": titre, "quantite": float(q), "cours": float(p), "devise": "",
+                           "frais": round(frais, 2) if frais else None, "montant": float(b), "sur": True,
+                           "net": None, "alternatives": []})
+    # symboles mal lus par la reconnaissance de caractères : « ESEE » alors que « ESE » figure aussi
+    symboles = {o["isin"] for o in operations}
+    for o in operations:
+        s_ = o["isin"]
+        if len(s_) > 3 and s_[-1] == s_[-2] and s_[:-1] in symboles:
+            o["isin"] = o["libelle"] = s_[:-1]
+    return operations if len(operations) >= minimum else []

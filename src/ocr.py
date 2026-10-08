@@ -28,6 +28,7 @@ import tempfile
 from pathlib import Path
 
 MOTS_UTILES = re.compile(r"quantit|cours|courtage|achat|vente|isin|ex[ée]cut|montant|brut|net|date|d[ée]bit|"
+                         r"price|quantity|trade|buy|sell|proceeds|commission|settle|symbol|"
                          r"cr[ée]dit|op[ée]ration|frais", re.IGNORECASE)
 _MOTEUR = {}
 
@@ -155,15 +156,60 @@ def ameliorer(image):
     return gris.point(lambda v: 255 if v > seuil else 0)
 
 
+def fond_sombre(image):
+    """Vrai si une bonne part de la page a un fond sombre (page imprimée en « mode sombre »,
+    lignes de tableau en couleur foncée) : texte clair sur fond foncé, mal lu tel quel."""
+    import numpy as np
+    gris = np.asarray(image.convert("L").resize((max(1, image.width // 8), max(1, image.height // 8))))
+    return float((gris < 100).mean()) > 0.25
+
+
+def normaliser_polarite(image):
+    """Texte noir sur fond blanc partout, quelle que soit la couleur du fond de chaque zone :
+    un point est du texte s'il s'écarte nettement du fond qui l'entoure (fond estimé par un
+    filtre médian puis un flou). Les longs traits (bordures de tableau) sont ensuite effacés,
+    car ils gênent la reconnaissance des cases."""
+    import numpy as np
+    from PIL import Image, ImageFilter
+    gris = image.convert("L")
+    pixels = np.asarray(gris).astype(np.int16)
+    fond = np.asarray(gris.filter(ImageFilter.MedianFilter(9)).filter(ImageFilter.BoxBlur(6))).astype(np.int16)
+    texte = np.abs(pixels - fond) > 55
+    # traits : suites de points alignés bien plus longues qu'une lettre (≈ 4 hauteurs de ligne)
+    try:
+        from scipy.ndimage import binary_opening
+        longueur = max(40, gris.height // 40)
+        traits = binary_opening(texte, structure=np.ones((longueur, 1), dtype=bool)) | \
+            binary_opening(texte, structure=np.ones((1, longueur * 3), dtype=bool))
+        texte &= ~traits
+    except ImportError:
+        texte[texte.mean(axis=1) > 0.35, :] = False
+    return Image.fromarray(np.where(texte, 0, 255).astype(np.uint8))
+
+
 def texte_pdf(brut, echelle=3, pretraitement=False):
-    """Texte de chaque page d'un PDF image (liste de textes). Essaie les 4 orientations.
+    """Texte de chaque page d'un PDF image (liste de textes).
+
+    Page à fond sombre (texte clair) : polarité ramenée à « noir sur blanc » et bordures de
+    tableau effacées, en résolution plus fine. Orientation : la page droite est lue d'abord ;
+    les 3 autres sens ne sont essayés que si elle ne donne presque rien (impression en paysage).
     pretraitement : redresser et nettoyer l'image avant lecture (seconde tentative, plus lente)."""
     import pypdfium2
     document = pypdfium2.PdfDocument(io.BytesIO(brut))
-    pages = []
-    for i in range(len(document)):
+    images = []
+    for i in range(len(document)):                       # rendu des pages (rapide, une par une)
         image = document[i].render(scale=echelle).to_pil()
-        if pretraitement:
+        if fond_sombre(image):
+            image = ("sombre", document[i].render(scale=max(echelle, 4)).to_pil())
+        else:
+            image = ("clair", image)
+        images.append(image)
+
+    def lire(element):
+        nature, image = element
+        if nature == "sombre":
+            image = normaliser_polarite(image)
+        elif pretraitement:
             image = ameliorer(image)
         meilleur, score_max = "", -1
         for angle in (0, 90, 270, 180):
@@ -171,10 +217,30 @@ def texte_pdf(brut, echelle=3, pretraitement=False):
             score = _score(texte)
             if score > score_max:
                 meilleur, score_max = texte, score
-            if score >= 8:                       # orientation manifestement bonne : inutile d'essayer les autres
+            # orientation manifestement bonne : des codes ISIN, ou un long texte avec des mots attendus
+            if score >= 8 or (len(texte.strip()) >= 300 and len(MOTS_UTILES.findall(texte)) >= 4):
                 break
-        pages.append(reparer_nombres(reparer_isin(meilleur)))
-    return pages
+        return reparer_nombres(reparer_isin(meilleur))
+
+    # les pages sont lues en parallèle (le moteur travaille hors de Python : gain réel)
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=max(1, min(4, len(images)))) as executeur:
+        return list(executeur.map(lire, images))
+
+
+_CONFUSIONS = str.maketrans({"O": "0", "o": "0", "I": "1", "l": "1", "|": "1", "S": "5", "B": "8"})
+
+
+def reparer_nombres(texte):
+    """Chiffres lus comme des lettres dans un nombre (« 1O5,OO » -> « 105,00 », « 65O,2O »
+    -> « 650,20 ») : seulement dans un groupe qui contient déjà au moins deux vrais chiffres,
+    une virgule ou un point décimal, et aucune autre lettre ; les mots ne sont jamais modifiés."""
+    def corriger(m):
+        groupe = m.group(0)
+        if sum(ch.isdigit() for ch in groupe) < 2 or not re.search(r"[.,]", groupe):
+            return groupe
+        return groupe.translate(_CONFUSIONS)
+    return re.sub(r"(?<![A-Za-z0-9])[0-9OoIl|SB][0-9OoIl|SB ]*[.,][0-9OoIl|SB]{1,4}(?![A-Za-z0-9])", corriger, texte)
 
 
 # ----------------------------------------------------------------------
@@ -210,18 +276,3 @@ def reparer_isin(texte):
         return brut
 
     return re.sub(r"(?<![A-Z0-9])[A-Z]{2}[A-Z0-9OoIlSBZ]{10}[A-Z0-9OoIlSBZ.]*", corriger, texte)
-
-
-_CONFUSIONS = str.maketrans({"O": "0", "o": "0", "I": "1", "l": "1", "|": "1", "S": "5", "B": "8"})
-
-
-def reparer_nombres(texte):
-    """Chiffres lus comme des lettres dans un nombre (« 1O5,OO » -> « 105,00 », « 65O,2O »
-    -> « 650,20 ») : seulement dans un groupe qui contient déjà au moins deux vrais chiffres,
-    une virgule ou un point décimal, et aucune autre lettre ; les mots ne sont jamais modifiés."""
-    def corriger(m):
-        groupe = m.group(0)
-        if sum(ch.isdigit() for ch in groupe) < 2 or not re.search(r"[.,]", groupe):
-            return groupe
-        return groupe.translate(_CONFUSIONS)
-    return re.sub(r"(?<![A-Za-z0-9])[0-9OoIl|SB][0-9OoIl|SB ]*[.,][0-9OoIl|SB]{1,4}(?![A-Za-z0-9])", corriger, texte)

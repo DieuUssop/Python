@@ -61,6 +61,7 @@ TEXTES = {
     "Taux de change ({n})": "Exchange rates ({n})",
     "Parcourir": "Browse",
     "Aide": "Help",
+    "PDF image : lecture par reconnaissance de caractères ({n} page(s), environ 10 à 30 secondes par page)...": "Image PDF: reading by character recognition ({n} page(s), about 10 to 30 seconds per page)...",
     "Colonnes : date, type (ACHAT, VENTE, DIVIDENDE), ticker (code Yahoo Finance), nom, quantite, prix, frais. CSV à virgules ou à points-virgules, fichier Excel, ou PDF (relevé d'opérations, avis d'opéré, relevé de portefeuille). Plusieurs fichiers à la fois : leurs opérations sont réunies. Prioritaire sur le portefeuille choisi ci-dessus.":
         "Columns: date, type (ACHAT/BUY, VENTE/SELL, DIVIDENDE/DIVIDEND), ticker (Yahoo Finance code), nom (name), quantite (quantity), prix (price), frais (fees). Comma- or semicolon-separated CSV, Excel file, or PDF (transaction statement, trade confirmation, portfolio statement). Several files at once: their transactions are combined. Takes priority over the portfolio selected above.",
     "1 ancienne → {n} nouvelles": "1 old → {n} new",

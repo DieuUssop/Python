@@ -713,6 +713,29 @@ Le résumé indique « Avis d'opéré PDF lu d'après son contenu (quantité × 
 
 L'opération n'est retenue automatiquement que si l'ISIN, la date, un trio de nombres cohérent et le sens sont tous trouvés (le sens peut aussi venir d'une quantité précédée de + ou −). Aucune lecture ne peut garantir de comprendre 100 % des documents existants : si l'un de ces éléments manque, le logiciel essaie encore un modèle appris (voir la fiche « Le logiciel apprend vos avis d'opéré »), puis le formulaire [[Compléter l'opération]] prend le relais avec les valeurs trouvées (voir la fiche suivante).
 
+## Un relevé d'opérations « une ligne par opération » (ex. Interactive Brokers)
+<!-- fiche: import-releve-une-ligne-par-operation | questions: mon relevé interactive brokers est il lu ; trade confirmation report avec plusieurs opérations ; mon relevé n'a pas de code isin seulement des symboles ; le pdf contient toutes mes opérations de l'année ; ibkr pdf import ; relevé imprimé en mode sombre ; mon pdf a un fond noir ; plusieurs achats et ventes dans un seul pdf | mots: relevé d'opérations, Interactive Brokers, IBKR, Trade Confirmation Report, symbole, une ligne par opération, mode sombre, fond noir, pdf_lignes -->
+
+Certains courtiers produisent un relevé où **chaque ligne porte une opération complète** : un code (ISIN ou simple symbole boursier comme « ESE », « PAEJ », « RMS »), la date, le sens (achat, vente, BUY, SELL), puis la quantité, le cours, le montant et la commission. C'est le cas du « Trade Confirmation Report » d'Interactive Brokers.
+
+### Comment le logiciel le lit
+
+- Il retient chaque ligne qui contient une date, un mot de sens et un code ; les lignes « Total » sont ignorées.
+- Sur chaque ligne, il cherche les trois nombres qui vérifient **quantité × cours = montant** au centime près. Exemple : `7 × 33,4540 = 234,18`.
+- La commission est le petit nombre décimal qui suit le montant (moins de 5 % du montant).
+- Une vente est reconnue au mot SELL / vente, ou au signe « − » de la quantité.
+- Un symbole suivi d'une minuscule ajoutée par le courtier (« LYSXd ») est ramené au symbole (« LYSX »). Le titre est ensuite identifié par ses cours (la place de cotation dont les prix collent aux prix du relevé), ou par le moteur de recherche.
+- Le relevé n'est retenu que si **toutes** ses lignes d'opération sont cohérentes ; sinon le formulaire « Compléter l'opération » prend le relais.
+
+### Relevé imprimé en « mode sombre »
+
+Une page imprimée depuis un navigateur en mode sombre (texte clair sur fond noir, lignes de tableau foncées) est remise en « noir sur blanc » zone par zone, et les bordures du tableau sont effacées avant la reconnaissance de caractères. Les virgules perdues par la lecture (« -23418 » pour -234,18) sont retrouvées grâce à la cohérence quantité × cours = montant.
+
+### Limites
+
+- Une commission mal lue sur une ligne peut rester fausse : vérifiez la colonne Frais dans l'onglet [[Transactions]].
+- Le plus sûr reste de télécharger le relevé au format CSV ou PDF « texte » depuis l'espace client du courtier plutôt que de l'imprimer.
+
 ## Vérification du cours lu avec le cours du marché
 <!-- fiche: import-pdf-verification-marche | questions: le logiciel vérifie t il le cours lu dans mon avis ; cours lu remplacé par pourquoi ; le logiciel a changé ma quantité et mon prix ; comment il choisit entre deux lectures du pdf ; cours de clôture affiché dans le formulaire ; le prix unitaire doit en être proche ça veut dire quoi ; vérification avec yahoo finance du prix de mon avis ; pourquoi les nombres de la liste sont dans cet ordre | mots: vérification par le marché, cours de clôture, Yahoo Finance, départage, arbitrage, lecture alternative, 15 %, 5 %, cours lu remplacé | aller: Analyse du portefeuille/Transactions -->
 
@@ -808,7 +831,7 @@ Le sens est lu dans le document (achat, vente…) ; à défaut, dans le code de 
 Dans le fichier `modeles_pdf.json` du dossier de la base de titres (`data/base`). Les 50 derniers modèles sont gardés ; un document très ressemblant à un modèle existant le remplace, en conservant les codes de sens déjà appris. Le fichier est commun à tous les utilisateurs de l'ordinateur. Le logiciel ne propose pas d'écran pour l'effacer : pour oublier tous les modèles, supprimez ce fichier.
 
 ## Un PDF scanné ou « imprimé » : la reconnaissance de caractères
-<!-- fiche: import-pdf-image | questions: mon pdf est une image ; pdf scanné est il lu ; c'est quoi l'ocr ; j'ai imprimé la page en pdf avec microsoft print to pdf ; reconnaissance de caractères comment ça marche ; mon pdf est tourné en paysage ; l'isin est mal lu ; rapidocr ou tesseract ; ça prend du temps à lire le pdf ; mon scan est pâle et de travers | mots: OCR, reconnaissance de caractères, PDF image, scan, RapidOCR, Tesseract, rotation, redressement, contraste, ISIN mal lu, chiffres mal lus, Microsoft Print to PDF -->
+<!-- fiche: import-pdf-image | questions: mon pdf est une image ; pdf scanné est il lu ; c'est quoi l'ocr ; j'ai imprimé la page en pdf avec microsoft print to pdf ; reconnaissance de caractères comment ça marche ; mon pdf est tourné en paysage ; l'isin est mal lu ; rapidocr ou tesseract ; ça prend du temps à lire le pdf ; le chargement est très long avec mon pdf ; mon pdf est en mode sombre ; mon scan est pâle et de travers | mots: OCR, reconnaissance de caractères, PDF image, scan, RapidOCR, Tesseract, rotation, redressement, contraste, ISIN mal lu, chiffres mal lus, Microsoft Print to PDF -->
 
 ### PDF texte et PDF image
 
@@ -830,16 +853,18 @@ Pour un PDF image, le logiciel « regarde » chaque page et y reconnaît les let
 
 ### Les précautions prises
 
-- **Rotation** : chaque page est essayée dans les quatre sens (0°, 90°, 270°, 180°). Le sens retenu est celui qui fait apparaître le plus de codes ISIN valides et de mots utiles (quantité, cours, courtage, achat, vente, date, montant…). Dès qu'un sens est manifestement bon, les autres ne sont pas essayés.
+- **Page à fond sombre** (impression en « mode sombre », lignes de tableau foncées) : la page est remise en noir sur blanc zone par zone, en plus haute résolution, et les bordures de tableau sont effacées avant la lecture.
+- **Rotation** : la page est d'abord lue droite ; les trois autres sens (90°, 270°, 180°) ne sont essayés que si elle ne donne presque rien d'utile (ni code ISIN, ni long texte avec des mots attendus : quantité, cours, achat, vente, price, quantity, buy, sell…).
+- **Plusieurs pages** : elles sont lues en même temps, ce qui divise le temps d'attente.
 - **Réparation des ISIN mal lus** : la lettre O lue à la place du chiffre 0 (`FRO013380607`), un I ou un l à la place de 1, S pour 5, B pour 8, Z pour 2, ou un caractère lu en double (`FRO0013380607`). Une correction n'est retenue que si l'ISIN corrigé a une clé de contrôle juste, un code pays existant et au moins 4 chiffres : le logiciel n'invente jamais un code. Un mot comme « EURONEXTPARIS » n'est jamais pris pour un ISIN.
 - **Réparation des nombres** : dans un nombre, une lettre lue à la place d'un chiffre est corrigée (O ou o en 0, I, l ou | en 1, S en 5, B en 8) : « 65O,2O » devient « 650,20 ». La correction n'a lieu que dans un groupe qui contient déjà au moins deux vrais chiffres et une virgule ou un point décimal, sans autre lettre : les mots ne sont jamais modifiés.
 - **Mots collés** : la lecture tolère les mots accolés (« VENTECOMPTANT »).
 
-Le texte reconnu est ensuite lu comme un avis d'opéré : d'abord par ses intitulés, puis par son contenu (ISIN, date, `quantité × cours = montant`), puis avec un modèle appris. La reconnaissance ne lit que des avis d'opéré : un relevé en tableau ou un relevé de portefeuille scanné n'est en général pas exploitable. Si aucune opération n'est reconnue, le formulaire [[Compléter l'opération]] propose les valeurs lues.
+Le texte reconnu est ensuite lu comme un relevé « une ligne par opération » (voir la fiche dédiée), puis comme un avis d'opéré : par ses intitulés, par son contenu (ISIN, date, `quantité × cours = montant`), puis avec un modèle appris. Un relevé de portefeuille scanné n'est en général pas exploitable. Si aucune opération n'est reconnue, le formulaire [[Compléter l'opération]] propose les valeurs lues.
 
 ### À vérifier systématiquement
 
-La lecture d'une image prend plusieurs secondes (davantage si la seconde tentative est nécessaire) et reste moins sûre qu'un PDF texte. Le résumé l'indique : « PDF image lu par reconnaissance de caractères : vérifiez les opérations (onglet « Transactions »). ». Contrôlez la date, la quantité et le cours.
+La lecture d'une image prend du temps : environ 10 à 30 secondes par page selon l'ordinateur (davantage si la seconde tentative est nécessaire) ; le message d'attente l'indique avec le nombre de pages. Pendant ce temps, l'ancien tableau de bord reste affiché en grisé : c'est normal. Elle reste moins sûre qu'un PDF texte. Le résumé l'indique : « PDF image lu par reconnaissance de caractères : vérifiez les opérations (onglet « Transactions »). ». Contrôlez la date, la quantité et le cours.
 
 ## Pourquoi mon PDF scanné est-il refusé ?
 <!-- fiche: import-pdf-scan-refuse | questions: pdf scanné refusé ; message impossible à lire automatiquement ; aucune opération n'a été reconnue dans mon pdf image ; pourquoi mon scan ne passe pas ; le logiciel refuse ma photo d'avis d'opéré ; que faire si mon pdf est une image ; installer la reconnaissance de caractères | mots: PDF scanné, refus, PDF image, OCR non installé, message d'erreur, Format PDF, saisie manuelle, requirements-ocr -->

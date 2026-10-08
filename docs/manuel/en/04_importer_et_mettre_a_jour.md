@@ -713,6 +713,29 @@ The summary says "PDF trade confirmation read from its content (quantity × pric
 
 The transaction is kept automatically only if the ISIN, the date, a consistent trio of numbers and the direction are all found (the direction may also come from a quantity preceded by + or −). No reader can guarantee to understand 100% of existing documents: if one of these elements is missing, the software still tries a learned model (see the fiche "The software learns your trade confirmations"), then the [[Complete the transaction]] form takes over with the values found (see the next fiche).
 
+## A transaction statement with one transaction per line (e.g. Interactive Brokers)
+<!-- fiche: import-releve-une-ligne-par-operation | questions: is my interactive brokers statement read ; trade confirmation report with several transactions ; my statement has no isin only symbols ; the pdf contains all my transactions of the year ; ibkr pdf import ; statement printed in dark mode ; my pdf has a black background ; several buys and sells in one pdf | mots: transaction statement, Interactive Brokers, IBKR, Trade Confirmation Report, symbol, one transaction per line, dark mode, black background, pdf_lignes -->
+
+Some brokers produce a statement where **each line holds a complete transaction**: a code (ISIN or a plain ticker symbol such as "ESE", "PAEJ", "RMS"), the date, the direction (buy, sell), then the quantity, price, amount and commission. This is the case of Interactive Brokers' "Trade Confirmation Report".
+
+### How the software reads it
+
+- It keeps each line that contains a date, a direction word and a code; "Total" lines are ignored.
+- On each line, it looks for the three numbers that satisfy **quantity × price = amount** to the cent. Example: `7 × 33.4540 = 234.18`.
+- The commission is the small decimal number after the amount (less than 5% of the amount).
+- A sale is recognised by the word SELL / vente, or by the "−" sign of the quantity.
+- A symbol followed by a lowercase letter added by the broker ("LYSXd") is reduced to the symbol ("LYSX"). The security is then identified by its prices (the exchange whose prices match those of the statement), or by the search engine.
+- The statement is used only if **all** its transaction lines are consistent; otherwise the "Complete the transaction" form takes over.
+
+### Statement printed in "dark mode"
+
+A page printed from a browser in dark mode (light text on a black background, dark table rows) is turned back into "black on white" area by area, and the table borders are erased before character recognition. Decimal points lost by the reading ("-23418" for -234.18) are recovered thanks to the consistency quantity × price = amount.
+
+### Limits
+
+- A commission misread on a line may remain wrong: check the Fees column in the [[Transactions]] tab.
+- The safest option is still to download the statement as CSV or as a "text" PDF from the broker's client area rather than printing it.
+
 ## Checking the price read against the market price
 <!-- fiche: import-pdf-verification-marche | questions: does the software check the price read in my confirmation ; price read replaced by why ; the software changed my quantity and price ; how does it choose between two readings of the pdf ; closing price shown in the form ; the unit price should be close to it what does it mean ; check of my confirmation price with yahoo finance ; why are the numbers in the list in this order | mots: market check, closing price, Yahoo Finance, tie-break, arbitration, alternative reading, 15%, 5%, price read replaced | aller: Analyse du portefeuille/Transactions -->
 
@@ -808,7 +831,7 @@ The direction is read in the document (achat, vente…); failing that, in the le
 In the `modeles_pdf.json` file of the securities database folder (`data/base`). The last 50 models are kept; a document very similar to an existing model replaces it, keeping the direction codes already learned. The file is shared by all users of the computer. The software offers no screen to erase it: to forget all models, delete this file.
 
 ## A scanned or "printed" PDF: character recognition
-<!-- fiche: import-pdf-image | questions: my pdf is an image ; is a scanned pdf read ; what is ocr ; I printed the page to pdf with microsoft print to pdf ; how does character recognition work ; my pdf is rotated to landscape ; the isin is misread ; rapidocr or tesseract ; reading the pdf takes a long time ; my scan is pale and crooked | mots: OCR, character recognition, image PDF, scan, RapidOCR, Tesseract, rotation, deskewing, contrast, misread ISIN, misread digits, Microsoft Print to PDF -->
+<!-- fiche: import-pdf-image | questions: my pdf is an image ; is a scanned pdf read ; what is ocr ; I printed the page to pdf with microsoft print to pdf ; how does character recognition work ; my pdf is rotated to landscape ; the isin is misread ; rapidocr or tesseract ; reading the pdf takes a long time ; loading is very slow with my pdf ; my pdf is in dark mode ; my scan is pale and crooked | mots: OCR, character recognition, image PDF, scan, RapidOCR, Tesseract, rotation, deskewing, contrast, misread ISIN, misread digits, Microsoft Print to PDF -->
 
 ### Text PDFs and image PDFs
 
@@ -830,16 +853,18 @@ For an image PDF, the software "looks at" each page and recognises the letters a
 
 ### The precautions taken
 
-- **Rotation**: each page is tried in all four orientations (0°, 90°, 270°, 180°). The orientation kept is the one that brings out the most valid ISIN codes and useful words (quantité, cours, courtage, achat, vente, date, montant…). As soon as an orientation is clearly right, the others are not tried.
+- **Page with a dark background** (printed in "dark mode", dark table rows): the page is turned back into black on white area by area, at a higher resolution, and table borders are erased before reading.
+- **Rotation**: the page is first read upright; the three other orientations (90°, 270°, 180°) are tried only if it gives almost nothing useful (no ISIN code, nor a long text with expected words: quantity, price, buy, sell, quantité, cours…).
+- **Several pages**: they are read at the same time, which divides the waiting time.
 - **Repair of misread ISINs**: the letter O read in place of the digit 0 (`FRO013380607`), an I or an l in place of 1, S for 5, B for 8, Z for 2, or a character read twice (`FRO0013380607`). A correction is kept only if the corrected ISIN has a correct check digit, an existing country code and at least 4 digits: the software never invents a code. A word like "EURONEXTPARIS" is never mistaken for an ISIN.
 - **Repair of numbers**: in a number, a letter read in place of a digit is corrected (O or o to 0, I, l or | to 1, S to 5, B to 8): "65O,2O" becomes "650,20". The correction only happens in a group that already contains at least two real digits and a decimal comma or point, with no other letter: words are never changed.
 - **Run-together words**: reading tolerates words stuck together ("VENTECOMPTANT").
 
-The recognised text is then read as a trade confirmation: first by its headings, then by its content (ISIN, date, `quantity × price = amount`), then with a learned model. Recognition reads only trade confirmations: a scanned statement in table form or a scanned portfolio statement is generally unusable. If no transaction is recognised, the [[Complete the transaction]] form suggests the values read.
+The recognised text is then read as a "one transaction per line" statement (see the dedicated entry), then as a trade confirmation: by its headings, by its content (ISIN, date, `quantity × price = amount`), then with a learned model. A scanned portfolio statement is generally not usable. If no transaction is recognised, the [[Complete the transaction]] form suggests the values read.
 
 ### Always check
 
-Reading an image takes several seconds (more if the second attempt is needed) and remains less reliable than a text PDF. The summary says so: "Image PDF read by character recognition: please check the transactions ("Transactions" tab).". Check the date, quantity and price.
+Reading an image takes time: about 10 to 30 seconds per page depending on the computer (more if the second attempt is needed); the waiting message says so, with the number of pages. Meanwhile, the previous dashboard stays greyed out: this is normal. It remains less reliable than a text PDF. The summary says so: "Image PDF read by character recognition: please check the transactions ("Transactions" tab).". Check the date, quantity and price.
 
 ## Why is my scanned PDF rejected?
 <!-- fiche: import-pdf-scan-refuse | questions: scanned pdf rejected ; message cannot be read automatically ; no transaction was recognised in my image pdf ; why wont my scan work ; the software rejects my photo of a trade confirmation ; what should I do if my pdf is an image ; install character recognition | mots: scanned PDF, rejection, image PDF, OCR not installed, error message, PDF format, manual entry, requirements-ocr -->

@@ -277,7 +277,8 @@ def lot_de_fichiers(fichiers, importer):
                 demander_mot_de_passe(brut, nom, empreinte)
                 en_attente.append(nom)
                 continue
-            with st.spinner(t("Lecture de {nom}...", nom=nom)):
+            attente, valeurs = import_fichier.message_attente(brut)
+            with st.spinner(nom + " · " + t(attente, **valeurs)):
                 resultat = importer(brut)
             if resultat["sur"]:
                 etat["operations"][empreinte] = resultat["transactions"][["date", "type", "ticker", "nom", "quantite",

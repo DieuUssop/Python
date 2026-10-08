@@ -333,6 +333,24 @@ def dechiffrer_pdf(brut, mot_de_passe):
     return sortie.getvalue()
 
 
+def message_attente(brut):
+    """Message d'attente adapté : un PDF image est lu par reconnaissance de caractères, ce qui
+    prend du temps (environ 10 à 30 secondes par page selon l'ordinateur)."""
+    if brut[:5] == b"%PDF-" and not est_protege(brut):
+        try:
+            import pdfplumber
+            with pdfplumber.open(io.BytesIO(brut)) as pdf:
+                texte = "".join((page.extract_text() or "") for page in pdf.pages[:3])
+                pages = len(pdf.pages)
+            from .lecture_pdf import texte_illisible
+            if len(texte.strip()) < 20 or texte_illisible(texte):
+                return ("PDF image : lecture par reconnaissance de caractères ({n} page(s), environ 10 à 30 "
+                        "secondes par page)...", {"n": pages})
+        except Exception:
+            pass
+    return ("Lecture du fichier et vérification des prix avec les cours du marché...", {})
+
+
 def est_protege(brut):
     """Vrai si le PDF ne s'ouvre pas sans mot de passe."""
     if brut[:5] != b"%PDF-":
@@ -587,7 +605,9 @@ def _grille_pdf(brut):
         for reglage in ({}, {"echelle": 4, "pretraitement": True}):
             textes = ocr.texte_pdf(brut, **reglage)
             texte_ocr = "\n".join(textes)
-            lignes = [l for l in (lire_avis_opere(t) for t in textes) if l and _ligne_complete(l, texte_ocr)]
+            lignes = _par_lignes(textes)            # relevé « une ligne par opération » (plusieurs opérations)
+            if not lignes:
+                lignes = [l for l in (lire_avis_opere(t) for t in textes) if l and _ligne_complete(l, texte_ocr)]
             if not lignes:
                 lignes = _par_le_contenu(textes) or _par_un_modele(textes)
             if lignes:
@@ -633,16 +653,30 @@ def _grille_pdf(brut):
         lignes = [ligne] if ligne else []
     if lignes and all(_ligne_complete(l, texte_total) for l in lignes):
         return [COLONNES_AVIS] + lignes, "pdf_avis"
-    # 3. Avis d'opéré lu par son contenu, quel que soit le courtier : ISIN, date, et
+    # 3. Relevé « une ligne par opération » sans tableau reconnu (code, date, sens, quantité × cours = montant)
+    lignes = _par_lignes([p["texte"] for p in pages])
+    if lignes:
+        return [COLONNES_AVIS] + lignes, "pdf_lignes"
+    # 4. Avis d'opéré lu par son contenu, quel que soit le courtier : ISIN, date, et
     #    quantité × cours = montant (src/lecture_pdf.py)
     lignes = _par_le_contenu([p["texte"] for p in pages])
     if lignes:
         return [COLONNES_AVIS] + lignes, "pdf_contenu"
-    # 4. Modèle appris : ce type de document a déjà été complété dans le formulaire
+    # 5. Modèle appris : ce type de document a déjà été complété dans le formulaire
     lignes = _par_un_modele([p["texte"] for p in pages])
     if lignes:
         return [COLONNES_AVIS] + lignes, "pdf_modele"
     raise PdfNonReconnu(MESSAGE_NON_RECONNU)
+
+
+def _par_lignes(textes):
+    """Relevé où chaque ligne porte une opération : retenu seulement si TOUTES les lignes
+    d'opération (au moins deux) sont cohérentes."""
+    from . import lecture_pdf
+    operations = lecture_pdf.lire_lignes_operations("\n".join(textes))
+    if operations and all(o["sur"] for o in operations):
+        return [lecture_pdf.en_ligne_avis(o) for o in operations]
+    return []
 
 
 def _par_un_modele(textes):
@@ -1246,10 +1280,15 @@ def reconnaitre_par_les_prix(transactions, codes, tickers_connus=(), chercher=No
     if not tous:
         return {}
     debut = (transactions["date"].min() - pd.Timedelta(days=10)).strftime("%Y-%m-%d")
+    # Sans cours du marché (pas d'Internet) : un code qui ne correspond qu'à UN titre connu en
+    # local (fiche des titres, tables d'ISIN intégrées) est pris tel quel (« ESE » -> ESE.PA)
+    sans_marche = {code: bases[code][0] for code in codes if len(set(bases.get(code, []))) == 1}
     try:
         info, historique = marche(tous, debut)
     except Exception:
-        return {}
+        return sans_marche
+    if historique is None or getattr(historique, "empty", True):
+        return sans_marche
     trouves = {}
     for code, liste in candidats.items():
         lignes = transactions[(transactions["ticker"] == code) & transactions["type"].isin(["ACHAT", "VENTE"])]
@@ -1472,7 +1511,8 @@ def importer_automatiquement(brut, chercher=None, marche=donnees_de_marche):
         restants = [c for c in courts if (provisoire["ticker"] == c.upper()).any()]   # sans colonne "place"
         try:
             from . import base_titres
-            racines = connus | set(base_titres.lire_titres().index)
+            racines = connus | set(base_titres.lire_titres().index) | \
+                {t for t, _ in list(base_titres.ISIN_ETF.values()) + list(base_titres.ISIN_ACTIONS.values())}
         except Exception:
             racines = connus
         reconnus = reconnaitre_par_les_prix(provisoire, [c.upper() for c in restants], racines, chercher=chercher)
@@ -1497,7 +1537,7 @@ def importer_automatiquement(brut, chercher=None, marche=donnees_de_marche):
         return {"sur": False, "transactions": None, "resume": resume,
                 "raison": " ; ".join(message_erreur(e) for e in rapport["erreurs"]) or "Aucune transaction lue."}
     # Noms officiels (Yahoo Finance) à la place des libellés abrégés des avis d'opéré (« AM.C.C.40 UC.ETF C »)
-    if (not correspondance.get("nom") or resume.get("source_pdf") in ("pdf_avis", "pdf_ocr", "pdf_contenu", "pdf_modele")) and noms_trouves:
+    if (not correspondance.get("nom") or resume.get("source_pdf") in ("pdf_avis", "pdf_ocr", "pdf_contenu", "pdf_modele", "pdf_lignes")) and noms_trouves:
         transactions["nom"] = [noms_trouves.get(tk, n) for tk, n in zip(transactions["ticker"], transactions["nom"])]
     resume["ignorees"] = rapport["ignorees"]
 
